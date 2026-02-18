@@ -892,11 +892,11 @@ const AISettingsScreen = ({ userStats, onBack, onUpdateStats, notifSettings, not
         <button
             onClick={() => onChange(!value)}
             className={`w-14 h-7 rounded-full transition-all relative flex-shrink-0 ${value ? 'bg-electric-blue shadow-glow-blue' : 'bg-white/10'}`}
+            style={{ direction: 'ltr' }}
         >
-            <motion.div
-                animate={{ x: value ? 28 : 4 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                className="absolute top-1.5 w-4 h-4 bg-white rounded-full shadow-sm"
+            <div
+                className="absolute top-1.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-200"
+                style={{ left: value ? '28px' : '4px' }}
             />
         </button>
     );
@@ -1213,11 +1213,43 @@ const ProfileScreen = ({ userStats, userProfile, setActiveTab, onEditProfile, on
 const CustomListScreen = ({ onSave, onBack, onStartLearning }: any) => {
     const [text, setText] = useState('');
     const [saved, setSaved] = useState(false);
+    const [translating, setTranslating] = useState(false);
+    const [preview, setPreview] = useState<{ word: string; definition: string }[]>([]);
 
-    const handleImport = () => {
+    // Detect if a string is Hebrew
+    const isHebrew = (str: string) => /[\u05d0-\u05ea]/.test(str);
+
+    // Translate a single word using MyMemory (free, no key needed)
+    const translateWord = async (word: string): Promise<string> => {
+        try {
+            const isHeb = isHebrew(word);
+            const langPair = isHeb ? 'he|en' : 'en|he';
+            const res = await fetch(
+                `https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=${langPair}`
+            );
+            const data = await res.json();
+            const translation = data?.responseData?.translatedText;
+            if (translation && translation.toLowerCase() !== word.toLowerCase()) {
+                return translation;
+            }
+        } catch {
+            // Silently fail — use placeholder
+        }
+        return `(${word})`;
+    };
+
+    const handleImport = async () => {
         const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-        const newList: WordCard[] = lines.map((line, idx) => {
-            // Support both "word : definition" and plain "word" formats
+        if (lines.length === 0) return;
+
+        setTranslating(true);
+        setPreview([]);
+
+        const newList: WordCard[] = [];
+        const previewItems: { word: string; definition: string }[] = [];
+
+        for (let idx = 0; idx < lines.length; idx++) {
+            const line = lines[idx];
             const hasColon = line.includes(':');
             const hasDash = line.includes(' - ');
             let word = line;
@@ -1232,18 +1264,26 @@ const CustomListScreen = ({ onSave, onBack, onStartLearning }: any) => {
                 word = w.trim();
                 definition = rest.join(' - ').trim();
             }
-            // If no separator, word = line, definition will be filled by AI/user later
 
-            return {
+            // Auto-translate if no definition provided
+            if (!definition) {
+                definition = await translateWord(word);
+            }
+
+            previewItems.push({ word, definition });
+            setPreview([...previewItems]); // Live update
+
+            newList.push({
                 id: `custom-${Date.now()}-${idx}`,
-                word: word,
-                definition: definition || `(${word})`,
+                word,
+                definition,
                 example: 'מהרשימה האישית שלך',
                 category: 'הרשימה שלי',
                 difficulty: 'medium'
-            };
-        });
+            });
+        }
 
+        setTranslating(false);
         if (newList.length > 0) {
             onSave(newList);
             setSaved(true);
@@ -1256,7 +1296,7 @@ const CustomListScreen = ({ onSave, onBack, onStartLearning }: any) => {
             animate={{ opacity: 1, y: 0 }}
             className="px-5 pt-8 pb-32 h-screen flex flex-col"
         >
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-6">
                 <button onClick={onBack} className="p-2 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
                     <ChevronRight className="w-6 h-6" />
                 </button>
@@ -1264,24 +1304,63 @@ const CustomListScreen = ({ onSave, onBack, onStartLearning }: any) => {
                 <div className="w-10" />
             </div>
 
-            <GlassCard className="p-6 flex-1 flex flex-col gap-4">
-                <div className="text-sm text-text-secondary leading-relaxed mb-2">
+            <GlassCard className="p-5 flex-1 flex flex-col gap-4 overflow-hidden">
+                <div className="text-sm text-text-secondary leading-relaxed">
                     <span className="font-bold text-white">הכנס מילים — כל מילה בשורה חדשה.</span>
                     <br />
-                    <span className="text-text-muted">אפשר פשוט להדביק מילים, או להוסיף פירוש:</span>
+                    <span className="text-text-muted text-xs">בעברית או באנגלית — Bina תתרגם אוטומטית! 🤖</span>
                     <br />
-                    <code className="text-neon-purple font-mono text-xs">Apple{"\n"}Banana : בננה{"\n"}Ubiquitous : נמצא בכל מקום</code>
+                    <span className="text-text-muted text-xs">אפשר גם להוסיף פירוש: <code className="text-neon-purple">Apple : תפוח</code></span>
                 </div>
-                <textarea
-                    value={text}
-                    onChange={(e) => { setText(e.target.value); setSaved(false); }}
-                    placeholder={`Apple\nBanana\nUbiquitous : נמצא בכל מקום`}
-                    className="flex-1 bg-black/40 border border-white/10 rounded-xl p-4 text-text-primary font-mono text-sm focus:outline-none focus:border-electric-blue/50 transition-colors resize-none mb-4"
-                />
+
+                {/* Input or Preview */}
                 {saved ? (
-                    <div className="space-y-3">
-                        <div className="text-center text-emerald-400 font-bold text-sm py-2">
-                            ✅ {text.split('\n').filter(l => l.trim()).length} מילים נשמרו!
+                    <div className="flex-1 overflow-y-auto space-y-2">
+                        {preview.map((item, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: i * 0.03 }}
+                                className="flex items-center justify-between bg-black/30 rounded-xl px-4 py-3 border border-white/5"
+                            >
+                                <span className="font-black text-white">{item.word}</span>
+                                <span className="text-text-secondary text-sm">{item.definition}</span>
+                            </motion.div>
+                        ))}
+                    </div>
+                ) : translating ? (
+                    <div className="flex-1 overflow-y-auto space-y-2">
+                        <div className="text-center text-electric-blue font-bold text-sm mb-3 animate-pulse">
+                            🤖 Bina מתרגמת את המילים שלך...
+                        </div>
+                        {preview.map((item, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="flex items-center justify-between bg-black/30 rounded-xl px-4 py-3 border border-white/5"
+                            >
+                                <span className="font-black text-white">{item.word}</span>
+                                <span className="text-text-secondary text-sm">{item.definition}</span>
+                            </motion.div>
+                        ))}
+                    </div>
+                ) : (
+                    <textarea
+                        value={text}
+                        onChange={(e) => { setText(e.target.value); setSaved(false); }}
+                        placeholder={`Apple\nBanana\nUbiquitous\nאמפתיה\nאובייקטיבי`}
+                        className="flex-1 bg-black/40 border border-white/10 rounded-xl p-4 text-text-primary font-mono text-sm focus:outline-none focus:border-electric-blue/50 transition-colors resize-none"
+                        dir="auto"
+                    />
+                )}
+
+                {/* Buttons */}
+                {saved ? (
+                    <div className="space-y-3 flex-shrink-0">
+                        <div className="text-center text-emerald-400 font-bold text-sm py-1">
+                            ✅ {preview.length} מילים נשמרו עם תרגום!
                         </div>
                         <button
                             onClick={onStartLearning}
@@ -1290,7 +1369,7 @@ const CustomListScreen = ({ onSave, onBack, onStartLearning }: any) => {
                             התחל ללמוד 🚀
                         </button>
                         <button
-                            onClick={() => setSaved(false)}
+                            onClick={() => { setSaved(false); setPreview([]); }}
                             className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-text-secondary font-bold text-sm"
                         >
                             ערוך רשימה
@@ -1299,16 +1378,24 @@ const CustomListScreen = ({ onSave, onBack, onStartLearning }: any) => {
                 ) : (
                     <button
                         onClick={handleImport}
-                        disabled={!text.trim()}
-                        className="w-full py-4 rounded-xl bg-gradient-to-r from-electric-blue to-neon-purple text-charcoal font-black text-lg shadow-glow-blue disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all"
+                        disabled={!text.trim() || translating}
+                        className="w-full py-4 rounded-xl bg-gradient-to-r from-electric-blue to-neon-purple text-charcoal font-black text-lg shadow-glow-blue disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all flex-shrink-0 flex items-center justify-center gap-2"
                     >
-                        שמור רשימה ✨
+                        {translating ? (
+                            <>
+                                <div className="w-5 h-5 border-2 border-charcoal/40 border-t-charcoal rounded-full animate-spin" />
+                                מתרגם...
+                            </>
+                        ) : (
+                            'שמור ותרגם ✨'
+                        )}
                     </button>
                 )}
             </GlassCard>
         </motion.div>
     );
 };
+
 
 const SmartAlert = ({ card, onClose, onAction }: any) => (
     <motion.div
@@ -1559,19 +1646,17 @@ function App() {
                 }
             }
 
-            // Update activity history (simulated minutes based on work)
-            let newActivityHistory = [...(prev.activityHistory || [])];
-            if (newActivityHistory.length > 0) {
-                const dayNames = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
-                const dayIndex = new Date().getDay();
-                const dayName = dayNames[dayIndex];
-                const histIndex = newActivityHistory.findIndex(h => h.day === dayName);
-                if (histIndex !== -1) {
-                    newActivityHistory[histIndex].value += category ? 1 : 0; // 1 minute per question for demo
-                }
-            }
+            // Update activity history — deep copy each item to avoid mutation
+            const dayNames = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+            const dayIndex = new Date().getDay();
+            const dayName = dayNames[dayIndex];
+            const newActivityHistory = (prev.activityHistory || []).map((h: any) =>
+                h.day === dayName && category
+                    ? { ...h, value: (h.value || 0) + 1 } // 1 minute per question
+                    : { ...h }
+            );
 
-            return {
+            const updatedStats = {
                 ...prev,
                 xp: newXP,
                 level: newLevel,
@@ -1582,6 +1667,10 @@ function App() {
                 activityHistory: newActivityHistory,
                 streak: { ...prev.streak, lastDate: today }
             };
+
+            // Persist to localStorage on every update
+            localStorage.setItem('bina_user_stats', JSON.stringify(updatedStats));
+            return updatedStats;
         });
     };
 
