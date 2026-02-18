@@ -1,0 +1,162 @@
+[
+    {
+        "id": "v001",
+        "word": "UBIQUITOUS",
+        "definition": "נמצא בכל מקום, נפוץ מאוד",
+        "example": "Smartphones have become ubiquitous in modern society",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v002",
+        "word": "EPHEMERAL",
+        "definition": "חולף, זמני, קצר ימים",
+        "example": "The beauty of a sunset is ephemeral",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v003",
+        "word": "PERSPICACIOUS",
+        "definition": "פיקח, בעל כושר הבחנה חדה",
+        "example": "The perspicacious investor spotted the trend early",
+        "category": "אוצר מילים",
+        "difficulty": "hard"
+    },
+    {
+        "id": "v004",
+        "word": "AMBIGUOUS",
+        "definition": "דו-משמעי, לא ברור, ניתן לפרשנויות שונות",
+        "example": "The politician gave an ambiguous answer to avoid controversy",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v005",
+        "word": "BENEVOLENT",
+        "definition": "נדיב, טוב לב, רחום",
+        "example": "The benevolent donor funded the entire hospital wing",
+        "category": "אוצר מילים",
+        "difficulty": "easy"
+    },
+    {
+        "id": "v006",
+        "word": "CANDID",
+        "definition": "כן, גלוי לב, ישיר",
+        "example": "She gave a candid assessment of the project's flaws",
+        "category": "אוצר מילים",
+        "difficulty": "easy"
+    },
+    {
+        "id": "v007",
+        "word": "DILIGENT",
+        "definition": "חרוץ, שקדן, עמל",
+        "example": "The diligent student reviewed her notes every evening",
+        "category": "אוצר מילים",
+        "difficulty": "easy"
+    },
+    {
+        "id": "v008",
+        "word": "ELOQUENT",
+        "definition": "רהוט, בעל כושר ביטוי, דברן",
+        "example": "His eloquent speech moved the entire audience to tears",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v009",
+        "word": "FRUGAL",
+        "definition": "חסכוני, קמצן, מתון בהוצאות",
+        "example": "Living a frugal lifestyle allowed her to retire early",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v010",
+        "word": "GREGARIOUS",
+        "definition": "חברותי, אוהב חברה",
+        "example": "The gregarious host made every guest feel welcome",
+        "category": "אוצר מילים",
+        "difficulty": "hard"
+    },
+    {
+        "id": "v011",
+        "word": "HAUGHTY",
+        "definition": "יהיר, גאוותן, מתנשא",
+        "example": "Her haughty attitude made it hard to work with her",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v012",
+        "word": "IMPECCABLE",
+        "definition": "מושלם, ללא דופי, מעולה",
+        "example": "The chef's impeccable technique impressed the judges",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v013",
+        "word": "JOVIAL",
+        "definition": "עליז, שמח, בעל מזג טוב",
+        "example": "The jovial grandfather always had a story to tell",
+        "category": "אוצר מילים",
+        "difficulty": "easy"
+    },
+    {
+        "id": "v014",
+        "word": "LETHARGIC",
+        "definition": "עצלן, חסר אנרגיה, ישנוני",
+        "example": "After the heavy meal, everyone felt lethargic",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v015",
+        "word": "METICULOUS",
+        "definition": "קפדן, מדוקדק, מדייק",
+        "example": "The meticulous editor caught every grammatical error",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v016",
+        "word": "NONCHALANT",
+        "definition": "אדיש, שאנן, חסר דאגה",
+        "example": "He seemed nonchalant about the exam despite its importance",
+        "category": "אוצר מילים",
+        "difficulty": "hard"
+    },
+    {
+        "id": "v017",
+        "word": "OBSTINATE",
+        "definition": "עקשן, קשה עורף, לא מוותר",
+        "example": "The obstinate child refused to eat his vegetables",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v018",
+        "word": "PRAGMATIC",
+        "definition": "פרגמטי, מעשי, ריאליסטי",
+        "example": "A pragmatic approach to the problem saved time and money",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v019",
+        "word": "RESILIENT",
+        "definition": "עמיד, גמיש, מסוגל להתאושש",
+        "example": "Resilient communities rebuild quickly after disasters",
+        "category": "אוצר מילים",
+        "difficulty": "easy"
+    },
+    {
+        "id": "v020",
+        "word": "TENACIOUS",
+        "definition": "עיקש, אחוז, בעל עקשנות חיובית",
+        "example": "Her tenacious spirit helped her overcome every obstacle",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    }
+]

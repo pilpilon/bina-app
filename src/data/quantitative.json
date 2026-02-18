@@ -1,0 +1,162 @@
+[
+    {
+        "id": "q001",
+        "word": "נוסחת שטח מלבן",
+        "definition": "שטח = אורך × רוחב",
+        "example": "מלבן באורך 8 ורוחב 5: שטח = 8×5 = 40",
+        "category": "גיאומטריה",
+        "difficulty": "easy"
+    },
+    {
+        "id": "q002",
+        "word": "נוסחת שטח משולש",
+        "definition": "שטח = (בסיס × גובה) ÷ 2",
+        "example": "משולש עם בסיס 6 וגובה 4: שטח = (6×4)÷2 = 12",
+        "category": "גיאומטריה",
+        "difficulty": "easy"
+    },
+    {
+        "id": "q003",
+        "word": "נוסחת שטח עיגול",
+        "definition": "שטח = π × r²",
+        "example": "עיגול עם רדיוס 3: שטח = π×9 ≈ 28.3",
+        "category": "גיאומטריה",
+        "difficulty": "easy"
+    },
+    {
+        "id": "q004",
+        "word": "נוסחת היקף עיגול",
+        "definition": "היקף = 2 × π × r",
+        "example": "עיגול עם רדיוס 5: היקף = 2×π×5 ≈ 31.4",
+        "category": "גיאומטריה",
+        "difficulty": "easy"
+    },
+    {
+        "id": "q005",
+        "word": "משפט פיתגורס",
+        "definition": "במשולש ישר-זווית: a² + b² = c² (c = יתר)",
+        "example": "צלעות 3 ו-4: יתר = √(9+16) = √25 = 5",
+        "category": "גיאומטריה",
+        "difficulty": "medium"
+    },
+    {
+        "id": "q006",
+        "word": "אחוז שינוי",
+        "definition": "שינוי% = (ערך חדש − ערך ישן) ÷ ערך ישן × 100",
+        "example": "מחיר עלה מ-200 ל-250: שינוי = 50÷200×100 = 25%",
+        "category": "אלגברה",
+        "difficulty": "medium"
+    },
+    {
+        "id": "q007",
+        "word": "ממוצע חשבוני",
+        "definition": "ממוצע = סכום כל הערכים ÷ מספר הערכים",
+        "example": "ממוצע של 4, 8, 12: (4+8+12)÷3 = 24÷3 = 8",
+        "category": "אלגברה",
+        "difficulty": "easy"
+    },
+    {
+        "id": "q008",
+        "word": "נוסחת מרחק-מהירות-זמן",
+        "definition": "מרחק = מהירות × זמן (d = v × t)",
+        "example": "רכב נוסע 60 קמ\"ש במשך 3 שעות: מרחק = 180 ק\"מ",
+        "category": "בעיות מילוליות",
+        "difficulty": "easy"
+    },
+    {
+        "id": "q009",
+        "word": "כפל מקוצר (a+b)²",
+        "definition": "(a+b)² = a² + 2ab + b²",
+        "example": "(x+3)² = x² + 6x + 9",
+        "category": "אלגברה",
+        "difficulty": "medium"
+    },
+    {
+        "id": "q010",
+        "word": "כפל מקוצר (a-b)²",
+        "definition": "(a-b)² = a² - 2ab + b²",
+        "example": "(x-4)² = x² - 8x + 16",
+        "category": "אלגברה",
+        "difficulty": "medium"
+    },
+    {
+        "id": "q011",
+        "word": "הפרש ריבועים a²-b²",
+        "definition": "a² - b² = (a+b)(a-b)",
+        "example": "x² - 9 = (x+3)(x-3)",
+        "category": "אלגברה",
+        "difficulty": "medium"
+    },
+    {
+        "id": "q012",
+        "word": "הסתברות בסיסית",
+        "definition": "הסתברות = מספר מקרים רצויים ÷ סך כל המקרים",
+        "example": "הסתברות להוציא 6 בקוביה: 1÷6 ≈ 16.7%",
+        "category": "הסתברות",
+        "difficulty": "easy"
+    },
+    {
+        "id": "q013",
+        "word": "ריבית פשוטה",
+        "definition": "ריבית = קרן × שיעור × זמן (I = P × r × t)",
+        "example": "1000₪ ב-5% ל-3 שנים: ריבית = 1000×0.05×3 = 150₪",
+        "category": "אלגברה",
+        "difficulty": "medium"
+    },
+    {
+        "id": "q014",
+        "word": "שיפוע ישר",
+        "definition": "שיפוע m = (y₂-y₁) ÷ (x₂-x₁)",
+        "example": "נקודות (1,2) ו-(3,6): m = (6-2)÷(3-1) = 4÷2 = 2",
+        "category": "אלגברה",
+        "difficulty": "medium"
+    },
+    {
+        "id": "q015",
+        "word": "זוויות במשולש",
+        "definition": "סכום זוויות במשולש = 180°",
+        "example": "משולש עם זוויות 60° ו-80°: הזווית השלישית = 180-60-80 = 40°",
+        "category": "גיאומטריה",
+        "difficulty": "easy"
+    },
+    {
+        "id": "q016",
+        "word": "נפח תיבה",
+        "definition": "נפח = אורך × רוחב × גובה",
+        "example": "תיבה 4×3×5: נפח = 60 יח' מעוקבות",
+        "category": "גיאומטריה",
+        "difficulty": "easy"
+    },
+    {
+        "id": "q017",
+        "word": "עבודה משותפת",
+        "definition": "אם A מסיים ב-a שעות ו-B ב-b שעות, יחד: 1÷(1/a + 1/b)",
+        "example": "A מסיים ב-3 שעות, B ב-6: יחד = 1÷(1/3+1/6) = 2 שעות",
+        "category": "בעיות מילוליות",
+        "difficulty": "hard"
+    },
+    {
+        "id": "q018",
+        "word": "פרופורציה",
+        "definition": "אם a/b = c/d אז a×d = b×c (כפל צולב)",
+        "example": "3/4 = x/12 → 4x = 36 → x = 9",
+        "category": "אלגברה",
+        "difficulty": "medium"
+    },
+    {
+        "id": "q019",
+        "word": "שורש ריבועי",
+        "definition": "√(a×b) = √a × √b | √(a/b) = √a ÷ √b",
+        "example": "√75 = √(25×3) = 5√3",
+        "category": "אלגברה",
+        "difficulty": "medium"
+    },
+    {
+        "id": "q020",
+        "word": "קומבינטוריקה – בחירה",
+        "definition": "C(n,k) = n! ÷ (k! × (n-k)!) — כמה דרכים לבחור k מתוך n",
+        "example": "בחירת 2 מתוך 5: C(5,2) = 5!÷(2!×3!) = 10",
+        "category": "הסתברות",
+        "difficulty": "hard"
+    }
+]

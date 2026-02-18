@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bina - Home Screen</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0A0E27 0%, #0D1117 100%);
+            color: #F8F9FA;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated background particles */
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .particle:nth-child(1) {
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(0, 217, 255, 0.2), transparent);
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .particle:nth-child(2) {
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(176, 38, 255, 0.15), transparent);
+            top: 60%;
+            right: 15%;
+            animation-delay: 5s;
+        }
+
+        .particle:nth-child(3) {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.1), transparent);
+            bottom: 30%;
+            left: 20%;
+            animation-delay: 10s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.3;
+            }
+
+            50% {
+                transform: translate(50px, -50px) scale(1.2);
+                opacity: 0.6;
+            }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 428px;
+            margin: 0 auto;
+            padding: 24px 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            font-size: 48px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00D9FF 0%, #B026FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            letter-spacing: -2px;
+        }
+
+        .tagline {
+            font-size: 14px;
+            color: #B0B8C1;
+            font-weight: 400;
+        }
+
+        /* Streak Badge */
+        .streak-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 32px;
+            animation: fadeIn 1s ease-out 0.3s both;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .streak-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 24px;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #B026FF 0%, #FF006E 100%);
+            box-shadow: 0 0 30px rgba(176, 38, 255, 0.6);
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 30px rgba(176, 38, 255, 0.6);
+            }
+
+            50% {
+                box-shadow: 0 0 50px rgba(176, 38, 255, 0.9);
+            }
+        }
+
+        .streak-icon {
+            font-size: 28px;
+        }
+
+        .streak-text {
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        /* CTA Button */
+        .cta-button {
+            width: 100%;
+            padding: 20px;
+            margin-bottom: 32px;
+            border: none;
+            border-radius: 20px;
+            background: #00D9FF;
+            color: #0A0E27;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 0 40px rgba(0, 217, 255, 0.6);
+            transition: all 0.3s ease;
+            animation: fadeIn 1s ease-out 0.5s both;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 60px rgba(0, 217, 255, 0.9);
+        }
+
+        .cta-button:active {
+            transform: scale(0.95);
+        }
+
+        /* Stats Dashboard */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 80px;
+            animation: fadeIn 1s ease-out 0.7s both;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 217, 255, 0.3);
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00D9FF 0%, #FFD700 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #B0B8C1;
+            font-weight: 500;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 14, 39, 0.8);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 0;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 16px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-item.active {
+            background: rgba(0, 217, 255, 0.2);
+            color: #00D9FF;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* Progress Ring */
+        .progress-ring {
+            margin: 0 auto 32px;
+            animation: fadeIn 1s ease-out 0.9s both;
+        }
+
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.5s ease;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">🧠 Bina</div>
+            <div class="tagline">AI מותאם אישית לפסיכומטרי שלך</div>
+        </div>
+
+        <!-- Streak Badge -->
+        <div class="streak-container">
+            <div class="streak-badge">
+                <span class="streak-icon">🔥</span>
+                <span class="streak-text">7 ימים ברצף</span>
+            </div>
+        </div>
+
+        <!-- CTA Button -->
+        <button class="cta-button">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
+                <span style="font-size: 24px;">🎯</span>
+                <div style="text-align: right;">
+                    <div style="font-size: 20px; font-weight: 800;">תרגול חכם - 5 דקות</div>
+                    <div style="font-size: 13px; opacity: 0.8; font-weight: 500;">ה-AI ימצא את נקודות התורפה שלך</div>
+                </div>
+            </div>
+        </button>
+
+        <!-- Stats Dashboard -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">687</div>
+                <div class="stat-label">ציון חזוי</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">23</div>
+                <div class="stat-label">תרגילים היום</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">89%</div>
+                <div class="stat-label">דיוק כללי</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">142</div>
+                <div class="stat-label">מילים נלמדו</div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <div class="nav-item active">
+                <div class="nav-icon">🏠</div>
+                <div class="nav-label">בית</div>
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon">📚</div>
+                <div class="nav-label">לימוד</div>
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon">📊</div>
+                <div class="nav-label">סטטיסטיקות</div>
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon">👤</div>
+                <div class="nav-label">פרופיל</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,162 @@
+[
+    {
+        "id": "e001",
+        "word": "The scientist's discovery was ___; it changed everything we knew about physics.",
+        "definition": "revolutionary — מהפכני",
+        "example": "תשובה: revolutionary (= שינה את כל מה שידענו)",
+        "category": "Sentence Completion",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e002",
+        "word": "Despite the ___ weather, the hikers decided to continue their journey.",
+        "definition": "treacherous — מסוכן, בוגדני",
+        "example": "תשובה: treacherous (= מסוכן, מתאים לתנאי מזג אוויר קשים)",
+        "category": "Sentence Completion",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e003",
+        "word": "The CEO's ___ leadership style encouraged employees to share their ideas freely.",
+        "definition": "inclusive — כולל, מאחד",
+        "example": "תשובה: inclusive (= עידד שיתוף ורעיונות חדשים)",
+        "category": "Sentence Completion",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e004",
+        "word": "The ancient ruins were so ___ that archaeologists spent decades studying them.",
+        "definition": "enigmatic — מסתורי, חידתי",
+        "example": "תשובה: enigmatic (= מסתורי, הצדיק עשורי מחקר)",
+        "category": "Sentence Completion",
+        "difficulty": "hard"
+    },
+    {
+        "id": "e005",
+        "word": "Her ___ attitude toward failure helped her learn from every mistake.",
+        "definition": "resilient — עמיד, מסוגל להתאושש",
+        "example": "תשובה: resilient (= למדה מכישלונות, לא נשברה)",
+        "category": "Sentence Completion",
+        "difficulty": "easy"
+    },
+    {
+        "id": "e006",
+        "word": "The documentary presented a ___ view of the conflict, showing both sides equally.",
+        "definition": "balanced — מאוזן, אובייקטיבי",
+        "example": "תשובה: balanced (= הציג שני צדדים באופן שווה)",
+        "category": "Sentence Completion",
+        "difficulty": "easy"
+    },
+    {
+        "id": "e007",
+        "word": "The new policy was met with ___ opposition from the local community.",
+        "definition": "fierce — עז, נמרץ",
+        "example": "תשובה: fierce (= התנגדות חזקה מהקהילה)",
+        "category": "Sentence Completion",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e008",
+        "word": "The professor's lecture was so ___ that students struggled to stay awake.",
+        "definition": "monotonous — מונוטוני, משעמם",
+        "example": "תשובה: monotonous (= גרם לתלמידים להתקשות להישאר ערים)",
+        "category": "Sentence Completion",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e009",
+        "word": "The charity's ___ efforts to feed the homeless were recognized with a national award.",
+        "definition": "commendable — ראוי לשבח",
+        "example": "תשובה: commendable (= זכה להכרה לאומית)",
+        "category": "Sentence Completion",
+        "difficulty": "hard"
+    },
+    {
+        "id": "e010",
+        "word": "After years of ___ research, the team finally found a cure for the disease.",
+        "definition": "rigorous — קפדני, מדוקדק",
+        "example": "תשובה: rigorous (= מחקר יסודי וקפדני)",
+        "category": "Sentence Completion",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e011",
+        "word": "ABUNDANT means the same as:",
+        "definition": "plentiful — רב, שופע",
+        "example": "Restatement: abundant ≈ plentiful (שניהם = הרבה מאוד)",
+        "category": "Restatement",
+        "difficulty": "easy"
+    },
+    {
+        "id": "e012",
+        "word": "CONCISE means the same as:",
+        "definition": "brief — קצר, תמציתי",
+        "example": "Restatement: concise ≈ brief (שניהם = קצר ולעניין)",
+        "category": "Restatement",
+        "difficulty": "easy"
+    },
+    {
+        "id": "e013",
+        "word": "DIMINISH means the same as:",
+        "definition": "decrease — להקטין, לצמצם",
+        "example": "Restatement: diminish ≈ decrease (שניהם = להפחית)",
+        "category": "Restatement",
+        "difficulty": "easy"
+    },
+    {
+        "id": "e014",
+        "word": "FACILITATE means the same as:",
+        "definition": "enable / make easier — להקל, לאפשר",
+        "example": "Restatement: facilitate ≈ make easier (שניהם = לאפשר/להקל)",
+        "category": "Restatement",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e015",
+        "word": "INEVITABLE means the same as:",
+        "definition": "unavoidable — בלתי נמנע",
+        "example": "Restatement: inevitable ≈ unavoidable (שניהם = לא ניתן להימנע)",
+        "category": "Restatement",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e016",
+        "word": "AMBIGUOUS means the same as:",
+        "definition": "unclear / open to interpretation — לא ברור, דו-משמעי",
+        "example": "Restatement: ambiguous ≈ unclear (שניהם = ניתן לפרש בדרכים שונות)",
+        "category": "Restatement",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e017",
+        "word": "PROFOUND means the same as:",
+        "definition": "deep / significant — עמוק, משמעותי",
+        "example": "Restatement: profound ≈ deep (שניהם = בעל עומק ומשמעות)",
+        "category": "Restatement",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e018",
+        "word": "SCRUTINIZE means the same as:",
+        "definition": "examine carefully — לבחון בקפידה",
+        "example": "Restatement: scrutinize ≈ examine carefully (שניהם = לבדוק לעומק)",
+        "category": "Restatement",
+        "difficulty": "hard"
+    },
+    {
+        "id": "e019",
+        "word": "ALLEVIATE means the same as:",
+        "definition": "relieve / reduce — להקל, להפחית",
+        "example": "Restatement: alleviate ≈ relieve (שניהם = להפחית כאב/בעיה)",
+        "category": "Restatement",
+        "difficulty": "hard"
+    },
+    {
+        "id": "e020",
+        "word": "METICULOUS means the same as:",
+        "definition": "very careful / precise — קפדן, מדוקדק",
+        "example": "Restatement: meticulous ≈ very careful (שניהם = תשומת לב לפרטים)",
+        "category": "Restatement",
+        "difficulty": "medium"
+    }
+]

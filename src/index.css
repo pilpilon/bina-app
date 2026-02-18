@@ -1,0 +1,230 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import Inter font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* CSS Custom Properties for Design Tokens */
+:root {
+  /* Colors */
+  --color-charcoal: #0A0E27;
+  --color-midnight: #0D1117;
+  --color-dark-surface: #1A1F3A;
+  --color-electric-blue: #00D9FF;
+  --color-cyber-yellow: #FFD700;
+  --color-neon-purple: #B026FF;
+  --color-neon-pink: #FF006E;
+  --color-text-primary: #F8F9FA;
+  --color-text-secondary: #B0B8C1;
+  --color-text-muted: #6C757D;
+
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+
+  /* Border Radius */
+  --radius-sm: 0.5rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
+  --radius-xl: 2rem;
+
+  /* Glassmorphism */
+  --glass-blur: 12px;
+  --glass-opacity: 0.1;
+}
+
+/* Base Styles - Dark Mode Default */
+@layer base {
+  * {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  body {
+    @apply bg-charcoal text-text-primary font-sans antialiased;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p {
+    @apply m-0;
+  }
+
+  /* Typography */
+  h1 {
+    @apply text-4xl font-bold tracking-tight;
+  }
+
+  h2 {
+    @apply text-3xl font-bold tracking-tight;
+  }
+
+  h3 {
+    @apply text-2xl font-semibold;
+  }
+
+  p {
+    @apply text-base text-text-secondary leading-relaxed;
+  }
+}
+
+/* Component Utilities */
+@layer components {
+
+  /* Glassmorphism Card */
+  .glass-card {
+    @apply bg-glass-white backdrop-blur-xl border border-white/10 rounded-2xl shadow-glass;
+  }
+
+  .glass-card-dark {
+    @apply bg-glass-dark backdrop-blur-2xl border border-white/5 rounded-2xl shadow-glass;
+  }
+
+  /* Neon Button */
+  .btn-neon {
+    @apply px-6 py-3 rounded-xl font-semibold text-lg transition-all duration-300;
+    @apply bg-electric-blue text-charcoal shadow-glow-blue;
+    @apply hover:scale-105 hover:shadow-glow-blue active:scale-95;
+  }
+
+  .btn-neon-yellow {
+    @apply px-6 py-3 rounded-xl font-semibold text-lg transition-all duration-300;
+    @apply bg-cyber-yellow text-charcoal shadow-glow-yellow;
+    @apply hover:scale-105 hover:shadow-glow-yellow active:scale-95;
+  }
+
+  /* Progress Bar with Glow */
+  .progress-glow {
+    @apply h-2 rounded-full bg-dark-surface overflow-hidden relative;
+  }
+
+  .progress-glow::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-electric-blue to-neon-purple;
+    @apply animate-pulse-glow;
+  }
+
+  /* Swipe Card */
+  .swipe-card {
+    @apply glass-card-dark p-8 min-h-[400px] flex flex-col justify-center items-center;
+    @apply transition-transform duration-300 cursor-grab active:cursor-grabbing;
+  }
+
+  /* Streak Badge */
+  .streak-badge {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-full;
+    @apply bg-gradient-to-r from-neon-purple to-neon-pink;
+    @apply shadow-glow-purple font-bold text-xl;
+  }
+
+  /* Stats Card */
+  .stats-card {
+    @apply glass-card p-6 text-center;
+    @apply hover:scale-105 transition-transform duration-300;
+  }
+
+  /* Bottom Navigation */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 glass-card-dark;
+    @apply flex justify-around items-center py-4 px-2;
+    @apply border-t border-white/10;
+  }
+}
+
+/* Animations */
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes bounce-soft {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Scanline Effect */
+.scanline-overlay::before {
+  content: " ";
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+    linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+  z-index: 100;
+  background-size: 100% 4px, 3px 100%;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px) translateX(0px);
+  }
+
+  50% {
+    transform: translateY(-10px) translateX(5px);
+  }
+
+  100% {
+    transform: translateY(0px) translateX(0px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}

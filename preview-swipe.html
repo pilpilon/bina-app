@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bina - Swipe Learning</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0A0E27 0%, #0D1117 100%);
+            color: #F8F9FA;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Animated background */
+        .bg-glow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(0, 217, 255, 0.15), transparent);
+            border-radius: 50%;
+            animation: breathe 4s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        @keyframes breathe {
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.3;
+            }
+
+            50% {
+                transform: translate(-50%, -50%) scale(1.3);
+                opacity: 0.6;
+            }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 428px;
+            margin: 0 auto;
+            padding: 24px 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            margin-bottom: 24px;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: #B0B8C1;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 65%;
+            background: linear-gradient(90deg, #B026FF 0%, #00D9FF 100%);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(176, 38, 255, 0.6);
+            animation: progressGrow 1s ease-out;
+        }
+
+        @keyframes progressGrow {
+            from {
+                width: 0%;
+            }
+
+            to {
+                width: 65%;
+            }
+        }
+
+        /* Swipe Card */
+        .card-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 0;
+            position: relative;
+        }
+
+        .swipe-card {
+            width: 100%;
+            max-width: 360px;
+            min-height: 480px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 2px solid rgba(0, 217, 255, 0.3);
+            border-radius: 32px;
+            padding: 48px 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(0, 217, 255, 0.2);
+            cursor: grab;
+            transition: all 0.3s ease;
+            animation: cardAppear 0.8s ease-out 0.3s both;
+            position: relative;
+        }
+
+        @keyframes cardAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .swipe-card:active {
+            cursor: grabbing;
+            transform: scale(0.98);
+        }
+
+        .card-category {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #00D9FF;
+            margin-bottom: 24px;
+            padding: 8px 16px;
+            background: rgba(0, 217, 255, 0.1);
+            border-radius: 20px;
+        }
+
+        .card-word {
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 32px;
+            background: linear-gradient(135deg, #00D9FF 0%, #FFD700 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+
+        .card-definition {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #B0B8C1;
+            font-weight: 400;
+            margin-bottom: 24px;
+        }
+
+        .card-example {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #6C757D;
+            font-style: italic;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            border-left: 3px solid #B026FF;
+        }
+
+        /* Swipe Indicators */
+        .swipe-indicators {
+            position: absolute;
+            bottom: 80px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 40px;
+            animation: fadeIn 1s ease-out 1s both;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            opacity: 0.6;
+            transition: all 0.3s ease;
+        }
+
+        .indicator:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .indicator-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            transition: all 0.3s ease;
+        }
+
+        .indicator.left .indicator-icon {
+            background: rgba(255, 0, 110, 0.2);
+            border: 2px solid #FF006E;
+            box-shadow: 0 0 20px rgba(255, 0, 110, 0.3);
+        }
+
+        .indicator.right .indicator-icon {
+            background: rgba(0, 217, 255, 0.2);
+            border: 2px solid #00D9FF;
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .indicator-text {
+            font-size: 13px;
+            font-weight: 600;
+            color: #B0B8C1;
+        }
+
+        /* Swipe hint animation */
+        .swipe-hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.3);
+            animation: swipeHint 2s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes swipeHint {
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%) translateX(0);
+                opacity: 0.3;
+            }
+
+            50% {
+                transform: translate(-50%, -50%) translateX(20px);
+                opacity: 0.6;
+            }
+        }
+
+        /* Back button */
+        .back-button {
+            position: absolute;
+            top: 24px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05);
+        }
+
+        .back-button:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-glow"></div>
+
+    <div class="container">
+        <!-- Back Button -->
+        <button class="back-button">←</button>
+
+        <!-- Progress Bar -->
+        <div class="progress-container">
+            <div class="progress-header">
+                <span class="progress-text">אוצר מילים - רמה מתקדמת</span>
+                <span class="progress-text">13/20</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- Swipe Card -->
+        <div class="card-container">
+            <div class="swipe-card">
+                <div class="card-category">📚 Vocabulary</div>
+                <div class="card-word">UBIQUITOUS</div>
+                <div class="card-definition">
+                    נמצא בכל מקום, נפוץ מאוד
+                </div>
+                <div class="card-example">
+                    "Smartphones have become ubiquitous in modern society"
+                </div>
+            </div>
+            <div class="swipe-hint">← החלק לצדדים →</div>
+        </div>
+
+        <!-- Swipe Indicators -->
+        <div class="swipe-indicators">
+            <div class="indicator left">
+                <div class="indicator-icon">✗</div>
+                <div class="indicator-text">לא יודע</div>
+            </div>
+            <div class="indicator right">
+                <div class="indicator-icon">✓</div>
+                <div class="indicator-text">יודע</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
