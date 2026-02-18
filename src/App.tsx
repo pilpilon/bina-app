@@ -25,7 +25,7 @@ import {
     defaultNotificationSettings,
 } from './utils/notifications';
 import { auth, signInWithGoogle, logout as firebaseLogout, db, doc, setDoc, getDoc, onSnapshot } from './utils/firebase';
-import { redirectToCheckout } from './utils/stripe';
+import { openPaddleCheckout, initializePaddle } from './utils/paddle';
 
 // --- Types ---
 interface WordCard {
@@ -1280,8 +1280,11 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan }: any) => {
                                     if (plan.id === 'free') {
                                         onSelectPlan?.(plan.tier);
                                     } else {
-                                        // Trigger Stripe Checkout
-                                        redirectToCheckout(plan.id === 'plus' ? 'price_PLUS_ID' : 'price_PRO_ID');
+                                        // Trigger Paddle Checkout
+                                        openPaddleCheckout(
+                                            plan.id === 'plus' ? 'pri_01khs94ykm1pk6xv7nvsjzf3vg' : 'pri_01khs97cjrpkr3qew3m6b6hdpw',
+                                            user?.email
+                                        );
                                     }
                                 }}
                                 className={`w-full py-4 rounded-xl font-black transition-all ${isCurrent ? 'bg-white/5 text-text-muted cursor-default' : plan.popular ? 'bg-neon-purple text-white shadow-glow-purple hover:scale-[1.02]' : 'bg-electric-blue text-charcoal hover:scale-[1.02]'}`}
@@ -1817,6 +1820,7 @@ function App() {
     // Register service worker and schedule notifications on mount
     useEffect(() => {
         registerServiceWorker();
+        initializePaddle();
         if (notifSettings.enabled && getPermissionStatus() === 'granted') {
             scheduleSmartNotifications(notifSettings, weakPoints.length, userProfile?.examDate);
         }
