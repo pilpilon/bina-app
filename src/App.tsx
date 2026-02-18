@@ -489,7 +489,7 @@ const StatsScreen = ({ userStats, userProfile }: any) => {
     );
 };
 
-const AchievementsScreen = ({ achievements }: { achievements: string[] }) => {
+const AchievementsScreen = ({ achievements, onBack }: { achievements: string[], onBack: () => void }) => {
     const list = [
         { id: 'centurion', name: '🌟 הצעד הראשון', desc: 'הגעת ל-100 XP ראשונים', icon: '🎯' },
         { id: 'streak3', name: '🔥 התמדה', desc: '3 ימים ברצף', icon: '⚡' },
@@ -499,10 +499,14 @@ const AchievementsScreen = ({ achievements }: { achievements: string[] }) => {
 
     return (
         <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="px-5 pt-8 pb-32"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="px-5 pt-12 pb-32"
         >
+            <button onClick={onBack} className="flex items-center gap-2 text-text-muted mb-8 font-bold">
+                <ChevronLeft className="w-5 h-5" />
+                <span>חזור</span>
+            </button>
             <h1 className="text-3xl font-black mb-6">הישגים ותארים</h1>
             <div className="grid grid-cols-1 gap-4">
                 {list.map(ach => {
@@ -522,7 +526,86 @@ const AchievementsScreen = ({ achievements }: { achievements: string[] }) => {
     );
 };
 
-const ProfileScreen = ({ userStats, userProfile, setActiveTab, onEditProfile }: any) => {
+const StudyPlanScreen = ({ userProfile, onBack }: any) => {
+    const examDate = userProfile?.examDate ? new Date(userProfile.examDate) : new Date();
+    const daysLeft = Math.max(0, Math.ceil((examDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+    const weeksLeft = Math.ceil(daysLeft / 7);
+
+    const roadmap = [
+        { title: 'שבוע יישור קו', desc: 'חזרה על יסודות האלגברה ואוצר מילים בסיסי', status: 'completed' },
+        { title: 'שבוע חיזוקים', desc: 'אנלוגיות מורכבות ובעיות תנועה', status: 'current' },
+        { title: 'שבוע אנגלית', desc: 'קריאת טקסטים ושיפור מהירות', status: 'upcoming' },
+        { title: 'שבוע מרתון', desc: 'סימולציות מלאות וניהול זמנים', status: 'upcoming' }
+    ];
+
+    return (
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="px-5 pt-12 pb-32">
+            <button onClick={onBack} className="flex items-center gap-2 text-text-muted mb-8 font-bold">
+                <ChevronLeft className="w-5 h-5" />
+                <span>חזור</span>
+            </button>
+            <h2 className="text-3xl font-black mb-2 text-neon-purple">תוכנית הלימודים</h2>
+            <p className="text-text-secondary mb-8">נותרו {daysLeft} ימים (כ-{weeksLeft} שבועות) למבחן</p>
+
+            <div className="space-y-6 relative">
+                <div className="absolute top-0 right-4 bottom-0 w-0.5 bg-white/5" />
+                {roadmap.map((item, idx) => (
+                    <div key={idx} className="relative pr-10">
+                        <div className={`absolute right-3 top-2 w-3 h-3 rounded-full border-2 ${item.status === 'completed' ? 'bg-emerald-400 border-emerald-400' : item.status === 'current' ? 'bg-neon-purple border-neon-purple shadow-glow-purple' : 'bg-charcoal border-white/20'}`} />
+                        <GlassCard className={`p-4 ${item.status === 'upcoming' ? 'opacity-50' : ''}`}>
+                            <h4 className="font-black text-lg">{item.title}</h4>
+                            <p className="text-sm text-text-secondary">{item.desc}</p>
+                        </GlassCard>
+                    </div>
+                ))}
+            </div>
+        </motion.div>
+    );
+};
+
+const AISettingsScreen = ({ userStats, onBack }: any) => {
+    return (
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="px-5 pt-12 pb-32">
+            <button onClick={onBack} className="flex items-center gap-2 text-text-muted mb-8 font-bold">
+                <ChevronLeft className="w-5 h-5" />
+                <span>חזור</span>
+            </button>
+            <h2 className="text-3xl font-black mb-2 text-cyber-yellow">הגדרות AI אישיות</h2>
+            <p className="text-text-secondary mb-8">ה-Bina לומדת את החוזקות והחולשות שלך</p>
+
+            <div className="grid grid-cols-1 gap-4">
+                <GlassCard className="p-6">
+                    <h4 className="font-bold text-cyber-yellow mb-2 text-sm uppercase tracking-wider">סטטוס למידה</h4>
+                    <div className="text-4xl font-black mb-1">רמה {userStats.level}</div>
+                    <div className="text-text-secondary text-sm">{userStats.xp} XP נצברו עד כה</div>
+                </GlassCard>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <GlassCard className="p-4">
+                        <div className="text-emerald-400 font-bold text-xs mb-1 uppercase">חוזקה עיקרית</div>
+                        <div className="font-black text-xl">אנגלית</div>
+                    </GlassCard>
+                    <GlassCard className="p-4">
+                        <div className="text-neon-pink font-bold text-xs mb-1 uppercase">לחיזוק</div>
+                        <div className="font-black text-xl">אנלוגיות</div>
+                    </GlassCard>
+                </div>
+
+                <GlassCard className="p-6">
+                    <h4 className="font-bold text-white/70 mb-4 text-sm uppercase">התראות חכמות</h4>
+                    <div className="flex items-center justify-between">
+                        <span className="font-bold">תזכורת תרגול יומית</span>
+                        <div className="w-12 h-6 bg-electric-blue/20 rounded-full relative">
+                            <div className="absolute left-1 top-1 w-4 h-4 bg-electric-blue rounded-full" />
+                        </div>
+                    </div>
+                </GlassCard>
+            </div>
+        </motion.div>
+    );
+};
+
+const ProfileScreen = ({ userStats, userProfile, setActiveTab, onEditProfile, onLogout }: any) => {
     const [toast, setToast] = useState<string | null>(null);
 
     const showToast = (msg: string) => {
@@ -532,10 +615,10 @@ const ProfileScreen = ({ userStats, userProfile, setActiveTab, onEditProfile }: 
 
     const settings = [
         { icon: User, label: 'עריכת פרופיל', color: 'text-electric-blue', action: () => onEditProfile() },
-        { icon: Zap, label: 'הגדרות AI אישיות', color: 'text-cyber-yellow', action: () => showToast(`XP: ${userStats.xp} | רמה: ${userStats.level}`) },
-        { icon: Calendar, label: 'תוכנית לימודים', color: 'text-neon-purple', action: () => showToast(`מבחן ב-${userProfile?.examDate || 'בקרוב'}`) },
+        { icon: Zap, label: 'הגדרות AI אישיות', color: 'text-cyber-yellow', action: () => setActiveTab('ai-settings') },
+        { icon: Calendar, label: 'תוכנית לימודים', color: 'text-neon-purple', action: () => setActiveTab('study-plan') },
         { icon: BookOpen, label: 'הישגים', color: 'text-emerald-400', action: () => setActiveTab('achievements') },
-        { icon: X, label: 'התנתקות', color: 'text-neon-pink', action: () => window.location.reload() }
+        { icon: X, label: 'התנתקות', color: 'text-neon-pink', action: () => onLogout() }
     ];
 
     const examDateStr = userProfile?.examDate ? new Date(userProfile.examDate).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' }) : 'מועד לא מוגדר';
@@ -630,7 +713,7 @@ const ProfileScreen = ({ userStats, userProfile, setActiveTab, onEditProfile }: 
                             </div>
                             <span className="font-bold text-sm">{item.label}</span>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-text-muted group-hover:text-text-primary transition-colors" />
+                        <ChevronLeft className="w-5 h-5 text-text-muted group-hover:text-text-primary transition-colors" />
                     </GlassCard>
                 ))}
             </div>
@@ -787,9 +870,29 @@ function App() {
     });
 
     const handleOnboardingComplete = (profile: UserProfile) => {
+        const isFirstTime = !localStorage.getItem('bina_onboarding');
         localStorage.setItem('bina_onboarding', JSON.stringify(profile));
         setUserProfile(profile);
         setHasOnboarded(true);
+
+        if (isFirstTime) {
+            // Ensure stats are clean for new users
+            const cleanStats = {
+                xp: 0,
+                level: 1,
+                streak: { count: 1, lastDate: new Date().toISOString().split('T')[0] },
+                achievements: [],
+                categoryErrors: {},
+                categoryTotal: {},
+                dailyQuestions: 0,
+                activityHistory: [
+                    { day: 'א', value: 0 }, { day: 'ב', value: 0 }, { day: 'ג', value: 0 },
+                    { day: 'ד', value: 0 }, { day: 'ה', value: 0 }, { day: 'ו', value: 0 }, { day: 'ש', value: 0 },
+                ]
+            };
+            setUserStats(cleanStats);
+            localStorage.setItem('bina_user_stats', JSON.stringify(cleanStats));
+        }
     };
 
     useEffect(() => {
@@ -881,6 +984,15 @@ function App() {
         });
     };
 
+    const handleOnboardingCancel = () => {
+        setHasOnboarded(true);
+    };
+
+    const handleLogout = () => {
+        localStorage.clear();
+        window.location.reload();
+    };
+
     const awardXP = (amount: number) => recordActivity(amount);
 
     const recordError = (category: string) => recordActivity(0, category, false);
@@ -944,7 +1056,13 @@ function App() {
     };
 
     if (!hasOnboarded) {
-        return <OnboardingScreen onComplete={handleOnboardingComplete} initialProfile={userProfile} />;
+        return (
+            <OnboardingScreen
+                onComplete={handleOnboardingComplete}
+                onCancel={handleOnboardingCancel}
+                initialProfile={userProfile}
+            />
+        );
     }
 
     return (
@@ -1033,6 +1151,7 @@ function App() {
                                     onBack={() => setActiveTab('home')}
                                     awardXP={awardXP}
                                     recordActivity={recordActivity}
+                                    onMiss={addToWeakPoints}
                                 />
                             )}
                             {activeTab === 'stats' && <StatsScreen userStats={userStats} userProfile={userProfile} />}
@@ -1042,9 +1161,12 @@ function App() {
                                     userProfile={userProfile}
                                     setActiveTab={setActiveTab}
                                     onEditProfile={() => setHasOnboarded(false)}
+                                    onLogout={handleLogout}
                                 />
                             )}
-                            {activeTab === 'achievements' && <AchievementsScreen achievements={userStats.achievements} />}
+                            {activeTab === 'achievements' && <AchievementsScreen achievements={userStats.achievements} onBack={() => setActiveTab('profile')} />}
+                            {activeTab === 'study-plan' && <StudyPlanScreen userProfile={userProfile} onBack={() => setActiveTab('profile')} />}
+                            {activeTab === 'ai-settings' && <AISettingsScreen userStats={userStats} onBack={() => setActiveTab('profile')} />}
                         </motion.div>
                     )}
                 </AnimatePresence>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, Calendar, Zap, ChevronRight, Check, BookOpen, Brain, TrendingUp, Clock, User } from 'lucide-react';
+import { Target, Calendar, Zap, ChevronRight, ChevronLeft, Check, BookOpen, Brain, TrendingUp, Clock, User } from 'lucide-react';
 
 export interface UserProfile {
     name: string;
@@ -11,6 +11,7 @@ export interface UserProfile {
 
 interface OnboardingScreenProps {
     onComplete: (profile: UserProfile) => void;
+    onCancel?: () => void;
     initialProfile?: UserProfile | null;
 }
 
@@ -165,8 +166,9 @@ const GoalStep = ({
         >
             {/* Header */}
             <div className="mb-8">
-                <button onClick={onBack} className="text-text-muted hover:text-text-primary transition-colors mb-6 text-sm font-bold">
-                    ← חזור
+                <button onClick={onBack} className="text-text-muted hover:text-text-primary transition-colors mb-6 text-sm font-bold flex items-center gap-1">
+                    <ChevronLeft className="w-4 h-4" />
+                    <span>חזור</span>
                 </button>
                 <h2 className="text-3xl font-black text-text-primary mb-1">הגדר את המטרה</h2>
                 <p className="text-text-secondary text-sm">נבנה לך תוכנית לימודים מותאמת אישית</p>
@@ -545,7 +547,7 @@ const StepDots = ({ step }: { step: number }) => (
 
 // ─── Main Onboarding Screen ──────────────────────────────────────────────────
 
-const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, initialProfile }) => {
+const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, onCancel, initialProfile }) => {
     const [step, setStep] = useState(initialProfile ? 1 : 0);
     const [profile, setProfile] = useState<UserProfile>(initialProfile || {
         name: '',
@@ -553,6 +555,14 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, initial
         examDate: '',
         dailyMinutes: 30,
     });
+
+    const handleBack = () => {
+        if (step === 1 && initialProfile && onCancel) {
+            onCancel();
+        } else {
+            setStep(prev => Math.max(0, prev - 1));
+        }
+    };
 
     const updateProfile = (partial: Partial<UserProfile>) => {
         setProfile((prev) => ({ ...prev, ...partial }));
