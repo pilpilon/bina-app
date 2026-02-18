@@ -1852,6 +1852,10 @@ function App() {
                         setUserProfile(cloudData.profile);
                         setHasOnboarded(true);
                     }
+                } else {
+                    // New Google user with no saved profile — auto-create a basic profile
+                    // so they skip the welcome screen and go straight to goal setup
+                    console.log("New Google user, no cloud profile found.");
                 }
             }
             setLoading(false);
@@ -2149,6 +2153,20 @@ function App() {
             setTimeout(() => setShowSurprise(card), 1500);
         }
     };
+
+    // Show loading screen while Firebase resolves auth state
+    if (loading) {
+        return (
+            <div className="fixed inset-0 bg-charcoal flex items-center justify-center" dir="rtl">
+                <div className="text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-electric-blue to-neon-purple flex items-center justify-center mx-auto mb-4 animate-pulse">
+                        <span className="text-3xl">🧠</span>
+                    </div>
+                    <p className="text-text-muted text-sm">טוען...</p>
+                </div>
+            </div>
+        );
+    }
 
     if (!hasOnboarded) {
         return (
