@@ -106,6 +106,13 @@ const WelcomeStep = ({ onNext, onGoogleLogin }: { onNext: () => void, onGoogleLo
                 transition={{ delay: 1 }}
                 className="w-full max-w-xs mt-4"
             >
+                <button
+                    onClick={onNext}
+                    className="w-full py-4 rounded-2xl bg-electric-blue text-charcoal font-black text-lg shadow-glow-blue hover:scale-[1.02] active:scale-95 transition-all mb-4"
+                >
+                    בואו נתחיל
+                </button>
+
                 <div className="flex items-center gap-4 mb-4">
                     <div className="flex-1 h-px bg-white/10" />
                     <span className="text-text-muted text-[10px] font-bold uppercase tracking-widest">או</span>
