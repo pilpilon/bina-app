@@ -109,7 +109,7 @@ const WelcomeStep = ({ onNext }: { onNext: () => void }) => {
                 className="w-full max-w-xs py-5 rounded-2xl bg-gradient-to-r from-electric-blue to-neon-purple text-charcoal font-black text-lg shadow-glow-blue flex items-center justify-center gap-3"
             >
                 <span>בוא נתחיל</span>
-                <ChevronRight className="w-5 h-5" />
+                <ChevronLeft className="w-5 h-5" />
             </motion.button>
         </motion.div>
     );
@@ -167,7 +167,7 @@ const GoalStep = ({
             {/* Header */}
             <div className="mb-8">
                 <button onClick={onBack} className="text-text-muted hover:text-text-primary transition-colors mb-6 text-sm font-bold flex items-center gap-1">
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronRight className="w-4 h-4" />
                     <span>חזור</span>
                 </button>
                 <h2 className="text-3xl font-black text-text-primary mb-1">הגדר את המטרה</h2>
@@ -518,7 +518,7 @@ const PlanGenerationStep = ({
                             className="w-full py-5 rounded-2xl bg-gradient-to-r from-electric-blue to-neon-purple text-charcoal font-black text-lg shadow-glow-blue flex items-center justify-center gap-3"
                         >
                             <span>בוא נתחיל ללמוד!</span>
-                            <ChevronRight className="w-5 h-5" />
+                            <ChevronLeft className="w-5 h-5" />
                         </motion.button>
                     </motion.div>
                 )}
@@ -593,7 +593,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, onCance
                                 profile={profile}
                                 onChange={updateProfile}
                                 onNext={() => setStep(2)}
-                                onBack={() => setStep(0)}
+                                onBack={handleBack}
                             />
                         )}
                         {step === 2 && (

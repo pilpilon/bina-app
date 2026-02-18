@@ -202,7 +202,7 @@ const HomeScreen = ({ onStartLearning, userProfile, userStats, getLevelName }: a
                         <div className="text-xs text-text-secondary">ייבא מילים משלך למבחן מהיר</div>
                     </div>
                 </div>
-                <ChevronRight className="w-6 h-6 text-text-muted group-hover:text-electric-blue" />
+                <ChevronLeft className="w-6 h-6 text-text-muted group-hover:text-electric-blue" />
             </GlassCard>
         </motion.div>
     );
@@ -282,7 +282,7 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
         >
             <div className="flex items-center justify-between mb-8">
                 <button onClick={onBack} className="p-2 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
-                    <ChevronLeft className="w-6 h-6" />
+                    <ChevronRight className="w-6 h-6" />
                 </button>
                 <div className="text-center">
                     <div className="text-xs font-bold text-text-muted uppercase tracking-widest">{currentTopicInfo.title}</div>
@@ -504,7 +504,7 @@ const AchievementsScreen = ({ achievements, onBack }: { achievements: string[], 
             className="px-5 pt-12 pb-32"
         >
             <button onClick={onBack} className="flex items-center gap-2 text-text-muted mb-8 font-bold">
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronRight className="w-5 h-5" />
                 <span>חזור</span>
             </button>
             <h1 className="text-3xl font-black mb-6">הישגים ותארים</h1>
@@ -541,7 +541,7 @@ const StudyPlanScreen = ({ userProfile, onBack }: any) => {
     return (
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="px-5 pt-12 pb-32">
             <button onClick={onBack} className="flex items-center gap-2 text-text-muted mb-8 font-bold">
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronRight className="w-5 h-5" />
                 <span>חזור</span>
             </button>
             <h2 className="text-3xl font-black mb-2 text-neon-purple">תוכנית הלימודים</h2>
@@ -567,7 +567,7 @@ const AISettingsScreen = ({ userStats, onBack }: any) => {
     return (
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="px-5 pt-12 pb-32">
             <button onClick={onBack} className="flex items-center gap-2 text-text-muted mb-8 font-bold">
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronRight className="w-5 h-5" />
                 <span>חזור</span>
             </button>
             <h2 className="text-3xl font-black mb-2 text-cyber-yellow">הגדרות AI אישיות</h2>
