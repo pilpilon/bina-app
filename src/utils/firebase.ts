@@ -2,14 +2,13 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 
-// TO THE USER: Replace these with your actual Firebase config from the Firebase Console
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyAJzVWTH_-N-2meQ2ck7O1ah0cUJUPR4TY",
+    authDomain: "bina-app-9ab6c.firebaseapp.com",
+    projectId: "bina-app-9ab6c",
+    storageBucket: "bina-app-9ab6c.firebasestorage.app",
+    messagingSenderId: "452193156998",
+    appId: "1:452193156998:web:01b0ddcf4d5bedb7ebb607"
 };
 
 // Initialize Firebase
@@ -30,4 +29,5 @@ export const signInWithGoogle = async () => {
     }
 };
 
+export const firebaseLogout = () => signOut(auth);
 export const logout = () => signOut(auth);
