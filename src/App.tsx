@@ -76,130 +76,137 @@ const NavItem = ({ icon: Icon, label, active = false, onClick }: any) => (
 
 // --- Screen Components ---
 
-const HomeScreen = ({ onStartLearning, userProfile, userStats, getLevelName }: any) => (
-    <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        className="px-5 pt-8 pb-32"
-    >
-        <header className="text-center mb-8">
-            <div className="flex justify-center items-center gap-3 mb-2">
-                <h1 className="text-5xl font-black bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent tracking-tighter">
-                    Bina
-                </h1>
-                <div className="w-12 h-12 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10">
-                    <span className="text-2xl">🧠</span>
+const HomeScreen = ({ onStartLearning, userProfile, userStats, getLevelName }: any) => {
+    const totalQuestions = Object.values(userStats.categoryTotal || {}).reduce((a: any, b: any) => a + Number(b), 0) as number;
+    const totalErrors = Object.values(userStats.categoryErrors || {}).reduce((a: any, b: any) => a + Number(b), 0) as number;
+    const accuracy = totalQuestions > 0 ? Math.round(((totalQuestions - totalErrors) / totalQuestions) * 100) : 0;
+    const wordsLearned = Math.floor(userStats.xp / 10);
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="px-5 pt-8 pb-32"
+        >
+            <header className="text-center mb-8">
+                <div className="flex justify-center items-center gap-3 mb-2">
+                    <h1 className="text-5xl font-black bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent tracking-tighter">
+                        Bina
+                    </h1>
+                    <div className="w-12 h-12 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10">
+                        <span className="text-2xl">🧠</span>
+                    </div>
+                </div>
+                <p className="text-text-secondary font-medium">AI מותאם אישית לפסיכומטרי שלך</p>
+            </header>
+
+            <div className="flex justify-center mb-8">
+                <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-neon-purple to-neon-pink shadow-glow-purple font-black text-xl"
+                >
+                    <Flame className="w-6 h-6 fill-white" />
+                    <span>{userStats.streak.count} ימים ברצף</span>
+                </motion.div>
+            </div>
+
+            <div className="mb-8 px-2">
+                <div className="flex justify-between items-center mb-2">
+                    <div className="text-sm font-black text-white/70 uppercase tracking-wider">רמה {userStats.level}: {getLevelName(userStats.level)}</div>
+                    <div className="text-sm font-black text-electric-blue">{userStats.xp} / {userStats.level * 500} XP</div>
+                </div>
+                <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden border border-white/5">
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(userStats.xp % 500) / 5}%` }}
+                        className="h-full bg-gradient-to-r from-electric-blue to-neon-purple"
+                    />
                 </div>
             </div>
-            <p className="text-text-secondary font-medium">AI מותאם אישית לפסיכומטרי שלך</p>
-        </header>
 
-        <div className="flex justify-center mb-8">
-            <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-neon-purple to-neon-pink shadow-glow-purple font-black text-xl"
-            >
-                <Flame className="w-6 h-6 fill-white" />
-                <span>{userStats.streak.count} ימים ברצף</span>
-            </motion.div>
-        </div>
+            <SmartCTA onClick={onStartLearning} />
 
-        <div className="mb-8 px-2">
-            <div className="flex justify-between items-center mb-2">
-                <div className="text-sm font-black text-white/70 uppercase tracking-wider">רמה {userStats.level}: {getLevelName(userStats.level)}</div>
-                <div className="text-sm font-black text-electric-blue">{userStats.xp} / {userStats.level * 500} XP</div>
+            <h3 className="text-xl font-bold mb-4 pr-1">סטטיסטיקה בזמן אמת</h3>
+            <div className="grid grid-cols-2 gap-4 mb-10">
+                <StatCard label="ציון יעד" value={userProfile?.targetScore ?? '687'} colorClass="bg-gradient-to-r from-electric-blue to-cyber-yellow bg-clip-text text-transparent" />
+                <StatCard label="תרגילים היום" value={userStats.dailyQuestions || '0'} />
+                <StatCard label="דיוק כללי" value={`${accuracy}%`} />
+                <StatCard label="מילים נלמדו" value={wordsLearned} />
             </div>
-            <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden border border-white/5">
-                <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(userStats.xp % 500) / 5}%` }}
-                    className="h-full bg-gradient-to-r from-electric-blue to-neon-purple"
+
+            <h3 className="text-xl font-bold mb-4 pr-1">נושאים מומלצים</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <TopicCard
+                    icon={BookOpen}
+                    title="אנלוגיות מורכבות"
+                    sub="דיוק נוכחי: 72%"
+                    color="text-neon-purple"
+                    bg="bg-neon-purple/20"
+                    onClick={() => onStartLearning('analogies')}
+                />
+                <TopicCard
+                    icon={Target}
+                    title="חשיבה כמותית"
+                    sub="אלגברה וגיאומטריה"
+                    color="text-cyber-yellow"
+                    bg="bg-cyber-yellow/20"
+                    onClick={() => onStartLearning('quantitative')}
+                />
+                <TopicCard
+                    icon={Zap}
+                    title="אנגלית"
+                    sub="אוצר מילים וניסוח"
+                    color="text-electric-blue"
+                    bg="bg-electric-blue/20"
+                    onClick={() => onStartLearning('english')}
+                />
+                <TopicCard
+                    icon={Flame}
+                    title="אוצר מילים"
+                    sub="רמה מתקדמת"
+                    color="text-neon-pink"
+                    bg="bg-neon-pink/20"
+                    onClick={() => onStartLearning('vocabulary')}
+                />
+                <TopicCard
+                    icon={Timer}
+                    title="מרתון - סימולציה"
+                    sub="20 דקות | 20 שאלות"
+                    color="text-emerald-400"
+                    bg="bg-emerald-400/20"
+                    onClick={() => onStartLearning('marathon')}
                 />
             </div>
-        </div>
 
-        <SmartCTA onClick={onStartLearning} />
-
-        <h3 className="text-xl font-bold mb-4 pr-1">סטטיסטיקה בזמן אמת</h3>
-        <div className="grid grid-cols-2 gap-4 mb-10">
-            <StatCard label="ציון יעד" value={userProfile?.targetScore ?? '687'} colorClass="bg-gradient-to-r from-electric-blue to-cyber-yellow bg-clip-text text-transparent" />
-            <StatCard label="תרגילים היום" value="23" />
-            <StatCard label="דיוק כללי" value="89%" />
-            <StatCard label="מילים נלמדו" value="142" />
-        </div>
-
-        <h3 className="text-xl font-bold mb-4 pr-1">נושאים מומלצים</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <TopicCard
-                icon={BookOpen}
-                title="אנלוגיות מורכבות"
-                sub="דיוק נוכחי: 72%"
-                color="text-neon-purple"
-                bg="bg-neon-purple/20"
-                onClick={() => onStartLearning('analogies')}
-            />
-            <TopicCard
-                icon={Target}
-                title="חשיבה כמותית"
-                sub="אלגברה וגיאומטריה"
-                color="text-cyber-yellow"
-                bg="bg-cyber-yellow/20"
-                onClick={() => onStartLearning('quantitative')}
-            />
-            <TopicCard
-                icon={Zap}
-                title="אנגלית"
-                sub="אוצר מילים וניסוח"
-                color="text-electric-blue"
-                bg="bg-electric-blue/20"
-                onClick={() => onStartLearning('english')}
-            />
-            <TopicCard
-                icon={Flame}
-                title="אוצר מילים"
-                sub="רמה מתקדמת"
-                color="text-neon-pink"
-                bg="bg-neon-pink/20"
-                onClick={() => onStartLearning('vocabulary')}
-            />
-            <TopicCard
-                icon={Timer}
-                title="מרתון - סימולציה"
-                sub="20 דקות | 20 שאלות"
-                color="text-emerald-400"
-                bg="bg-emerald-400/20"
-                onClick={() => onStartLearning('marathon')}
-            />
-        </div>
-
-        <div className="mt-8 mb-4 flex items-center justify-between">
-            <h3 className="text-xl font-bold pr-1">מילים שלי</h3>
-            <button
-                onClick={() => onStartLearning('custom-edit')}
-                className="text-xs font-black text-electric-blue uppercase tracking-wider hover:underline"
-            >
-                + ערוך רשימה
-            </button>
-        </div>
-        <GlassCard
-            className="p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all group border-dashed border-white/20"
-            onClick={() => onStartLearning('custom')}
-        >
-            <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center text-text-muted group-hover:text-electric-blue transition-colors">
-                    <BarChart3 className="w-7 h-7" />
-                </div>
-                <div>
-                    <div className="font-bold text-lg">הרשימה האישית שלי</div>
-                    <div className="text-xs text-text-secondary">ייבא מילים משלך למבחן מהיר</div>
-                </div>
+            <div className="mt-8 mb-4 flex items-center justify-between">
+                <h3 className="text-xl font-bold pr-1">מילים שלי</h3>
+                <button
+                    onClick={() => onStartLearning('custom-edit')}
+                    className="text-xs font-black text-electric-blue uppercase tracking-wider hover:underline"
+                >
+                    + ערוך רשימה
+                </button>
             </div>
-            <ChevronRight className="w-6 h-6 text-text-muted group-hover:text-electric-blue" />
-        </GlassCard>
-    </motion.div>
-);
+            <GlassCard
+                className="p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all group border-dashed border-white/20"
+                onClick={() => onStartLearning('custom')}
+            >
+                <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center text-text-muted group-hover:text-electric-blue transition-colors">
+                        <BarChart3 className="w-7 h-7" />
+                    </div>
+                    <div>
+                        <div className="font-bold text-lg">הרשימה האישית שלי</div>
+                        <div className="text-xs text-text-secondary">ייבא מילים משלך למבחן מהיר</div>
+                    </div>
+                </div>
+                <ChevronRight className="w-6 h-6 text-text-muted group-hover:text-electric-blue" />
+            </GlassCard>
+        </motion.div>
+    );
+};
 
 const TopicCard = ({ icon: Icon, title, sub, color, bg, onClick }: any) => (
     <GlassCard
@@ -219,7 +226,7 @@ const TopicCard = ({ icon: Icon, title, sub, color, bg, onClick }: any) => (
     </GlassCard>
 );
 
-const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, ...props }: { onBack: () => void, topic?: string, awardXP: (n: number) => void, [key: string]: any }) => {
+const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity, ...props }: { onBack: () => void, topic?: string, awardXP: (n: number) => void, recordActivity: (xp: number, cat: string, correct: boolean) => void, [key: string]: any }) => {
     const [index, setIndex] = useState(0);
     const [knownCount, setKnownCount] = useState(0);
 
@@ -238,13 +245,13 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, ...props }: { o
     const isFinished = index >= currentDataSet.length;
     const currentWord = !isFinished ? currentDataSet[index] : currentDataSet[0];
 
-    const topicTitles: Record<string, { title: string, sub: string }> = {
-        vocabulary: { title: 'אוצר מילים', sub: 'רמה מתקדמת' },
-        analogies: { title: 'אנלוגיות', sub: 'חשיבה מילולית' },
-        quantitative: { title: 'חשיבה כמותית', sub: 'אלגברה וגיאומטריה' },
-        english: { title: 'אנגלית', sub: 'Sentence Completion' },
-        weakPoints: { title: 'חיזוק חולשות', sub: 'מבוסס על ביצועים' },
-        custom: { title: 'הרשימה שלי', sub: 'מילים שייבאת' }
+    const topicTitles: Record<string, { title: string, sub: string, category: string }> = {
+        vocabulary: { title: 'אוצר מילים', sub: 'רמה מתקדמת', category: 'אוצר מילים' },
+        analogies: { title: 'אנלוגיות', sub: 'חשיבה מילולית', category: 'מילולי' },
+        quantitative: { title: 'חשיבה כמותית', sub: 'אלגברה וגיאומטריה', category: 'כמותי' },
+        english: { title: 'אנגלית', sub: 'Sentence Completion', category: 'אנגלית' },
+        weakPoints: { title: 'חיזוק חולשות', sub: 'מבוסס על ביצועים', category: 'חיזוק' },
+        custom: { title: 'הרשימה שלי', sub: 'מילים שייבאת', category: 'אישי' }
     };
 
     const currentTopicInfo = topicTitles[topic] || topicTitles.vocabulary;
@@ -283,7 +290,6 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, ...props }: { o
                 </div>
                 <div className="w-10" /> {/* Spacer */}
             </div>
-            {/* ... rest of existing LearningScreen content ... */}
 
             <div className="mb-8">
                 <div className="flex justify-between items-center mb-2 text-xs font-bold text-text-secondary">
@@ -339,11 +345,12 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, ...props }: { o
                             onSwipeLeft={() => {
                                 setKnownCount(prev => prev + 1);
                                 setIndex(prev => prev + 1);
-                                awardXP(10);
+                                recordActivity(10, currentTopicInfo.category, true);
                             }}
                             onSwipeRight={() => {
                                 if ((props as any).onMiss) (props as any).onMiss(currentWord);
                                 setIndex(prev => prev + 1);
+                                recordActivity(5, currentTopicInfo.category, false);
                             }}
                         />
                     </AnimatePresence>
@@ -368,14 +375,32 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, ...props }: { o
     );
 };
 
-const StatsScreen = () => {
+const StatsScreen = ({ userStats, userProfile }: any) => {
     const accuracyData = [
-        { label: 'כמותי', value: 82, color: '#00D9FF' },
-        { label: 'מילולי', value: 75, color: '#B026FF' },
-        { label: 'אנגלית', value: 91, color: '#FFD700' }
+        {
+            label: 'כמותי',
+            value: userStats.categoryTotal?.['כמותי']
+                ? Math.round(((userStats.categoryTotal['כמותי'] - (userStats.categoryErrors['כמותי'] || 0)) / userStats.categoryTotal['כמותי']) * 100)
+                : 82,
+            color: '#00D9FF'
+        },
+        {
+            label: 'מילולי',
+            value: userStats.categoryTotal?.['מילולי']
+                ? Math.round(((userStats.categoryTotal['מילולי'] - (userStats.categoryErrors['מילולי'] || 0)) / userStats.categoryTotal['מילולי']) * 100)
+                : 75,
+            color: '#B026FF'
+        },
+        {
+            label: 'אנגלית',
+            value: userStats.categoryTotal?.['אנגלית']
+                ? Math.round(((userStats.categoryTotal['אנגלית'] - (userStats.categoryErrors['אנגלית'] || 0)) / userStats.categoryTotal['אנגלית']) * 100)
+                : 91,
+            color: '#FFD700'
+        }
     ];
 
-    const weeklyActivity = [
+    const weeklyActivity = userStats.activityHistory || [
         { day: 'א', value: 45 },
         { day: 'ב', value: 60 },
         { day: 'ג', value: 30 },
@@ -384,6 +409,16 @@ const StatsScreen = () => {
         { day: 'ו', value: 20 },
         { day: 'ש', value: 10 },
     ];
+
+    // Simple predicted score logic: targetScore adjusted by XP and accuracy
+    const totalQuestions = Object.values(userStats.categoryTotal || {}).reduce((a: any, b: any) => a + b, 0) as number;
+    const totalErrors = Object.values(userStats.categoryErrors || {}).reduce((a: any, b: any) => a + b, 0) as number;
+    const accuracy = totalQuestions > 0 ? (totalQuestions - totalErrors) / totalQuestions : 0.8;
+
+    const baseScore = userProfile?.targetScore || 687;
+    const xpBonus = Math.min(50, (userStats.xp / 100));
+    const accuracyBonus = (accuracy - 0.7) * 100;
+    const predictedScore = Math.min(800, Math.round(baseScore + xpBonus + accuracyBonus));
 
     return (
         <motion.div
@@ -411,11 +446,11 @@ const StatsScreen = () => {
                 <div className="relative z-10">
                     <div className="text-sm font-bold text-text-secondary uppercase tracking-[0.2em] mb-2">ציון חזוי נוכחי</div>
                     <div className="text-6xl font-black bg-gradient-to-r from-electric-blue via-cyber-yellow to-neon-purple bg-clip-text text-transparent filter drop-shadow-[0_0_15px_rgba(0,217,255,0.4)]">
-                        687
+                        {predictedScore}
                     </div>
                     <div className="flex items-center justify-center gap-2 mt-4 text-emerald-400 font-bold">
                         <TrendingUp className="w-4 h-4" />
-                        <span>+12 נקודות השבוע</span>
+                        <span>+{Math.round(xpBonus + accuracyBonus)} נקודות השבוע</span>
                     </div>
                 </div>
             </GlassCard>
@@ -436,7 +471,7 @@ const StatsScreen = () => {
                     <h3 className="text-xl font-bold">פעילות שבועית (דקות)</h3>
                 </div>
                 <div className="flex items-end justify-between h-32 px-2">
-                    {weeklyActivity.map((day, idx) => (
+                    {weeklyActivity.map((day: any, idx: number) => (
                         <div key={idx} className="flex flex-col items-center gap-2 h-full">
                             <div className="flex-1 w-6 flex items-end">
                                 <motion.div
@@ -487,7 +522,7 @@ const AchievementsScreen = ({ achievements }: { achievements: string[] }) => {
     );
 };
 
-const ProfileScreen = ({ userStats, setActiveTab }: any) => {
+const ProfileScreen = ({ userStats, userProfile, setActiveTab, onEditProfile }: any) => {
     const [toast, setToast] = useState<string | null>(null);
 
     const showToast = (msg: string) => {
@@ -496,12 +531,17 @@ const ProfileScreen = ({ userStats, setActiveTab }: any) => {
     };
 
     const settings = [
-        { icon: User, label: 'עריכת פרופיל', color: 'text-electric-blue', action: () => showToast('עריכת פרופיל תהיה זמינה בגרסה הבאה 🚀') },
-        { icon: Zap, label: 'הגדרות AI אישיות', color: 'text-cyber-yellow', action: () => showToast('הגדרות ה-AI שלך בקינפוג...') },
-        { icon: Calendar, label: 'תוכנית לימודים', color: 'text-neon-purple', action: () => showToast('מחשב מסלול מחדש... 📅') },
-        { icon: Check, label: 'התראות', color: 'text-emerald-400', action: () => showToast('מערכת ההתראות פעילה!') },
+        { icon: User, label: 'עריכת פרופיל', color: 'text-electric-blue', action: () => onEditProfile() },
+        { icon: Zap, label: 'הגדרות AI אישיות', color: 'text-cyber-yellow', action: () => showToast(`XP: ${userStats.xp} | רמה: ${userStats.level}`) },
+        { icon: Calendar, label: 'תוכנית לימודים', color: 'text-neon-purple', action: () => showToast(`מבחן ב-${userProfile?.examDate || 'בקרוב'}`) },
+        { icon: BookOpen, label: 'הישגים', color: 'text-emerald-400', action: () => setActiveTab('achievements') },
         { icon: X, label: 'התנתקות', color: 'text-neon-pink', action: () => window.location.reload() }
     ];
+
+    const examDateStr = userProfile?.examDate ? new Date(userProfile.examDate).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' }) : 'מועד לא מוגדר';
+    const dailyMinutesMax = userProfile?.dailyMinutes || 60;
+    const dailyQuestionsProgress = Math.min(100, (userStats.dailyQuestions / 50) * 100);
+    const dailyTimeProgress = Math.min(100, ((userStats.activityHistory?.find((h: any) => h.day === ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'][new Date().getDay()])?.value || 0) / dailyMinutesMax) * 100);
 
     return (
         <motion.div
@@ -535,8 +575,8 @@ const ProfileScreen = ({ userStats, setActiveTab }: any) => {
                         Pro
                     </div>
                 </div>
-                <h2 className="text-2xl font-black">יונתן ישראלי</h2>
-                <p className="text-text-secondary">נבחן במועד אפריל 2026</p>
+                <h2 className="text-2xl font-black">{userProfile?.name || 'משתמש Bina'}</h2>
+                <p className="text-text-secondary">נבחן במועד {examDateStr}</p>
             </div>
 
             {/* Daily Goals */}
@@ -548,10 +588,14 @@ const ProfileScreen = ({ userStats, setActiveTab }: any) => {
                             <BookOpen className="w-5 h-5 text-electric-blue" />
                             <span className="font-bold text-sm">שאלות לתרגול</span>
                         </div>
-                        <span className="text-electric-blue font-black">23/50</span>
+                        <span className="text-electric-blue font-black">{userStats.dailyQuestions || 0}/50</span>
                     </div>
                     <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-electric-blue w-[46%] shadow-glow-blue" />
+                        <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${dailyQuestionsProgress}%` }}
+                            className="h-full bg-electric-blue shadow-glow-blue"
+                        />
                     </div>
 
                     <div className="pt-2 flex justify-between items-center">
@@ -559,10 +603,14 @@ const ProfileScreen = ({ userStats, setActiveTab }: any) => {
                             <Zap className="w-5 h-5 text-cyber-yellow" />
                             <span className="font-bold text-sm">זמן למידה</span>
                         </div>
-                        <span className="text-cyber-yellow font-black">45/60 דק'</span>
+                        <span className="text-cyber-yellow font-black">{userStats.activityHistory?.find((h: any) => h.day === ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'][new Date().getDay()])?.value || 0}/{dailyMinutesMax} דק'</span>
                     </div>
                     <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-cyber-yellow w-[75%] shadow-glow-yellow" />
+                        <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${dailyTimeProgress}%` }}
+                            className="h-full bg-cyber-yellow shadow-glow-yellow"
+                        />
                     </div>
                 </GlassCard>
             </div>
@@ -716,7 +764,18 @@ function App() {
             level: 1,
             streak: { count: 1, lastDate: new Date().toISOString().split('T')[0] },
             achievements: [] as string[],
-            categoryErrors: {} as Record<string, number>
+            categoryErrors: {} as Record<string, number>,
+            categoryTotal: {} as Record<string, number>,
+            dailyQuestions: 0,
+            activityHistory: [
+                { day: 'א', value: 0 },
+                { day: 'ב', value: 0 },
+                { day: 'ג', value: 0 },
+                { day: 'ד', value: 0 },
+                { day: 'ה', value: 0 },
+                { day: 'ו', value: 0 },
+                { day: 'ש', value: 0 },
+            ]
         };
     });
     const [hasOnboarded, setHasOnboarded] = useState<boolean>(() => {
@@ -771,10 +830,12 @@ function App() {
         }
     }, []);
 
-    const awardXP = (amount: number) => {
+    const recordActivity = (amount: number, category?: string, isCorrect?: boolean) => {
         setUserStats((prev: any) => {
             const newXP = prev.xp + amount;
             const newLevel = Math.floor(newXP / 500) + 1;
+            const today = new Date().toISOString().split('T')[0];
+            const isNewDay = prev.streak.lastDate !== today;
 
             // Check for achievements
             let newAchievements = [...prev.achievements];
@@ -783,19 +844,46 @@ function App() {
                 setTimeout(() => showAchievementToast('🌟 הצעד הראשון: הגעת ל-100 XP!'), 500);
             }
 
-            return { ...prev, xp: newXP, level: newLevel, achievements: newAchievements };
+            let newCategoryErrors = { ...prev.categoryErrors };
+            let newCategoryTotal = { ...prev.categoryTotal };
+            let newDailyQuestions = isNewDay ? (category ? 1 : 0) : (prev.dailyQuestions || 0) + (category ? 1 : 0);
+
+            if (category) {
+                newCategoryTotal[category] = (newCategoryTotal[category] || 0) + 1;
+                if (isCorrect === false) {
+                    newCategoryErrors[category] = (newCategoryErrors[category] || 0) + 1;
+                }
+            }
+
+            // Update activity history (simulated minutes based on work)
+            let newActivityHistory = [...(prev.activityHistory || [])];
+            if (newActivityHistory.length > 0) {
+                const dayNames = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+                const dayIndex = new Date().getDay();
+                const dayName = dayNames[dayIndex];
+                const histIndex = newActivityHistory.findIndex(h => h.day === dayName);
+                if (histIndex !== -1) {
+                    newActivityHistory[histIndex].value += category ? 1 : 0; // 1 minute per question for demo
+                }
+            }
+
+            return {
+                ...prev,
+                xp: newXP,
+                level: newLevel,
+                achievements: newAchievements,
+                categoryErrors: newCategoryErrors,
+                categoryTotal: newCategoryTotal,
+                dailyQuestions: newDailyQuestions,
+                activityHistory: newActivityHistory,
+                streak: { ...prev.streak, lastDate: today }
+            };
         });
     };
 
-    const recordError = (category: string) => {
-        setUserStats((prev: any) => ({
-            ...prev,
-            categoryErrors: {
-                ...prev.categoryErrors,
-                [category]: (prev.categoryErrors[category] || 0) + 1
-            }
-        }));
-    };
+    const awardXP = (amount: number) => recordActivity(amount);
+
+    const recordError = (category: string) => recordActivity(0, category, false);
 
     const getLevelName = (level: number) => {
         const names = ["מתחיל", "לומד", "מתקדם", "מומחה", "אלוף"];
@@ -856,7 +944,7 @@ function App() {
     };
 
     if (!hasOnboarded) {
-        return <OnboardingScreen onComplete={handleOnboardingComplete} />;
+        return <OnboardingScreen onComplete={handleOnboardingComplete} initialProfile={userProfile} />;
     }
 
     return (
@@ -911,6 +999,7 @@ function App() {
                             customLists={customLists}
                             onMiss={addToWeakPoints}
                             awardXP={awardXP}
+                            recordActivity={recordActivity}
                         />
                     ) : (
                         <motion.div
@@ -938,9 +1027,23 @@ function App() {
                                     onBack={() => setActiveTab('home')}
                                 />
                             )}
-                            {activeTab === 'learning' && <LearningScreen topic="vocabulary" onBack={() => setActiveTab('home')} awardXP={awardXP} />}
-                            {activeTab === 'stats' && <StatsScreen />}
-                            {activeTab === 'profile' && <ProfileScreen userStats={userStats} setActiveTab={setActiveTab} />}
+                            {activeTab === 'learning' && (
+                                <LearningScreen
+                                    topic="vocabulary"
+                                    onBack={() => setActiveTab('home')}
+                                    awardXP={awardXP}
+                                    recordActivity={recordActivity}
+                                />
+                            )}
+                            {activeTab === 'stats' && <StatsScreen userStats={userStats} userProfile={userProfile} />}
+                            {activeTab === 'profile' && (
+                                <ProfileScreen
+                                    userStats={userStats}
+                                    userProfile={userProfile}
+                                    setActiveTab={setActiveTab}
+                                    onEditProfile={() => setHasOnboarded(false)}
+                                />
+                            )}
                             {activeTab === 'achievements' && <AchievementsScreen achievements={userStats.achievements} />}
                         </motion.div>
                     )}

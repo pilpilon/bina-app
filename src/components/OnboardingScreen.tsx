@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, Calendar, Zap, ChevronRight, Check, BookOpen, Brain, TrendingUp, Clock } from 'lucide-react';
+import { Target, Calendar, Zap, ChevronRight, Check, BookOpen, Brain, TrendingUp, Clock, User } from 'lucide-react';
 
 export interface UserProfile {
+    name: string;
     targetScore: number;
     examDate: string;
     dailyMinutes: number;
@@ -10,6 +11,7 @@ export interface UserProfile {
 
 interface OnboardingScreenProps {
     onComplete: (profile: UserProfile) => void;
+    initialProfile?: UserProfile | null;
 }
 
 // ─── Step 1: Welcome ────────────────────────────────────────────────────────
@@ -150,7 +152,7 @@ const GoalStep = ({
         ? Math.max(0, Math.ceil((new Date(profile.examDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
         : null;
 
-    const canProceed = profile.examDate && profile.targetScore;
+    const canProceed = profile.examDate && profile.targetScore && profile.name?.trim();
 
     return (
         <motion.div
@@ -168,6 +170,21 @@ const GoalStep = ({
                 </button>
                 <h2 className="text-3xl font-black text-text-primary mb-1">הגדר את המטרה</h2>
                 <p className="text-text-secondary text-sm">נבנה לך תוכנית לימודים מותאמת אישית</p>
+            </div>
+
+            {/* Name */}
+            <div className="mb-8">
+                <div className="flex items-center gap-2 mb-3">
+                    <User className="w-5 h-5 text-electric-blue" />
+                    <span className="font-bold text-sm">שם מלא</span>
+                </div>
+                <input
+                    type="text"
+                    placeholder="איך נקרא לך?"
+                    value={profile.name}
+                    onChange={(e) => onChange({ name: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-text-primary font-bold text-sm focus:outline-none focus:border-electric-blue/50 transition-colors"
+                />
             </div>
 
             {/* Target Score */}
@@ -244,8 +261,8 @@ const GoalStep = ({
                             key={min}
                             onClick={() => onChange({ dailyMinutes: min })}
                             className={`py-3 rounded-xl text-xs font-black transition-all ${profile.dailyMinutes === min
-                                    ? 'bg-gradient-to-b from-cyber-yellow to-neon-pink text-charcoal shadow-glow-yellow'
-                                    : 'bg-white/5 border border-white/10 text-text-secondary hover:bg-white/10'
+                                ? 'bg-gradient-to-b from-cyber-yellow to-neon-pink text-charcoal shadow-glow-yellow'
+                                : 'bg-white/5 border border-white/10 text-text-secondary hover:bg-white/10'
                                 }`}
                         >
                             {min}′
@@ -261,8 +278,8 @@ const GoalStep = ({
                 onClick={canProceed ? onNext : undefined}
                 disabled={!canProceed}
                 className={`w-full py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 transition-all ${canProceed
-                        ? 'bg-gradient-to-r from-electric-blue to-neon-purple text-charcoal shadow-glow-blue'
-                        : 'bg-white/5 border border-white/10 text-text-muted cursor-not-allowed'
+                    ? 'bg-gradient-to-r from-electric-blue to-neon-purple text-charcoal shadow-glow-blue'
+                    : 'bg-white/5 border border-white/10 text-text-muted cursor-not-allowed'
                     }`}
             >
                 <Zap className="w-5 h-5" />
@@ -528,9 +545,10 @@ const StepDots = ({ step }: { step: number }) => (
 
 // ─── Main Onboarding Screen ──────────────────────────────────────────────────
 
-const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
-    const [step, setStep] = useState(0);
-    const [profile, setProfile] = useState<UserProfile>({
+const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, initialProfile }) => {
+    const [step, setStep] = useState(initialProfile ? 1 : 0);
+    const [profile, setProfile] = useState<UserProfile>(initialProfile || {
+        name: '',
         targetScore: 680,
         examDate: '',
         dailyMinutes: 30,
