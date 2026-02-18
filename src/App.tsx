@@ -21,6 +21,8 @@ import {
     type NotificationSettings,
     defaultNotificationSettings,
 } from './utils/notifications';
+import { auth, signInWithGoogle, logout as firebaseLogout, db, doc, setDoc, getDoc, onSnapshot } from './utils/firebase';
+import { redirectToCheckout } from './utils/stripe';
 
 // --- Types ---
 interface WordCard {
@@ -1270,7 +1272,15 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan }: any) => {
                                 ))}
                             </ul>
                             <button
-                                onClick={() => !isCurrent && onSelectPlan?.(plan.tier)}
+                                onClick={() => {
+                                    if (isCurrent) return;
+                                    if (plan.id === 'free') {
+                                        onSelectPlan?.(plan.tier);
+                                    } else {
+                                        // Trigger Stripe Checkout
+                                        redirectToCheckout(plan.id === 'plus' ? 'price_PLUS_ID' : 'price_PRO_ID');
+                                    }
+                                }}
                                 className={`w-full py-4 rounded-xl font-black transition-all ${isCurrent ? 'bg-white/5 text-text-muted cursor-default' : plan.popular ? 'bg-neon-purple text-white shadow-glow-purple hover:scale-[1.02]' : 'bg-electric-blue text-charcoal hover:scale-[1.02]'}`}
                             >
                                 {isCurrent ? plan.cta : plan.cta}
@@ -1288,7 +1298,7 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan }: any) => {
     );
 };
 
-const ProfileScreen = ({ userStats, userProfile, setActiveTab, onEditProfile, onLogout, onRedeem, onSimulateFriend, showToast }: any) => {
+const ProfileScreen = ({ userStats, userProfile, user, setActiveTab, onEditProfile, onLogout, onRedeem, onSimulateFriend, showToast }: any) => {
     const settings = [
         { icon: User, label: 'עריכת פרופיל', color: 'text-electric-blue', action: () => onEditProfile() },
         { icon: Zap, label: 'הגדרות AI אישיות', color: 'text-cyber-yellow', action: () => setActiveTab('ai-settings') },
@@ -1313,14 +1323,15 @@ const ProfileScreen = ({ userStats, userProfile, setActiveTab, onEditProfile, on
                 <div className="relative mb-4">
                     <div className="w-24 h-24 rounded-full bg-gradient-to-r from-electric-blue to-neon-purple p-1 shadow-glow-blue">
                         <div className="w-full h-full rounded-full bg-charcoal flex items-center justify-center overflow-hidden">
-                            <User className="w-12 h-12 text-text-secondary" />
+                            {user?.photoURL ? (
+                                <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                            ) : (
+                                <User className="w-12 h-12 text-text-secondary" />
+                            )}
                         </div>
                     </div>
-                    <div className="absolute bottom-0 right-0 w-8 h-8 bg-cyber-yellow rounded-full border-4 border-charcoal flex items-center justify-center text-charcoal font-black text-xs">
-                        Pro
-                    </div>
                 </div>
-                <h2 className="text-2xl font-black">{userProfile?.name || 'משתמש Bina'}</h2>
+                <h2 className="text-2xl font-black">{user?.displayName || userProfile?.name || 'משתמש Bina'}</h2>
                 <div className="flex items-center gap-2 mt-1">
                     <p className="text-text-secondary text-sm">מועד המבחן: {examDateStr}</p>
                     <span className="w-1 h-1 bg-text-muted rounded-full" />
@@ -1731,6 +1742,8 @@ const AIExplanationModal = ({ item, onClose, tier = 'free', onUpgrade }: { item:
 function App() {
     const [activeTab, setActiveTab] = useState('home');
     const [globalToast, setGlobalToast] = useState<string | null>(null);
+    const [user, setUser] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
     const showGlobalToast = (msg: string) => {
         setGlobalToast(msg);
@@ -1800,7 +1813,38 @@ function App() {
         if (notifSettings.enabled && getPermissionStatus() === 'granted') {
             scheduleSmartNotifications(notifSettings, weakPoints.length, userProfile?.examDate);
         }
+
+        // Firebase Auth Listener
+        const unsubscribeAuth = auth.onAuthStateChanged(async (firebaseUser) => {
+            setUser(firebaseUser);
+            if (firebaseUser) {
+                // Fetch cloud data
+                const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+                if (userDoc.exists()) {
+                    const cloudData = userDoc.data();
+                    if (cloudData.stats) setUserStats(cloudData.stats);
+                    if (cloudData.profile) {
+                        setUserProfile(cloudData.profile);
+                        setHasOnboarded(true);
+                    }
+                }
+            }
+            setLoading(false);
+        });
+
+        return () => unsubscribeAuth();
     }, []);
+
+    // Sync to Firestore on change
+    useEffect(() => {
+        if (user) {
+            setDoc(doc(db, 'users', user.uid), {
+                stats: userStats,
+                profile: userProfile,
+                lastUpdated: new Date().toISOString()
+            }, { merge: true });
+        }
+    }, [userStats, userProfile, user]);
 
     // Re-schedule when settings change
     useEffect(() => {
@@ -1993,7 +2037,8 @@ function App() {
         setHasOnboarded(true);
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        await firebaseLogout();
         localStorage.clear();
         window.location.reload();
     };
@@ -2085,6 +2130,7 @@ function App() {
             <OnboardingScreen
                 onComplete={handleOnboardingComplete}
                 onCancel={handleOnboardingCancel}
+                onGoogleLogin={signInWithGoogle}
                 initialProfile={userProfile}
             />
         );
@@ -2230,6 +2276,7 @@ function App() {
                                 <ProfileScreen
                                     userStats={userStats}
                                     userProfile={userProfile}
+                                    user={user}
                                     setActiveTab={setActiveTab}
                                     onEditProfile={() => setHasOnboarded(false)}
                                     onLogout={handleLogout}

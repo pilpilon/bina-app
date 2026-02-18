@@ -12,12 +12,13 @@ export interface UserProfile {
 interface OnboardingScreenProps {
     onComplete: (profile: UserProfile) => void;
     onCancel?: () => void;
+    onGoogleLogin?: () => void;
     initialProfile?: UserProfile | null;
 }
 
 // ─── Step 1: Welcome ────────────────────────────────────────────────────────
 
-const WelcomeStep = ({ onNext }: { onNext: () => void }) => {
+const WelcomeStep = ({ onNext, onGoogleLogin }: { onNext: () => void, onGoogleLogin?: () => void }) => {
     return (
         <motion.div
             key="welcome"
@@ -99,18 +100,26 @@ const WelcomeStep = ({ onNext }: { onNext: () => void }) => {
                 ))}
             </motion.div>
 
-            <motion.button
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.85 }}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-                onClick={onNext}
-                className="w-full max-w-xs py-5 rounded-2xl bg-gradient-to-r from-electric-blue to-neon-purple text-charcoal font-black text-lg shadow-glow-blue flex items-center justify-center gap-3"
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+                className="w-full max-w-xs mt-4"
             >
-                <span>בואו נתחיל</span>
-                <ChevronLeft className="w-5 h-5" />
-            </motion.button>
+                <div className="flex items-center gap-4 mb-4">
+                    <div className="flex-1 h-px bg-white/10" />
+                    <span className="text-text-muted text-[10px] font-bold uppercase tracking-widest">או</span>
+                    <div className="flex-1 h-px bg-white/10" />
+                </div>
+
+                <button
+                    onClick={onGoogleLogin}
+                    className="w-full py-3 rounded-2xl bg-white/5 border border-white/10 text-white font-bold text-sm flex items-center justify-center gap-3 hover:bg-white/10 transition-all"
+                >
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
+                    התחברות עם Google
+                </button>
+            </motion.div>
         </motion.div>
     );
 };
@@ -547,7 +556,7 @@ const StepDots = ({ step }: { step: number }) => (
 
 // ─── Main Onboarding Screen ──────────────────────────────────────────────────
 
-const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, onCancel, initialProfile }) => {
+const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, onCancel, onGoogleLogin, initialProfile }) => {
     const [step, setStep] = useState(initialProfile ? 1 : 0);
     const [profile, setProfile] = useState<UserProfile>(initialProfile || {
         name: '',
@@ -585,7 +594,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, onCance
                 <div className="flex-1 overflow-hidden">
                     <AnimatePresence mode="wait">
                         {step === 0 && (
-                            <WelcomeStep key="welcome" onNext={() => setStep(1)} />
+                            <WelcomeStep key="welcome" onNext={() => setStep(1)} onGoogleLogin={onGoogleLogin} />
                         )}
                         {step === 1 && (
                             <GoalStep
