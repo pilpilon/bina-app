@@ -95,15 +95,17 @@ export function scheduleSmartNotifications(
 
         if (settings.examCountdown && examDate) {
             const exam = new Date(examDate);
-            const daysLeft = Math.ceil((exam.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-            if (daysLeft > 0 && daysLeft <= 60) {
-                title = `Bina 📚 — נותרו ${daysLeft} ימים לבחינה!`;
-                body = 'כל יום שאתה לומד מקרב אותך ל-800. בוא נתחיל!';
+            const daysToExam = Math.ceil((exam.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            if (daysToExam > 0 && daysToExam <= 60) {
+                title = `Bina 📚 — נותרו ${daysToExam} ימים לבחינה!`;
+                if (daysToExam < 7) {
+                    body = 'הבחינה ממש מעבר לפינה! זה הזמן לחיזוק אחרון. קדימה ללמוד!';
+                } else {
+                    body = 'כל יום של למידה מקרב ל-800. בואו נתחיל!';
+                }
             }
-        }
-
-        if (settings.weakPointsNudge && weakPointsCount > 0) {
-            body = `יש לך ${weakPointsCount} מילים שצריכות חזרה. בוא נחזק אותן!`;
+        } else if (settings.weakPointsNudge && weakPointsCount > 5) {
+            body = `ישנן ${weakPointsCount} מילים שצריכות חזרה. בואו נחזק אותן!`;
         }
 
         new Notification(title, {

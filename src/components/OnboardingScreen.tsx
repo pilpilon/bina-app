@@ -108,7 +108,7 @@ const WelcomeStep = ({ onNext }: { onNext: () => void }) => {
                 onClick={onNext}
                 className="w-full max-w-xs py-5 rounded-2xl bg-gradient-to-r from-electric-blue to-neon-purple text-charcoal font-black text-lg shadow-glow-blue flex items-center justify-center gap-3"
             >
-                <span>בוא נתחיל</span>
+                <span>בואו נתחיל</span>
                 <ChevronLeft className="w-5 h-5" />
             </motion.button>
         </motion.div>
@@ -182,7 +182,7 @@ const GoalStep = ({
                 </div>
                 <input
                     type="text"
-                    placeholder="איך נקרא לך?"
+                    placeholder="מה השם שלך?"
                     value={profile.name}
                     onChange={(e) => onChange({ name: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-text-primary font-bold text-sm focus:outline-none focus:border-electric-blue/50 transition-colors"
@@ -285,7 +285,7 @@ const GoalStep = ({
                     }`}
             >
                 <Zap className="w-5 h-5" />
-                <span>בנה לי תוכנית לימודים</span>
+                <span>בניית תוכנית לימודים</span>
             </motion.button>
         </motion.div>
     );
@@ -517,7 +517,7 @@ const PlanGenerationStep = ({
                             onClick={onComplete}
                             className="w-full py-5 rounded-2xl bg-gradient-to-r from-electric-blue to-neon-purple text-charcoal font-black text-lg shadow-glow-blue flex items-center justify-center gap-3"
                         >
-                            <span>בוא נתחיל ללמוד!</span>
+                            <span>בואו נתחיל ללמוד!</span>
                             <ChevronLeft className="w-5 h-5" />
                         </motion.button>
                     </motion.div>

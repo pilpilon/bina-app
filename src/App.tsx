@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, BookOpen, BarChart3, User, Home, Flame, ChevronRight, ChevronLeft, X, Check, TrendingUp, Calendar, Zap, Timer, Heart, Bell, BellOff } from 'lucide-react';
 import SwipeCard from './components/SwipeCard';
@@ -84,6 +84,100 @@ const NavItem = ({ icon: Icon, label, active = false, onClick }: any) => (
         <span className="text-[10px] font-bold">{label}</span>
     </button>
 );
+
+const PaywallOverlay = ({ title, sub, onUpgrade, onRefer }: any) => (
+    <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="absolute inset-0 z-[50] flex flex-col items-center justify-center p-6 text-center bg-charcoal/60 backdrop-blur-md rounded-3xl"
+    >
+        <div className="w-20 h-20 bg-neon-purple/20 rounded-full flex items-center justify-center mb-6 shadow-glow-purple">
+            <Zap className="w-10 h-10 text-neon-purple" />
+        </div>
+        <h2 className="text-2xl font-black mb-2 text-white">{title}</h2>
+        <p className="text-text-secondary text-sm mb-8 leading-relaxed max-w-[240px]">
+            {sub}
+        </p>
+        <div className="w-full space-y-3">
+            <button
+                onClick={onUpgrade}
+                className="w-full py-4 bg-gradient-to-r from-electric-blue to-neon-purple text-charcoal font-black rounded-xl shadow-glow-blue active:scale-95 transition-all"
+            >
+                שדרוג עכשיו 🚀
+            </button>
+            <button
+                onClick={onRefer}
+                className="w-full py-3 bg-white/5 border border-white/10 text-text-secondary font-bold text-sm rounded-xl hover:bg-white/10 transition-all"
+            >
+                הזמנת חברים וקבלת ימים בחינם 🎁
+            </button>
+        </div>
+    </motion.div>
+);
+
+const DebugToolbar = ({ userStats, onUpdate }: any) => {
+    const [isOpen, setIsOpen] = React.useState(false);
+
+    if (!isOpen) return (
+        <button
+            onClick={() => setIsOpen(true)}
+            className="fixed bottom-24 right-4 z-[200] w-12 h-12 bg-charcoal border border-white/10 rounded-full flex items-center justify-center shadow-glow-purple text-xl hover:scale-110 transition-all"
+        >
+            🛠️
+        </button>
+    );
+
+    return (
+        <div className="fixed bottom-24 right-4 left-4 z-[200] bg-charcoal border border-white/10 rounded-2xl p-4 shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+                <h4 className="font-black text-white text-xs uppercase tracking-widest">🛠️ Debug Tools</h4>
+                <button onClick={() => setIsOpen(false)} className="text-text-muted hover:text-white"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+                <button
+                    onClick={() => onUpdate({ ...userStats, dailySwipes: 0 })}
+                    className="p-2 bg-white/5 rounded-lg text-[10px] font-bold text-electric-blue border border-electric-blue/20"
+                >
+                    Reset Swipes (0/10)
+                </button>
+                <button
+                    onClick={() => onUpdate({ ...userStats, dailySwipes: 10 })}
+                    className="p-2 bg-white/5 rounded-lg text-[10px] font-bold text-neon-pink border border-neon-pink/20"
+                >
+                    Max Swipes (10/10)
+                </button>
+                <button
+                    onClick={() => onUpdate({ ...userStats, credits: (userStats.credits || 0) + 50 })}
+                    className="p-2 bg-white/5 rounded-lg text-[10px] font-bold text-cyber-yellow border border-cyber-yellow/20"
+                >
+                    Add +50 Credits
+                </button>
+                <button
+                    onClick={() => {
+                        const past = new Date();
+                        past.setMinutes(past.getMinutes() - 1);
+                        onUpdate({ ...userStats, tierExpiry: past.toISOString() });
+                    }}
+                    className="p-2 bg-white/5 rounded-lg text-[10px] font-bold text-text-muted border border-white/10"
+                >
+                    Expire Tier Now
+                </button>
+                <button
+                    onClick={() => onUpdate({ ...userStats, tier: 'free', tierExpiry: null })}
+                    className="p-2 bg-white/5 rounded-lg text-[10px] font-bold text-white border border-white/10"
+                >
+                    Set Tier: Free
+                </button>
+                <button
+                    onClick={() => onUpdate({ ...userStats, tier: 'pro', tierExpiry: null })}
+                    className="p-2 bg-white/5 rounded-lg text-[10px] font-bold text-neon-purple border border-neon-purple/20"
+                >
+                    Set Tier: Pro
+                </button>
+            </div>
+        </div>
+    );
+};
 
 // --- Screen Components ---
 
@@ -279,9 +373,11 @@ const TopicCard = ({ icon: Icon, title, sub, color, bg, onClick }: any) => (
     </GlassCard>
 );
 
-const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity, favorites = [], onToggleFavorite, ...props }: { onBack: () => void, topic?: string, awardXP: (n: number) => void, recordActivity: (xp: number, cat: string, correct: boolean) => void, favorites?: string[], onToggleFavorite?: (id: string) => void, [key: string]: any }) => {
+const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity, favorites = [], onToggleFavorite, userStats, onUpgrade, onRefer, ...props }: { onBack: () => void, topic?: string, awardXP: (n: number) => void, recordActivity: (xp: number, cat: string, correct: boolean) => void, favorites?: string[], onToggleFavorite?: (id: string) => void, userStats: any, onUpgrade: () => void, onRefer: () => void, [key: string]: any }) => {
     const [index, setIndex] = useState(0);
     const [knownCount, setKnownCount] = useState(0);
+
+    const isLimitHit = userStats.tier === 'free' && (userStats.dailySwipes || 0) >= 10;
 
     const getDataSet = () => {
         switch (topic) {
@@ -314,18 +410,20 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
 
     const currentTopicInfo = topicTitles[topic] || topicTitles.vocabulary;
 
-    if (topic === 'marathon') {
-        // Generate 20 questions for the marathon
+    const marathonQuestions = useMemo(() => {
+        if (topic !== 'marathon') return [];
         const allQuestions = [...vocabData, ...analogiesData, ...quantitativeData, ...englishData];
-        const shuffled = allQuestions.sort(() => 0.5 - Math.random());
-        const selected = shuffled.slice(0, 20).map(q => ({
+        const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, 20).map(q => ({
             ...q,
-            correctAnswer: (q as any).definition || (q as any).answer || (q as any).word // Simple mapping for demo
+            correctAnswer: (q as any).definition || (q as any).answer || (q as any).word
         }));
+    }, [topic]);
 
+    if (topic === 'marathon') {
         return (
             <ExamScreen
-                questions={selected}
+                questions={marathonQuestions}
                 onClose={onBack}
                 onShowExplanation={(item) => (props as any).onShowExplanation?.(item)}
             />
@@ -365,6 +463,14 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
             </div>
 
             <div className="flex-1 flex items-center justify-center relative">
+                {isLimitHit && (
+                    <PaywallOverlay
+                        title="הגעת למכסה היומית! 🎯"
+                        sub="השלמת 10 כרטיסיות היום. שדרוג ל-Plus לתרגול ללא הגבלה בכל הקטגוריות."
+                        onUpgrade={onUpgrade}
+                        onRefer={onRefer}
+                    />
+                )}
                 {isFinished ? (
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
@@ -403,12 +509,15 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
                             {...currentWord}
                             isFavorite={favorites.includes(currentWord.id)}
                             onToggleFavorite={() => onToggleFavorite?.(currentWord.id)}
+                            disabled={isLimitHit}
                             onSwipeLeft={() => {
+                                if (isLimitHit) return;
                                 setKnownCount(prev => prev + 1);
                                 setIndex(prev => prev + 1);
                                 recordActivity(10, currentTopicInfo.category, true);
                             }}
                             onSwipeRight={() => {
+                                if (isLimitHit) return;
                                 if ((props as any).onMiss) (props as any).onMiss(currentWord);
                                 setIndex(prev => prev + 1);
                                 recordActivity(5, currentTopicInfo.category, false);
@@ -708,8 +817,27 @@ const AIAnalysisScreen = ({ userStats, weakPoints, onBack, onStartLearning }: an
         .sort(([, a], [, b]) => (b as number) - (a as number))
         .slice(0, 5);
 
+    const isLocked = userStats.tier === 'free';
+
     return (
-        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="px-5 pt-12 pb-32 space-y-6">
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="px-5 pt-12 pb-32 space-y-6 relative overflow-hidden">
+            {isLocked && (
+                <div className="absolute inset-0 z-[40] flex flex-col items-center justify-center p-8 text-center bg-charcoal/40 backdrop-blur-md">
+                    <div className="w-16 h-16 bg-neon-purple/20 rounded-2xl flex items-center justify-center mb-4 shadow-glow-purple">
+                        <BarChart3 className="w-8 h-8 text-neon-purple" />
+                    </div>
+                    <h3 className="text-xl font-black mb-2 text-white italic">ניתוח חולשות AI 🔒</h3>
+                    <p className="text-text-secondary text-sm mb-6 max-w-[220px]">
+                        מגלים בדיוק איפה מאבדים נקודות וקבלת המלצות מותאמות אישית.
+                    </p>
+                    <button
+                        onClick={() => onStartLearning?.('pricing')}
+                        className="px-8 py-3 bg-neon-purple text-white font-black rounded-xl shadow-glow-purple hover:scale-105 transition-all"
+                    >
+                        עוברים ל-Plus
+                    </button>
+                </div>
+            )}
             <button onClick={onBack} className="flex items-center gap-2 text-text-muted font-bold">
                 <ChevronRight className="w-5 h-5" />
                 <span>חזור</span>
@@ -1047,61 +1175,120 @@ const AISettingsScreen = ({ userStats, onBack, onUpdateStats, notifSettings, not
     );
 };
 
-const PricingScreen = ({ onBack }: any) => {
+const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan }: any) => {
     const plans = [
-        { name: 'חינם', price: '0₪', features: ['גישה לבנק שאלות בסיסי', 'סטטיסטיקה יומית', 'תמיכה בקהילה'], active: true },
-        { name: 'Bina Pro', price: '49₪', period: '/חודש', features: ['הסברי AI לכל שאלה', 'תוכנית לימודים דינמית', 'גישה לכל הקטגוריות', 'ניתוח חולשות מתקדם'], popular: true },
-        { name: 'Elite', price: '499₪', period: ' חד פעמי', features: ['גישה לכל החיים', 'מפגש ייעוץ אישי עם AI', '20 סימולציות מלאות', 'ליווי עד הבחינה'] }
+        {
+            id: 'free',
+            name: 'חינם',
+            price: '₪0',
+            features: [
+                '10 כרטיסיות ביום',
+                'אוצר מילים ואנלוגיות',
+                'סטטיסטיקה בסיסית',
+                'תוכנית לימודים (חלקי)'
+            ],
+            cta: 'המסלול הנוכחי',
+            tier: 'free'
+        },
+        {
+            id: 'plus',
+            name: 'Bina Plus',
+            price: '₪39',
+            period: '/חודש',
+            save: '₪149 ל-6 חודשים (חוסך 36%)',
+            features: [
+                'תרגול ללא הגבלה',
+                'כל הקטגוריות (כולל כמותי ואנגלית)',
+                'ניתוח חולשות AI מלא',
+                'ניטור ציון חזוי בזמן אמת',
+                'מועדפים ורשימות אישיות'
+            ],
+            cta: 'שדרוג ל-Plus',
+            popular: true,
+            tier: 'plus'
+        },
+        {
+            id: 'pro',
+            name: 'Bina Pro',
+            price: '₪59',
+            period: '/חודש',
+            save: '₪199 ל-6 חודשים (חוסך 44%)',
+            features: [
+                'כל מה שיש ב-Plus',
+                'הסברי AI לכל טעות 🧠',
+                'רשימות אישיות ללא הגבלה',
+                'תמיכה בוואטסאפ תוך 24 שעות',
+                'תג "ציון מובטח" בפרופיל'
+            ],
+            cta: 'עבור ל-Pro',
+            tier: 'pro'
+        }
     ];
 
     return (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, x: 0 }} className="px-5 pt-12 pb-32">
-            <button onClick={onBack} className="flex items-center gap-2 text-text-muted mb-8 font-bold">
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="px-5 pt-12 pb-32 min-h-screen bg-charcoal">
+            <button onClick={onBack} className="flex items-center gap-2 text-text-muted mb-6 font-bold hover:text-white transition-colors">
                 <ChevronRight className="w-5 h-5" />
                 <span>חזור</span>
             </button>
-            <h2 className="text-3xl font-black mb-2 text-white">בחר את המסלול שלך</h2>
-            <p className="text-text-secondary mb-8">כל מה שצריך כדי להגיע ל-800</p>
-
-            <div className="space-y-4">
-                {plans.map((plan, i) => (
-                    <GlassCard key={i} className={`p-6 border-2 transition-all ${plan.popular ? 'border-electric-blue shadow-glow-blue scale-[1.02]' : 'border-white/5'}`}>
-                        {plan.popular && <div className="text-[10px] font-black text-electric-blue uppercase mb-2 tracking-widest">הכי פופולרי</div>}
-                        <div className="flex justify-between items-end mb-4">
-                            <div>
-                                <h4 className="text-xl font-black text-white">{plan.name}</h4>
-                            </div>
-                            <div className="text-right">
-                                <span className="text-2xl font-black text-white">{plan.price}</span>
-                                <span className="text-xs text-text-secondary">{plan.period}</span>
-                            </div>
-                        </div>
-                        <ul className="space-y-2 mb-6">
-                            {plan.features.map((f, j) => (
-                                <li key={j} className="flex items-center gap-2 text-sm text-text-secondary">
-                                    <Check className="w-4 h-4 text-emerald-400" />
-                                    <span>{f}</span>
-                                </li>
-                            ))}
-                        </ul>
-                        <button className={`w-full py-3 rounded-xl font-black transition-all ${plan.popular ? 'bg-electric-blue text-charcoal' : 'bg-white/5 border border-white/10 text-white'}`}>
-                            {plan.active ? 'המסלול הנוכחי' : 'הצטרף עכשיו'}
-                        </button>
-                    </GlassCard>
-                ))}
+            <div className="text-center mb-8">
+                <h2 className="text-4xl font-black mb-2 bg-gradient-to-r from-electric-blue via-neon-purple to-neon-pink bg-clip-text text-transparent italic">Bina Premium</h2>
+                <p className="text-text-secondary text-sm">הדרך הכי קלה להגיע ל-800</p>
             </div>
+
+            <div className="space-y-6">
+                {plans.map((plan) => {
+                    const isCurrent = currentTier === plan.id;
+                    return (
+                        <GlassCard
+                            key={plan.id}
+                            className={`p-6 border-2 transition-all relative overflow-hidden ${plan.popular ? 'border-neon-purple/50 shadow-glow-purple' : isCurrent ? 'border-electric-blue/30' : 'border-white/5'}`}
+                        >
+                            {plan.popular && (
+                                <div className="absolute top-0 right-0 bg-neon-purple text-white px-4 py-1 rounded-bl-xl font-black text-[10px] tracking-widest uppercase">
+                                    הכי פופולרי 🔥
+                                </div>
+                            )}
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <h4 className="text-2xl font-black text-white">{plan.name}</h4>
+                                    {plan.save && <div className="text-[10px] font-bold text-emerald-400 mt-1 uppercase tracking-wider">{plan.save}</div>}
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-3xl font-black text-white">{plan.price}</span>
+                                    {plan.period && <span className="text-sm text-text-secondary">{plan.period}</span>}
+                                </div>
+                            </div>
+                            <ul className="space-y-3 mb-8">
+                                {plan.features.map((f, j) => (
+                                    <li key={j} className="flex items-start gap-2 text-sm text-text-secondary">
+                                        <div className="mt-1 flex-shrink-0">
+                                            <Check className="w-4 h-4 text-emerald-400" />
+                                        </div>
+                                        <span>{f}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                            <button
+                                onClick={() => !isCurrent && onSelectPlan?.(plan.tier)}
+                                className={`w-full py-4 rounded-xl font-black transition-all ${isCurrent ? 'bg-white/5 text-text-muted cursor-default' : plan.popular ? 'bg-neon-purple text-white shadow-glow-purple hover:scale-[1.02]' : 'bg-electric-blue text-charcoal hover:scale-[1.02]'}`}
+                            >
+                                {isCurrent ? plan.cta : plan.cta}
+                            </button>
+                        </GlassCard>
+                    );
+                })}
+            </div>
+
+            <p className="mt-8 text-center text-[10px] text-text-muted leading-relaxed px-8">
+                ביטול בכל עת. המנוי מתחדש אוטומטית. <br />
+                ההרשמה מהווה הסכמה לתנאי השימוש ומדיניות הפרטיות.
+            </p>
         </motion.div>
     );
 };
 
-const ProfileScreen = ({ userStats, userProfile, setActiveTab, onEditProfile, onLogout }: any) => {
-    const [toast, setToast] = useState<string | null>(null);
-
-    const showToast = (msg: string) => {
-        setToast(msg);
-        setTimeout(() => setToast(null), 3000);
-    };
-
+const ProfileScreen = ({ userStats, userProfile, setActiveTab, onEditProfile, onLogout, onRedeem, onSimulateFriend, showToast }: any) => {
     const settings = [
         { icon: User, label: 'עריכת פרופיל', color: 'text-electric-blue', action: () => onEditProfile() },
         { icon: Zap, label: 'הגדרות AI אישיות', color: 'text-cyber-yellow', action: () => setActiveTab('ai-settings') },
@@ -1110,7 +1297,7 @@ const ProfileScreen = ({ userStats, userProfile, setActiveTab, onEditProfile, on
         { icon: X, label: 'התנתקות', color: 'text-neon-pink', action: () => onLogout() }
     ];
 
-    const examDateStr = userProfile?.examDate ? new Date(userProfile.examDate).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' }) : 'מועד לא מוגדר';
+    const examDateStr = userProfile?.examDate ? new Date(userProfile.examDate).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' }) : 'ספטמבר 2024';
     const dailyMinutesMax = userProfile?.dailyMinutes || 60;
     const dailyQuestionsProgress = Math.min(100, (userStats.dailyQuestions / 50) * 100);
     const dailyTimeProgress = Math.min(100, ((userStats.activityHistory?.find((h: any) => h.day === ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'][new Date().getDay()])?.value || 0) / dailyMinutesMax) * 100);
@@ -1121,20 +1308,6 @@ const ProfileScreen = ({ userStats, userProfile, setActiveTab, onEditProfile, on
             animate={{ opacity: 1, y: 0 }}
             className="px-5 pt-12 pb-32 relative"
         >
-            <AnimatePresence>
-                {toast && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="fixed top-8 left-4 right-4 z-50 pointer-events-none"
-                    >
-                        <GlassCard className="p-3 bg-charcoal/80 border-electric-blue/50 text-center font-bold text-sm text-electric-blue shadow-glow-blue">
-                            {toast}
-                        </GlassCard>
-                    </motion.div>
-                )}
-            </AnimatePresence>
             {/* User Header */}
             <div className="flex flex-col items-center mb-10">
                 <div className="relative mb-4">
@@ -1148,7 +1321,63 @@ const ProfileScreen = ({ userStats, userProfile, setActiveTab, onEditProfile, on
                     </div>
                 </div>
                 <h2 className="text-2xl font-black">{userProfile?.name || 'משתמש Bina'}</h2>
-                <p className="text-text-secondary">נבחן במועד {examDateStr}</p>
+                <div className="flex items-center gap-2 mt-1">
+                    <p className="text-text-secondary text-sm">מועד המבחן: {examDateStr}</p>
+                    <span className="w-1 h-1 bg-text-muted rounded-full" />
+                    <div className="flex items-center gap-1 text-cyber-yellow text-xs font-bold">
+                        <Zap className="w-3 h-3 fill-cyber-yellow" />
+                        <span>{userStats.credits || 0} Bina Credits</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Referral UI */}
+            <div className="mb-6">
+                <GlassCard className="p-5 bg-gradient-to-r from-neon-purple/20 to-neon-pink/20 border-neon-purple/30">
+                    <div className="flex justify-between items-center mb-3">
+                        <h3 className="font-black text-white">הזמנת חברים - קבלת Plus 🎁</h3>
+                        <div className="bg-neon-purple text-white px-2 py-0.5 rounded text-[10px] font-black italic">בונוס: 10 Points</div>
+                    </div>
+                    <p className="text-xs text-text-secondary mb-4 leading-relaxed">
+                        שתף את Bina עם חברים. על כל הצטרפות תקבל 10 Bina Credits שיכולים להפתח לך ימי פרימיום!
+                    </p>
+                    <div className="flex gap-2 mb-4">
+                        <div className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-[10px] font-mono text-text-muted flex items-center overflow-hidden">
+                            bina.app/ref/{userStats.referralCode}
+                        </div>
+                        <button
+                            onClick={() => {
+                                navigator.clipboard.writeText(`bina.app/ref/${userStats.referralCode}`);
+                                showToast('קישור הועתק! 🚀');
+                            }}
+                            className="bg-neon-purple text-white px-4 py-2 rounded-lg font-black text-xs hover:scale-105 transition-all shadow-glow-purple"
+                        >
+                            העתק
+                        </button>
+                    </div>
+
+                    <div className="space-y-2">
+                        <button
+                            onClick={() => onRedeem?.()}
+                            disabled={userStats.credits < 10}
+                            className={`w-full py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all ${userStats.credits >= 10 ? 'bg-cyber-yellow text-charcoal shadow-glow-yellow' : 'bg-white/5 text-text-muted opacity-50 cursor-not-allowed'}`}
+                        >
+                            {userStats.tier === 'plus' && userStats.tierExpiry ? (
+                                <><span>Plus פעיל דרך קרדיטים</span> <div className="text-[10px] opacity-70">בקרוב יתחדש</div></>
+                            ) : (
+                                <>מימוש 10 קרדיטים ליום Plus ⚡️</>
+                            )}
+                        </button>
+
+                        {/* Simulation / Debug UI (User requested to see this) */}
+                        <button
+                            onClick={() => onSimulateFriend?.()}
+                            className="w-full py-2 bg-white/5 border border-white/10 text-emerald-400 font-bold text-[10px] rounded-lg hover:bg-white/10 transition-all uppercase tracking-widest"
+                        >
+                            🛠️ סימולציית הצטרפות חבר (+10)
+                        </button>
+                    </div>
+                </GlassCard>
             </div>
 
             {/* Daily Goals */}
@@ -1432,7 +1661,8 @@ const SmartAlert = ({ card, onClose, onAction }: any) => (
     </motion.div>
 );
 
-const AIExplanationModal = ({ item, onClose }: { item: any, onClose: () => void }) => {
+const AIExplanationModal = ({ item, onClose, tier = 'free', onUpgrade }: { item: any, onClose: () => void, tier?: string, onUpgrade?: () => void }) => {
+    const isLocked = tier !== 'pro';
     const text = item.explanation || `כרגע אין הסבר מפורט ל"${item.word || item.id}", אבל ה-Bina ממליצה לחזור על הנושא ${item.category}.`;
 
     return (
@@ -1459,21 +1689,37 @@ const AIExplanationModal = ({ item, onClose }: { item: any, onClose: () => void 
                     </div>
                 </div>
 
-                <div className="text-lg text-text-secondary leading-relaxed mb-8 pr-1 min-h-[100px]">
-                    <motion.p
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                    >
-                        {text}
-                    </motion.p>
+                <div className={`text-lg text-text-secondary leading-relaxed mb-8 pr-1 min-h-[100px] relative ${isLocked ? 'overflow-hidden' : ''}`}>
+                    {isLocked ? (
+                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center bg-charcoal/20 backdrop-blur-md rounded-xl p-4">
+                            <div className="w-10 h-10 bg-neon-pink/20 rounded-full flex items-center justify-center mb-3">
+                                <Zap className="w-6 h-6 text-neon-pink" />
+                            </div>
+                            <div className="text-sm font-black text-white mb-1 italic">הסברי Bina Pro 🔒</div>
+                            <div className="text-[10px] text-text-secondary mb-4">השדרוג שיעזור לך להבין כל טעות לעומק</div>
+                            <button
+                                onClick={onUpgrade}
+                                className="text-xs font-black bg-neon-pink text-white px-4 py-2 rounded-lg shadow-glow-pink hover:scale-105 transition-all"
+                            >
+                                שדרוג ל-Pro
+                            </button>
+                        </div>
+                    ) : (
+                        <motion.p
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                        >
+                            {text}
+                        </motion.p>
+                    )}
                 </div>
 
                 <button
                     onClick={onClose}
-                    className="w-full py-4 bg-electric-blue text-charcoal font-black rounded-xl hover:scale-[1.02] transition-all shadow-glow-blue"
+                    className="w-full py-4 bg-white/5 border border-white/10 text-text-secondary font-black rounded-xl hover:bg-white/10 transition-all"
                 >
-                    הבנתי, תודה!
+                    סגור
                 </button>
             </GlassCard>
         </motion.div>
@@ -1484,6 +1730,13 @@ const AIExplanationModal = ({ item, onClose }: { item: any, onClose: () => void 
 
 function App() {
     const [activeTab, setActiveTab] = useState('home');
+    const [globalToast, setGlobalToast] = useState<string | null>(null);
+
+    const showGlobalToast = (msg: string) => {
+        setGlobalToast(msg);
+        setTimeout(() => setGlobalToast(null), 3000);
+    };
+
     const [isLearning, setIsLearning] = useState(false);
     const [learningTopic, setLearningTopic] = useState('vocabulary');
     const [customLists, setCustomLists] = useState<WordCard[]>(() => {
@@ -1521,7 +1774,13 @@ function App() {
                 { day: 'ש', value: 0 },
             ],
             favorites: [] as string[],
-            teacherMode: false
+            teacherMode: false,
+            tier: 'free' as 'free' | 'plus' | 'pro',
+            tierExpiry: null as string | null,
+            dailySwipes: 0,
+            lastSwipeDate: new Date().toISOString().split('T')[0],
+            credits: 10, // Starting bonus
+            referralCode: `BINA-${Math.random().toString(36).substring(2, 7).toUpperCase()}`
         };
     });
     const [showExplanation, setShowExplanation] = useState<any>(null);
@@ -1576,7 +1835,13 @@ function App() {
                     { day: 'ד', value: 0 }, { day: 'ה', value: 0 }, { day: 'ו', value: 0 }, { day: 'ש', value: 0 },
                 ],
                 favorites: [],
-                teacherMode: false
+                teacherMode: false,
+                tier: 'free',
+                tierExpiry: null,
+                dailySwipes: 0,
+                lastSwipeDate: new Date().toISOString().split('T')[0],
+                credits: 10,
+                referralCode: `BINA-${Math.random().toString(36).substring(2, 7).toUpperCase()}`
             };
             setUserStats(cleanStats);
             localStorage.setItem('bina_user_stats', JSON.stringify(cleanStats));
@@ -1595,10 +1860,30 @@ function App() {
         localStorage.setItem('bina_user_stats', JSON.stringify(userStats));
     }, [userStats]);
 
-    // Streak Maintenance Logic
+    // Streak & Swipe Maintenance Logic
     useEffect(() => {
         const today = new Date().toISOString().split('T')[0];
         const lastDate = userStats.streak.lastDate;
+        const lastSwipeDate = userStats.lastSwipeDate;
+        const tierExpiry = userStats.tierExpiry;
+
+        // Check for Tier Expiration
+        if (tierExpiry && new Date() > new Date(tierExpiry)) {
+            setUserStats((prev: any) => ({
+                ...prev,
+                tier: 'free',
+                tierExpiry: null
+            }));
+        }
+
+        // Reset swipes if it's a new day
+        if (lastSwipeDate !== today) {
+            setUserStats((prev: any) => ({
+                ...prev,
+                dailySwipes: 0,
+                lastSwipeDate: today
+            }));
+        }
 
         if (lastDate !== today) {
             const last = new Date(lastDate);
@@ -1665,13 +1950,43 @@ function App() {
                 categoryTotal: newCategoryTotal,
                 dailyQuestions: newDailyQuestions,
                 activityHistory: newActivityHistory,
-                streak: { ...prev.streak, lastDate: today }
+                streak: { ...prev.streak, lastDate: today },
+                // Only increment swipes if it was a learning activity (category present)
+                dailySwipes: (category) ? (prev.dailySwipes || 0) + 1 : (prev.dailySwipes || 0),
+                lastSwipeDate: today
             };
 
             // Persist to localStorage on every update
             localStorage.setItem('bina_user_stats', JSON.stringify(updatedStats));
             return updatedStats;
         });
+    };
+
+    const redeemCredits = () => {
+        if (userStats.credits < 10) {
+            showGlobalToast('חסרים לך קרדיטים! 😕');
+            return;
+        }
+
+        const expiry = new Date();
+        expiry.setHours(expiry.getHours() + 24);
+
+        setUserStats((prev: any) => ({
+            ...prev,
+            tier: 'plus',
+            tierExpiry: expiry.toISOString(),
+            credits: prev.credits - 10
+        }));
+
+        showGlobalToast('מזל טוב! יש לך Plus ל-24 השעות הקרובות 🚀');
+    };
+
+    const simulateFriendSignup = () => {
+        setUserStats((prev: any) => ({
+            ...prev,
+            credits: (prev.credits || 0) + 10
+        }));
+        showGlobalToast('חבר הצטרף! קיבלת 10 קרדיטים 🎁');
     };
 
     const handleOnboardingCancel = () => {
@@ -1683,23 +1998,23 @@ function App() {
         window.location.reload();
     };
 
-    const awardXP = (amount: number) => recordActivity(amount);
-
     const toggleFavorite = (id: string) => {
         setUserStats((prev: any) => {
-            const currentFavs = prev.favorites || [];
-            const isFav = currentFavs.includes(id);
-            const newFavs = isFav
-                ? currentFavs.filter((fid: string) => fid !== id)
-                : [...currentFavs, id];
-            return { ...prev, favorites: newFavs };
+            const favorites = prev.favorites || [];
+            const newFavorites = favorites.includes(id)
+                ? favorites.filter((f: string) => f !== id)
+                : [...favorites, id];
+            return { ...prev, favorites: newFavorites };
         });
     };
+
+    const awardXP = (amount: number) => recordActivity(amount);
+
 
     const recordError = (category: string) => recordActivity(0, category, false);
 
     const getLevelName = (level: number) => {
-        const names = ["מתחיל", "לומד", "מתקדם", "מומחה", "אלוף"];
+        const names = ["מתחילים", "לומדים", "מתקדמים", "מומחים", "אלופים"];
         return names[Math.min(level - 1, names.length - 1)];
     };
 
@@ -1728,6 +2043,13 @@ function App() {
             } else {
                 finalTopic = topics[Math.floor(Math.random() * topics.length)];
             }
+        }
+
+        // --- Paywall Verification ---
+        const isRestrictedTopic = topic === 'quantitative' || topic === 'english' || finalTopic === 'quantitative' || finalTopic === 'english';
+        if (userStats.tier === 'free' && isRestrictedTopic) {
+            setActiveTab('pricing');
+            return;
         }
 
         if (topic === 'favorites') finalTopic = 'favorites';
@@ -1778,6 +2100,20 @@ function App() {
             </div>
 
             <div className="relative z-10 max-w-md mx-auto min-h-screen flex flex-col">
+                <AnimatePresence>
+                    {globalToast && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            className="fixed top-8 left-4 right-4 z-50 pointer-events-none"
+                        >
+                            <GlassCard className="p-3 bg-charcoal/80 border-electric-blue/50 text-center font-bold text-sm text-electric-blue shadow-glow-blue">
+                                {globalToast}
+                            </GlassCard>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
                 <AnimatePresence mode="wait">
                     {showSurprise && (
                         <SmartAlert
@@ -1829,6 +2165,15 @@ function App() {
                             favorites={userStats.favorites}
                             onToggleFavorite={toggleFavorite}
                             onShowExplanation={setShowExplanation}
+                            userStats={userStats}
+                            onUpgrade={() => {
+                                setIsLearning(false);
+                                setActiveTab('pricing');
+                            }}
+                            onRefer={() => {
+                                setIsLearning(false);
+                                setActiveTab('profile'); // Referral UI is in profile
+                            }}
                         />
                     ) : (
                         <motion.div
@@ -1871,6 +2216,13 @@ function App() {
                                     awardXP={awardXP}
                                     recordActivity={recordActivity}
                                     onMiss={addToWeakPoints}
+                                    userStats={userStats}
+                                    onUpgrade={() => {
+                                        setActiveTab('pricing');
+                                    }}
+                                    onRefer={() => {
+                                        setActiveTab('profile');
+                                    }}
                                 />
                             )}
                             {activeTab === 'stats' && <StatsScreen userStats={userStats} userProfile={userProfile} setActiveTab={setActiveTab} />}
@@ -1881,6 +2233,9 @@ function App() {
                                     setActiveTab={setActiveTab}
                                     onEditProfile={() => setHasOnboarded(false)}
                                     onLogout={handleLogout}
+                                    onRedeem={redeemCredits}
+                                    onSimulateFriend={simulateFriendSignup}
+                                    showToast={showGlobalToast}
                                 />
                             )}
                             {activeTab === 'achievements' && <AchievementsScreen achievements={userStats.achievements} onBack={() => setActiveTab('profile')} />}
@@ -1919,7 +2274,16 @@ function App() {
                                 />
                             )}
 
-                            {activeTab === 'pricing' && <PricingScreen onBack={() => setActiveTab('home')} />}
+                            {activeTab === 'pricing' && (
+                                <PricingScreen
+                                    onBack={() => setActiveTab('home')}
+                                    currentTier={userStats.tier}
+                                    onSelectPlan={(tier: any) => {
+                                        setUserStats((prev: any) => ({ ...prev, tier }));
+                                        setActiveTab('home');
+                                    }}
+                                />
+                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -1931,6 +2295,12 @@ function App() {
                     <AIExplanationModal
                         item={showExplanation}
                         onClose={() => setShowExplanation(null)}
+                        tier={userStats.tier}
+                        onUpgrade={() => {
+                            setShowExplanation(null);
+                            setIsLearning(false);
+                            setActiveTab('pricing');
+                        }}
                     />
                 )}
             </AnimatePresence>
@@ -1944,6 +2314,15 @@ function App() {
                     <NavItem icon={User} label="פרופיל" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
                 </nav>
             )}
+
+            {/* Debug Toolbar */}
+            <DebugToolbar
+                userStats={userStats}
+                onUpdate={(newStats: any) => {
+                    setUserStats(newStats);
+                    localStorage.setItem('bina_user_stats', JSON.stringify(newStats));
+                }}
+            />
         </div>
     );
 }

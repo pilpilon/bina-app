@@ -11,9 +11,10 @@ interface SwipeCardProps {
     onSwipeLeft: () => void;
     isFavorite?: boolean;
     onToggleFavorite?: () => void;
+    disabled?: boolean;
 }
 
-const SwipeCard: React.FC<SwipeCardProps> = ({ word, definition, example, category, onSwipeRight, onSwipeLeft, isFavorite, onToggleFavorite }) => {
+const SwipeCard: React.FC<SwipeCardProps> = ({ word, definition, example, category, onSwipeRight, onSwipeLeft, isFavorite, onToggleFavorite, disabled }) => {
     const x = useMotionValue(0);
     const rotate = useTransform(x, [-200, 200], [-25, 25]);
     const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
@@ -21,6 +22,7 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ word, definition, example, catego
     const skipOpacity = useTransform(x, [50, 150], [0, 1]);
 
     const handleDragEnd = (_e: any, info: any) => {
+        if (disabled) return;
         if (info.offset.x < -100) {
             onSwipeLeft();
         } else if (info.offset.x > 100) {
@@ -32,10 +34,10 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ word, definition, example, catego
         <div className="relative w-full max-w-[360px] aspect-[3/4] perspective-1000">
             <motion.div
                 style={{ x, rotate, opacity }}
-                drag="x"
+                drag={disabled ? false : "x"}
                 dragConstraints={{ left: 0, right: 0 }}
                 onDragEnd={handleDragEnd}
-                className="absolute inset-0 glass-card p-8 flex flex-col justify-center items-center text-center cursor-grab active:cursor-grabbing border-2 border-electric-blue/30 overflow-hidden shadow-2xl group"
+                className={`absolute inset-0 glass-card p-8 flex flex-col justify-center items-center text-center border-2 border-electric-blue/30 overflow-hidden shadow-2xl group ${disabled ? 'cursor-default grayscale opacity-50' : 'cursor-grab active:cursor-grabbing'}`}
             >
                 {/* Favorite Toggle */}
                 <motion.button
@@ -60,10 +62,10 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ word, definition, example, catego
                 />
                 {/* Indicators */}
                 <motion.div style={{ opacity: successOpacity }} className="absolute top-4 left-4 text-electric-blue font-black text-2xl border-4 border-electric-blue px-4 py-2 rounded-xl -rotate-12 bg-charcoal/80">
-                    יודע ✓
+                    יודע/ת ✓
                 </motion.div>
                 <motion.div style={{ opacity: skipOpacity }} className="absolute top-4 right-4 text-neon-pink font-black text-2xl border-4 border-neon-pink px-4 py-2 rounded-xl rotate-12 bg-charcoal/80">
-                    ✗ לא יודע
+                    ✗ לא יודע/ת
                 </motion.div>
 
                 <div className="bg-electric-blue/10 px-4 py-1 rounded-full text-[10px] font-bold tracking-[0.2em] text-electric-blue uppercase mb-6">

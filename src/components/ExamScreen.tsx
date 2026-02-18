@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Timer, ChevronRight, ChevronLeft, CheckCircle2, XCircle, AlertCircle, Trophy, BarChart3, Home } from 'lucide-react';
 
@@ -24,19 +24,28 @@ const ExamScreen: React.FC<ExamScreenProps> = ({ questions, onClose, onShowExpla
     const [timeLeft, setTimeLeft] = useState(1200); // 20 minutes in seconds
     const [isFinished, setIsFinished] = useState(false);
 
-    // Timer logic
-    useEffect(() => {
-        if (timeLeft <= 0) {
-            setIsFinished(true);
-            return;
-        }
+    // Create a pool of distractors from all questions to avoid "buggy" placeholders
+    const distractorPool = useMemo(() => {
+        return questions
+            .map(q => q.definition || q.word || (q as any).answer || '')
+            .filter(Boolean);
+    }, [questions]);
 
+    // Timer logic - refactored to be more stable
+    useEffect(() => {
         const timer = setInterval(() => {
-            setTimeLeft((prev) => prev - 1);
+            setTimeLeft((prev) => {
+                if (prev <= 1) {
+                    setIsFinished(true);
+                    clearInterval(timer);
+                    return 0;
+                }
+                return prev - 1;
+            });
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [timeLeft]);
+    }, []);
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -150,13 +159,21 @@ const ExamScreen: React.FC<ExamScreenProps> = ({ questions, onClose, onShowExpla
     }
 
     const currentQuestion = questions[currentIndex];
-    // Mock options if not present (since vocabulary.json doesn't have options)
-    const options = currentQuestion.options || [
-        currentQuestion.definition || '',
-        'הפך של ' + currentQuestion.word,
-        'פירוש שגוי א\'',
-        'פירוש שגוי ב\''
-    ].sort(() => Math.random() - 0.5);
+
+    // Stabilize options to avoid re-shuffling on every timer tick
+    const options = useMemo(() => {
+        if (currentQuestion.options && currentQuestion.options.length > 0) return currentQuestion.options;
+
+        const correct = currentQuestion.definition || currentQuestion.correctAnswer || '';
+
+        // Pick 3 random distractors that aren't the correct answer from the whole pool
+        const distractors = [...distractorPool]
+            .filter(d => d !== correct)
+            .sort(() => Math.random() - 0.5)
+            .slice(0, 3);
+
+        return [correct, ...distractors].sort(() => Math.random() - 0.5);
+    }, [currentIndex, currentQuestion.id, distractorPool]);
 
     return (
         <motion.div
@@ -166,15 +183,16 @@ const ExamScreen: React.FC<ExamScreenProps> = ({ questions, onClose, onShowExpla
         >
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
+                <button onClick={onClose} className="flex items-center gap-2 text-text-muted font-bold hover:text-white transition-colors">
+                    <ChevronRight className="w-5 h-5 translate-x-1" />
+                    <span>יציאה מהמרתון</span>
+                </button>
                 <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-xl border border-white/10">
                     <Timer className={`w-5 h-5 ${timeLeft < 60 ? 'text-neon-pink animate-pulse' : 'text-electric-blue'}`} />
                     <span className={`font-mono text-xl font-bold ${timeLeft < 60 ? 'text-neon-pink' : 'text-white'}`}>
                         {formatTime(timeLeft)}
                     </span>
                 </div>
-                <button onClick={onClose} className="p-2 text-text-secondary hover:text-white transition-colors">
-                    <AlertCircle className="w-6 h-6" />
-                </button>
             </div>
 
             {/* Progress */}
@@ -240,7 +258,7 @@ const ExamScreen: React.FC<ExamScreenProps> = ({ questions, onClose, onShowExpla
                     className="flex-[2] py-4 bg-gradient-to-r from-electric-blue to-neon-purple rounded-2xl flex items-center justify-center gap-2 font-black text-charcoal shadow-glow-blue hover:brightness-110 active:scale-95 transition-all"
                 >
                     {currentIndex === questions.length - 1 ? 'סיים מבחן' : 'השאלה הבאה'}
-                    {currentIndex !== questions.length - 1 && <ChevronRight className="w-5 h-5" />}
+                    {currentIndex !== questions.length - 1 && <ChevronLeft className="w-5 h-5" />}
                 </button>
             </div>
         </motion.div>
