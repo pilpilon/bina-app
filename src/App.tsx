@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 // Triggering production deployment with latest infrastructure - Commit 96f2188++
+import { Routes, Route, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, BookOpen, BarChart3, User, Home, Flame, ChevronRight, ChevronLeft, X, Check, TrendingUp, Calendar, Zap, Timer, Heart, Bell, BellOff } from 'lucide-react';
 import SwipeCard from './components/SwipeCard';
@@ -9,6 +10,7 @@ import analogiesData from './data/analogies.json';
 import quantitativeData from './data/quantitative.json';
 import englishData from './data/english.json';
 import { useEffect } from 'react';
+import { TermsOfService, PrivacyPolicy } from './components/LegalPages';
 import ExamScreen from './components/ExamScreen';
 import OnboardingScreen, { UserProfile } from './components/OnboardingScreen';
 import {
@@ -1293,7 +1295,10 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan }: any) => {
 
             <p className="mt-8 text-center text-[10px] text-text-muted leading-relaxed px-8">
                 ביטול בכל עת. המנוי מתחדש אוטומטית. <br />
-                ההרשמה מהווה הסכמה לתנאי השימוש ומדיניות הפרטיות.
+                ההרשמה מהווה הסכמה ל
+                <Link to="/terms" className="text-electric-blue hover:underline">תנאי השימוש</Link>
+                ו
+                <Link to="/privacy" className="text-electric-blue hover:underline">מדיניות הפרטיות</Link>.
             </p>
         </motion.div>
     );
@@ -1741,6 +1746,7 @@ const AIExplanationModal = ({ item, onClose, tier = 'free', onUpgrade }: { item:
 // --- Main App ---
 
 function App() {
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('home');
     const [globalToast, setGlobalToast] = useState<string | null>(null);
     const [user, setUser] = useState<any>(null);
@@ -2138,240 +2144,246 @@ function App() {
     }
 
     return (
-        <div className="min-h-screen bg-charcoal text-text-primary font-sans selection:bg-electric-blue/30 overflow-x-hidden scanline-overlay" dir="rtl">
-            {/* Background Particles Decoration */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-[10%] left-[5%] w-64 h-64 bg-electric-blue/10 rounded-full blur-3xl animate-float" style={{ animationDuration: '8s' }} />
-                <div className="absolute top-[60%] right-[10%] w-96 h-96 bg-neon-purple/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s', animationDuration: '10s' }} />
-                <div className="absolute bottom-[10%] left-[20%] w-48 h-48 bg-neon-pink/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '4s', animationDuration: '7s' }} />
-            </div>
+        <Routes>
+            <Route path="/terms" element={<TermsOfService onBack={() => navigate('/')} />} />
+            <Route path="/privacy" element={<PrivacyPolicy onBack={() => navigate('/')} />} />
+            <Route path="*" element={
+                <div className="min-h-screen bg-charcoal text-text-primary font-sans selection:bg-electric-blue/30 overflow-x-hidden scanline-overlay" dir="rtl">
+                    {/* Background Particles Decoration */}
+                    <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                        <div className="absolute top-[10%] left-[5%] w-64 h-64 bg-electric-blue/10 rounded-full blur-3xl animate-float" style={{ animationDuration: '8s' }} />
+                        <div className="absolute top-[60%] right-[10%] w-96 h-96 bg-neon-purple/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s', animationDuration: '10s' }} />
+                        <div className="absolute bottom-[10%] left-[20%] w-48 h-48 bg-neon-pink/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '4s', animationDuration: '7s' }} />
+                    </div>
 
-            <div className="relative z-10 max-w-md mx-auto min-h-screen flex flex-col">
-                <AnimatePresence>
-                    {globalToast && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            className="fixed top-8 left-4 right-4 z-50 pointer-events-none"
-                        >
-                            <GlassCard className="p-3 bg-charcoal/80 border-electric-blue/50 text-center font-bold text-sm text-electric-blue shadow-glow-blue">
-                                {globalToast}
-                            </GlassCard>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-                <AnimatePresence mode="wait">
-                    {showSurprise && (
-                        <SmartAlert
-                            key="surprise"
-                            card={showSurprise}
-                            onClose={() => setShowSurprise(null)}
-                            onAction={() => {
-                                startLearning('weakPoints');
-                                setShowSurprise(null);
-                            }}
-                        />
-                    )}
-                </AnimatePresence>
-
-                <AnimatePresence>
-                    {achievementToast && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -50 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -50 }}
-                            className="fixed top-20 left-4 right-4 z-[110] pointer-events-none"
-                        >
-                            <div className="bg-gradient-to-r from-cyber-yellow to-neon-pink p-px rounded-xl shadow-glow-purple">
-                                <div className="bg-charcoal p-4 rounded-xl flex items-center gap-4">
-                                    <div className="text-2xl">🏆</div>
-                                    <div className="font-black text-white">{achievementToast}</div>
-                                </div>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                <AnimatePresence mode="wait">
-                    {isLearning ? (
-                        <LearningScreen
-                            key={`learning-${learningTopic}`}
-                            topic={learningTopic}
-                            onBack={() => setIsLearning(false)}
-                            weakPoints={weakPoints}
-                            customLists={customLists}
-                            onMiss={(card: WordCard) => {
-                                addToWeakPoints(card);
-                                if (userStats.teacherMode) {
-                                    setShowExplanation(card);
-                                }
-                            }}
-                            awardXP={awardXP}
-                            recordActivity={recordActivity}
-                            favorites={userStats.favorites}
-                            onToggleFavorite={toggleFavorite}
-                            onShowExplanation={setShowExplanation}
-                            userStats={userStats}
-                            onUpgrade={() => {
-                                setIsLearning(false);
-                                setActiveTab('pricing');
-                            }}
-                            onRefer={() => {
-                                setIsLearning(false);
-                                setActiveTab('profile'); // Referral UI is in profile
-                            }}
-                        />
-                    ) : (
-                        <motion.div
-                            key={activeTab}
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.3, ease: "easeInOut" }}
-                            className="flex-1"
-                        >
-                            {activeTab === 'home' && (
-                                <HomeScreen
-                                    onStartLearning={(topic: string) => {
-                                        if (topic === 'custom-edit') setActiveTab('custom-edit');
-                                        else if (topic === 'pricing') setActiveTab('pricing');
-                                        else startLearning(topic);
+                    <div className="relative z-10 max-w-md mx-auto min-h-screen flex flex-col">
+                        <AnimatePresence>
+                            {globalToast && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                    className="fixed top-8 left-4 right-4 z-50 pointer-events-none"
+                                >
+                                    <GlassCard className="p-3 bg-charcoal/80 border-electric-blue/50 text-center font-bold text-sm text-electric-blue shadow-glow-blue">
+                                        {globalToast}
+                                    </GlassCard>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                        <AnimatePresence mode="wait">
+                            {showSurprise && (
+                                <SmartAlert
+                                    key="surprise"
+                                    card={showSurprise}
+                                    onClose={() => setShowSurprise(null)}
+                                    onAction={() => {
+                                        startLearning('weakPoints');
+                                        setShowSurprise(null);
                                     }}
-                                    userProfile={userProfile}
-                                    userStats={userStats}
-                                    getLevelName={getLevelName}
                                 />
                             )}
-                            {activeTab === 'custom-edit' && (
-                                <CustomListScreen
-                                    onSave={(list: WordCard[]) => {
-                                        setCustomLists(list);
-                                        localStorage.setItem('bina_custom_lists', JSON.stringify(list));
-                                    }}
-                                    onStartLearning={() => {
-                                        setActiveTab('home');
-                                        setTimeout(() => startLearning('custom'), 100);
-                                    }}
-                                    onBack={() => setActiveTab('home')}
-                                />
+                        </AnimatePresence>
+
+                        <AnimatePresence>
+                            {achievementToast && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -50 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -50 }}
+                                    className="fixed top-20 left-4 right-4 z-[110] pointer-events-none"
+                                >
+                                    <div className="bg-gradient-to-r from-cyber-yellow to-neon-pink p-px rounded-xl shadow-glow-purple">
+                                        <div className="bg-charcoal p-4 rounded-xl flex items-center gap-4">
+                                            <div className="text-2xl">🏆</div>
+                                            <div className="font-black text-white">{achievementToast}</div>
+                                        </div>
+                                    </div>
+                                </motion.div>
                             )}
-                            {activeTab === 'learning' && (
+                        </AnimatePresence>
+
+                        <AnimatePresence mode="wait">
+                            {isLearning ? (
                                 <LearningScreen
-                                    topic="vocabulary"
-                                    onBack={() => setActiveTab('home')}
+                                    key={`learning-${learningTopic}`}
+                                    topic={learningTopic}
+                                    onBack={() => setIsLearning(false)}
+                                    weakPoints={weakPoints}
+                                    customLists={customLists}
+                                    onMiss={(card: WordCard) => {
+                                        addToWeakPoints(card);
+                                        if (userStats.teacherMode) {
+                                            setShowExplanation(card);
+                                        }
+                                    }}
                                     awardXP={awardXP}
                                     recordActivity={recordActivity}
-                                    onMiss={addToWeakPoints}
+                                    favorites={userStats.favorites}
+                                    onToggleFavorite={toggleFavorite}
+                                    onShowExplanation={setShowExplanation}
                                     userStats={userStats}
                                     onUpgrade={() => {
+                                        setIsLearning(false);
                                         setActiveTab('pricing');
                                     }}
                                     onRefer={() => {
-                                        setActiveTab('profile');
+                                        setIsLearning(false);
+                                        setActiveTab('profile'); // Referral UI is in profile
                                     }}
                                 />
-                            )}
-                            {activeTab === 'stats' && <StatsScreen userStats={userStats} userProfile={userProfile} setActiveTab={setActiveTab} />}
-                            {activeTab === 'profile' && (
-                                <ProfileScreen
-                                    userStats={userStats}
-                                    userProfile={userProfile}
-                                    user={user}
-                                    setActiveTab={setActiveTab}
-                                    onEditProfile={() => setHasOnboarded(false)}
-                                    onLogout={handleLogout}
-                                    onRedeem={redeemCredits}
-                                    onSimulateFriend={simulateFriendSignup}
-                                    showToast={showGlobalToast}
-                                />
-                            )}
-                            {activeTab === 'achievements' && <AchievementsScreen achievements={userStats.achievements} onBack={() => setActiveTab('profile')} />}
-                            {activeTab === 'study-plan' && <StudyPlanScreen userProfile={userProfile} onBack={() => setActiveTab('profile')} />}
-                            {activeTab === 'ai-analysis' && (
-                                <AIAnalysisScreen
-                                    userStats={userStats}
-                                    weakPoints={weakPoints}
-                                    onBack={() => setActiveTab('stats')}
-                                    onStartLearning={(topic: string) => {
-                                        setActiveTab('home');
-                                        setTimeout(() => startLearning(topic), 100);
-                                    }}
-                                />
-                            )}
+                            ) : (
+                                <motion.div
+                                    key={activeTab}
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                                    className="flex-1"
+                                >
+                                    {activeTab === 'home' && (
+                                        <HomeScreen
+                                            onStartLearning={(topic: string) => {
+                                                if (topic === 'custom-edit') setActiveTab('custom-edit');
+                                                else if (topic === 'pricing') setActiveTab('pricing');
+                                                else startLearning(topic);
+                                            }}
+                                            userProfile={userProfile}
+                                            userStats={userStats}
+                                            getLevelName={getLevelName}
+                                        />
+                                    )}
+                                    {activeTab === 'custom-edit' && (
+                                        <CustomListScreen
+                                            onSave={(list: WordCard[]) => {
+                                                setCustomLists(list);
+                                                localStorage.setItem('bina_custom_lists', JSON.stringify(list));
+                                            }}
+                                            onStartLearning={() => {
+                                                setActiveTab('home');
+                                                setTimeout(() => startLearning('custom'), 100);
+                                            }}
+                                            onBack={() => setActiveTab('home')}
+                                        />
+                                    )}
+                                    {activeTab === 'learning' && (
+                                        <LearningScreen
+                                            topic="vocabulary"
+                                            onBack={() => setActiveTab('home')}
+                                            awardXP={awardXP}
+                                            recordActivity={recordActivity}
+                                            onMiss={addToWeakPoints}
+                                            userStats={userStats}
+                                            onUpgrade={() => {
+                                                setActiveTab('pricing');
+                                            }}
+                                            onRefer={() => {
+                                                setActiveTab('profile');
+                                            }}
+                                        />
+                                    )}
+                                    {activeTab === 'stats' && <StatsScreen userStats={userStats} userProfile={userProfile} setActiveTab={setActiveTab} />}
+                                    {activeTab === 'profile' && (
+                                        <ProfileScreen
+                                            userStats={userStats}
+                                            userProfile={userProfile}
+                                            user={user}
+                                            setActiveTab={setActiveTab}
+                                            onEditProfile={() => setHasOnboarded(false)}
+                                            onLogout={handleLogout}
+                                            onRedeem={redeemCredits}
+                                            onSimulateFriend={simulateFriendSignup}
+                                            showToast={showGlobalToast}
+                                        />
+                                    )}
+                                    {activeTab === 'achievements' && <AchievementsScreen achievements={userStats.achievements} onBack={() => setActiveTab('profile')} />}
+                                    {activeTab === 'study-plan' && <StudyPlanScreen userProfile={userProfile} onBack={() => setActiveTab('profile')} />}
+                                    {activeTab === 'ai-analysis' && (
+                                        <AIAnalysisScreen
+                                            userStats={userStats}
+                                            weakPoints={weakPoints}
+                                            onBack={() => setActiveTab('stats')}
+                                            onStartLearning={(topic: string) => {
+                                                setActiveTab('home');
+                                                setTimeout(() => startLearning(topic), 100);
+                                            }}
+                                        />
+                                    )}
 
-                            {activeTab === 'ai-settings' && (
-                                <AISettingsScreen
-                                    userStats={userStats}
-                                    onBack={() => setActiveTab('profile')}
-                                    onUpdateStats={(newStats: any) => {
-                                        setUserStats(newStats);
-                                        localStorage.setItem('bina_user_stats', JSON.stringify(newStats));
-                                    }}
-                                    notifSettings={notifSettings}
-                                    notifPermission={notifPermission}
-                                    onUpdateNotif={updateNotifSettings}
-                                    onRequestPermission={async () => {
-                                        const perm = await requestNotificationPermission();
-                                        setNotifPermission(perm);
-                                        if (perm === 'granted') {
-                                            updateNotifSettings({ ...notifSettings, enabled: true });
-                                        }
-                                    }}
-                                    onTestNotif={showTestNotification}
-                                />
-                            )}
+                                    {activeTab === 'ai-settings' && (
+                                        <AISettingsScreen
+                                            userStats={userStats}
+                                            onBack={() => setActiveTab('profile')}
+                                            onUpdateStats={(newStats: any) => {
+                                                setUserStats(newStats);
+                                                localStorage.setItem('bina_user_stats', JSON.stringify(newStats));
+                                            }}
+                                            notifSettings={notifSettings}
+                                            notifPermission={notifPermission}
+                                            onUpdateNotif={updateNotifSettings}
+                                            onRequestPermission={async () => {
+                                                const perm = await requestNotificationPermission();
+                                                setNotifPermission(perm);
+                                                if (perm === 'granted') {
+                                                    updateNotifSettings({ ...notifSettings, enabled: true });
+                                                }
+                                            }}
+                                            onTestNotif={showTestNotification}
+                                        />
+                                    )}
 
-                            {activeTab === 'pricing' && (
-                                <PricingScreen
-                                    onBack={() => setActiveTab('home')}
-                                    currentTier={userStats.tier}
-                                    onSelectPlan={(tier: any) => {
-                                        setUserStats((prev: any) => ({ ...prev, tier }));
-                                        setActiveTab('home');
-                                    }}
-                                />
+                                    {activeTab === 'pricing' && (
+                                        <PricingScreen
+                                            onBack={() => setActiveTab('home')}
+                                            currentTier={userStats.tier}
+                                            onSelectPlan={(tier: any) => {
+                                                setUserStats((prev: any) => ({ ...prev, tier }));
+                                                setActiveTab('home');
+                                            }}
+                                        />
+                                    )}
+                                </motion.div>
                             )}
-                        </motion.div>
+                        </AnimatePresence>
+                    </div>
+
+                    {/* AI Explanation Modal */}
+                    <AnimatePresence>
+                        {showExplanation && (
+                            <AIExplanationModal
+                                item={showExplanation}
+                                onClose={() => setShowExplanation(null)}
+                                tier={userStats.tier}
+                                onUpgrade={() => {
+                                    setShowExplanation(null);
+                                    setIsLearning(false);
+                                    setActiveTab('pricing');
+                                }}
+                            />
+                        )}
+                    </AnimatePresence>
+
+                    {/* Navigation Bar */}
+                    {!isLearning && (
+                        <nav className="fixed bottom-0 left-0 right-0 bg-black/60 backdrop-blur-2xl border-t border-white/10 px-4 py-4 flex justify-around items-center z-50">
+                            <NavItem icon={Home} label="בית" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
+                            <NavItem icon={BookOpen} label="למידה" active={activeTab === 'learning'} onClick={() => setActiveTab('learning')} />
+                            <NavItem icon={BarChart3} label="נתונים" active={activeTab === 'stats'} onClick={() => setActiveTab('stats')} />
+                            <NavItem icon={User} label="פרופיל" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
+                        </nav>
                     )}
-                </AnimatePresence>
-            </div>
 
-            {/* AI Explanation Modal */}
-            <AnimatePresence>
-                {showExplanation && (
-                    <AIExplanationModal
-                        item={showExplanation}
-                        onClose={() => setShowExplanation(null)}
-                        tier={userStats.tier}
-                        onUpgrade={() => {
-                            setShowExplanation(null);
-                            setIsLearning(false);
-                            setActiveTab('pricing');
+                    {/* Debug Toolbar */}
+                    <DebugToolbar
+                        userStats={userStats}
+                        onUpdate={(newStats: any) => {
+                            setUserStats(newStats);
+                            localStorage.setItem('bina_user_stats', JSON.stringify(newStats));
                         }}
                     />
-                )}
-            </AnimatePresence>
-
-            {/* Navigation Bar */}
-            {!isLearning && (
-                <nav className="fixed bottom-0 left-0 right-0 bg-black/60 backdrop-blur-2xl border-t border-white/10 px-4 py-4 flex justify-around items-center z-50">
-                    <NavItem icon={Home} label="בית" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
-                    <NavItem icon={BookOpen} label="למידה" active={activeTab === 'learning'} onClick={() => setActiveTab('learning')} />
-                    <NavItem icon={BarChart3} label="נתונים" active={activeTab === 'stats'} onClick={() => setActiveTab('stats')} />
-                    <NavItem icon={User} label="פרופיל" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
-                </nav>
-            )}
-
-            {/* Debug Toolbar */}
-            <DebugToolbar
-                userStats={userStats}
-                onUpdate={(newStats: any) => {
-                    setUserStats(newStats);
-                    localStorage.setItem('bina_user_stats', JSON.stringify(newStats));
-                }}
-            />
-        </div>
+                </div>
+            } />
+        </Routes>
     );
 }
 
