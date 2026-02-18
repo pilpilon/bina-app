@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, BookOpen, BarChart3, User, Home, Flame, ChevronRight, ChevronLeft, X, Check, TrendingUp, Calendar, Zap, Timer, Heart } from 'lucide-react';
+import { Target, BookOpen, BarChart3, User, Home, Flame, ChevronRight, ChevronLeft, X, Check, TrendingUp, Calendar, Zap, Timer, Heart, Bell, BellOff } from 'lucide-react';
 import SwipeCard from './components/SwipeCard';
 import PerformanceChart from './components/PerformanceChart';
 import vocabData from './data/vocabulary.json';
@@ -10,6 +10,17 @@ import englishData from './data/english.json';
 import { useEffect } from 'react';
 import ExamScreen from './components/ExamScreen';
 import OnboardingScreen, { UserProfile } from './components/OnboardingScreen';
+import {
+    loadNotificationSettings,
+    saveNotificationSettings,
+    registerServiceWorker,
+    requestNotificationPermission,
+    getPermissionStatus,
+    showTestNotification,
+    scheduleSmartNotifications,
+    type NotificationSettings,
+    defaultNotificationSettings,
+} from './utils/notifications';
 
 // --- Types ---
 interface WordCard {
@@ -613,74 +624,162 @@ const StudyPlanScreen = ({ userProfile, onBack }: any) => {
     );
 };
 
-const AISettingsScreen = ({ userStats, onBack, onUpdateStats }: any) => {
+const AISettingsScreen = ({ userStats, onBack, onUpdateStats, notifSettings, notifPermission, onUpdateNotif, onRequestPermission, onTestNotif }: any) => {
+    const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
+        <button
+            onClick={() => onChange(!value)}
+            className={`w-14 h-7 rounded-full transition-all relative flex-shrink-0 ${value ? 'bg-electric-blue shadow-glow-blue' : 'bg-white/10'}`}
+        >
+            <motion.div
+                animate={{ x: value ? 28 : 4 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                className="absolute top-1.5 w-4 h-4 bg-white rounded-full shadow-sm"
+            />
+        </button>
+    );
+
+    const permissionDenied = notifPermission === 'denied';
+    const permissionGranted = notifPermission === 'granted';
+
     return (
-        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="px-5 pt-12 pb-32">
-            <button onClick={onBack} className="flex items-center gap-2 text-text-muted mb-8 font-bold">
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="px-5 pt-12 pb-32 space-y-5">
+            <button onClick={onBack} className="flex items-center gap-2 text-text-muted mb-2 font-bold">
                 <ChevronRight className="w-5 h-5" />
                 <span>חזור</span>
             </button>
-            <h2 className="text-3xl font-black mb-2 text-cyber-yellow">הגדרות AI אישיות</h2>
-            <p className="text-text-secondary mb-8">ה-Bina לומדת את החוזקות והחולשות שלך</p>
+            <div>
+                <h2 className="text-3xl font-black mb-1 text-cyber-yellow">הגדרות AI</h2>
+                <p className="text-text-secondary text-sm">התאם את Bina לסגנון הלמידה שלך</p>
+            </div>
 
-            <div className="grid grid-cols-1 gap-4">
-                <GlassCard className="p-6">
-                    <h4 className="font-bold text-cyber-yellow mb-2 text-sm uppercase tracking-wider">סטטוס למידה</h4>
-                    <div className="text-4xl font-black mb-1">רמה {userStats.level}</div>
-                    <div className="text-text-secondary text-sm">{userStats.xp} XP נצברו עד כה</div>
-                </GlassCard>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <GlassCard className="p-4">
-                        <div className="text-emerald-400 font-bold text-xs mb-1 uppercase">חוזקה עיקרית</div>
-                        <div className="font-black text-xl">אנגלית</div>
-                    </GlassCard>
-                    <GlassCard className="p-4">
-                        <div className="text-neon-pink font-bold text-xs mb-1 uppercase">לחיזוק</div>
-                        <div className="font-black text-xl">אנלוגיות</div>
-                    </GlassCard>
-                </div>
-
-                {/* Teacher Mode Toggle */}
-                <GlassCard className="p-5 border-electric-blue/30">
-                    <h4 className="font-bold text-white/70 mb-4 text-sm uppercase">AI Teacher Mode 🤖</h4>
-                    <div className="flex items-center justify-between gap-4">
-                        <div>
-                            <div className="font-bold">הסבר אוטומטי לטעויות</div>
-                            <div className="text-xs text-text-secondary mt-1">Bina תסביר כל טעות מיד לאחר שתבצע אותה</div>
-                        </div>
-                        <button
-                            onClick={() => onUpdateStats?.({ ...userStats, teacherMode: !userStats.teacherMode })}
-                            className={`w-14 h-7 rounded-full transition-colors relative flex-shrink-0 ${userStats.teacherMode ? 'bg-electric-blue shadow-glow-blue' : 'bg-white/10'}`}
-                        >
-                            <motion.div
-                                animate={{ x: userStats.teacherMode ? 28 : 4 }}
-                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                                className="absolute top-1.5 w-4 h-4 bg-white rounded-full shadow-sm"
-                            />
-                        </button>
+            {/* Stats summary */}
+            <GlassCard className="p-5">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <div className="text-text-muted text-xs uppercase font-bold mb-1">סטטוס</div>
+                        <div className="text-3xl font-black">רמה {userStats.level}</div>
+                        <div className="text-text-secondary text-xs mt-1">{userStats.xp} XP נצברו</div>
                     </div>
+                    <div className="grid grid-cols-2 gap-2 text-center">
+                        <div className="bg-emerald-400/10 rounded-xl p-3">
+                            <div className="text-emerald-400 text-xs font-bold">חוזקה</div>
+                            <div className="font-black text-sm">אנגלית</div>
+                        </div>
+                        <div className="bg-neon-pink/10 rounded-xl p-3">
+                            <div className="text-neon-pink text-xs font-bold">לחיזוק</div>
+                            <div className="font-black text-sm">אנלוגיות</div>
+                        </div>
+                    </div>
+                </div>
+            </GlassCard>
+
+            {/* Teacher Mode */}
+            <GlassCard className="p-5 border-electric-blue/20">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="w-9 h-9 bg-electric-blue/10 rounded-xl flex items-center justify-center">
+                        <Zap className="w-5 h-5 text-electric-blue" />
+                    </div>
+                    <div>
+                        <div className="font-black">AI Teacher Mode 🤖</div>
+                        <div className="text-xs text-text-secondary">הסבר אוטומטי לכל טעות</div>
+                    </div>
+                </div>
+                <div className="flex items-center justify-between">
+                    <span className="text-sm text-text-secondary">הפעל הסברים אוטומטיים</span>
+                    <Toggle value={!!userStats.teacherMode} onChange={(v) => onUpdateStats?.({ ...userStats, teacherMode: v })} />
+                </div>
+                <AnimatePresence>
                     {userStats.teacherMode && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            className="mt-4 text-xs text-electric-blue font-bold bg-electric-blue/10 rounded-lg p-3"
-                        >
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                            className="mt-3 text-xs text-electric-blue font-bold bg-electric-blue/10 rounded-lg p-3">
                             ✅ מצב מורה פעיל — Bina תסביר לך כל טעות!
                         </motion.div>
                     )}
-                </GlassCard>
+                </AnimatePresence>
+            </GlassCard>
 
-                <GlassCard className="p-6">
-                    <h4 className="font-bold text-white/70 mb-4 text-sm uppercase">התראות חכמות</h4>
-                    <div className="flex items-center justify-between">
-                        <span className="font-bold">תזכורת תרגול יומית</span>
-                        <div className="w-12 h-6 bg-electric-blue/20 rounded-full relative">
-                            <div className="absolute left-1 top-1 w-4 h-4 bg-electric-blue rounded-full" />
-                        </div>
+            {/* Push Notifications */}
+            <GlassCard className={`p-5 ${notifSettings?.enabled ? 'border-cyber-yellow/30' : ''}`}>
+                <div className="flex items-center gap-3 mb-4">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${notifSettings?.enabled ? 'bg-cyber-yellow/10' : 'bg-white/5'}`}>
+                        {notifSettings?.enabled ? <Bell className="w-5 h-5 text-cyber-yellow" /> : <BellOff className="w-5 h-5 text-text-muted" />}
                     </div>
-                </GlassCard>
-            </div>
+                    <div>
+                        <div className="font-black">התראות חכמות 🔔</div>
+                        <div className="text-xs text-text-secondary">תזכורות מותאמות אישית</div>
+                    </div>
+                </div>
+
+                {/* Permission status */}
+                {permissionDenied && (
+                    <div className="mb-4 p-3 bg-neon-pink/10 border border-neon-pink/20 rounded-xl text-xs text-neon-pink font-bold">
+                        ⚠️ גישה להתראות נחסמה בדפדפן. אפשר אותה ידנית בהגדרות הדפדפן.
+                    </div>
+                )}
+
+                {!permissionGranted && !permissionDenied && (
+                    <button
+                        onClick={onRequestPermission}
+                        className="w-full mb-4 py-3 rounded-xl bg-cyber-yellow/10 border border-cyber-yellow/30 text-cyber-yellow font-bold text-sm hover:bg-cyber-yellow/20 transition-colors"
+                    >
+                        🔔 אפשר התראות
+                    </button>
+                )}
+
+                <div className="flex items-center justify-between mb-4">
+                    <span className="text-sm font-bold">הפעל תזכורות יומיות</span>
+                    <Toggle
+                        value={!!notifSettings?.enabled}
+                        onChange={(v: boolean) => {
+                            if (v && !permissionGranted) { onRequestPermission(); return; }
+                            onUpdateNotif?.({ ...notifSettings, enabled: v });
+                        }}
+                    />
+                </div>
+
+                <AnimatePresence>
+                    {notifSettings?.enabled && permissionGranted && (
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-4">
+                            {/* Time picker */}
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm text-text-secondary">שעת תזכורת</span>
+                                <input
+                                    type="time"
+                                    value={notifSettings.reminderTime}
+                                    onChange={(e) => onUpdateNotif?.({ ...notifSettings, reminderTime: e.target.value })}
+                                    className="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-white font-mono text-sm focus:outline-none focus:border-electric-blue/50"
+                                />
+                            </div>
+
+                            {/* Sub-toggles */}
+                            <div className="space-y-3 pt-2 border-t border-white/5">
+                                {[
+                                    { key: 'streakReminder', label: '🔥 שמירת רצף יומי' },
+                                    { key: 'examCountdown', label: '📅 ספירה לאחור לבחינה' },
+                                    { key: 'weakPointsNudge', label: '🎯 חזרה על נקודות חלשות' },
+                                ].map(({ key, label }) => (
+                                    <div key={key} className="flex items-center justify-between">
+                                        <span className="text-sm text-text-secondary">{label}</span>
+                                        <Toggle
+                                            value={!!notifSettings[key]}
+                                            onChange={(v: boolean) => onUpdateNotif?.({ ...notifSettings, [key]: v })}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Test button */}
+                            <button
+                                onClick={onTestNotif}
+                                className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-text-secondary font-bold text-sm hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Bell className="w-4 h-4" />
+                                שלח התראת בדיקה עכשיו
+                            </button>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </GlassCard>
         </motion.div>
     );
 };
@@ -1076,6 +1175,8 @@ function App() {
         };
     });
     const [showExplanation, setShowExplanation] = useState<any>(null);
+    const [notifSettings, setNotifSettings] = useState<NotificationSettings>(() => loadNotificationSettings());
+    const [notifPermission, setNotifPermission] = useState<NotificationPermission>(() => getPermissionStatus());
     const [hasOnboarded, setHasOnboarded] = useState<boolean>(() => {
         return !!localStorage.getItem('bina_onboarding');
     });
@@ -1083,6 +1184,26 @@ function App() {
         const saved = localStorage.getItem('bina_onboarding');
         return saved ? JSON.parse(saved) : null;
     });
+
+    // Register service worker and schedule notifications on mount
+    useEffect(() => {
+        registerServiceWorker();
+        if (notifSettings.enabled && getPermissionStatus() === 'granted') {
+            scheduleSmartNotifications(notifSettings, weakPoints.length, userProfile?.examDate);
+        }
+    }, []);
+
+    // Re-schedule when settings change
+    useEffect(() => {
+        if (notifSettings.enabled && notifPermission === 'granted') {
+            scheduleSmartNotifications(notifSettings, weakPoints.length, userProfile?.examDate);
+        }
+    }, [notifSettings, notifPermission]);
+
+    const updateNotifSettings = (newSettings: NotificationSettings) => {
+        setNotifSettings(newSettings);
+        saveNotificationSettings(newSettings);
+    };
 
     const handleOnboardingComplete = (profile: UserProfile) => {
         const isFirstTime = !localStorage.getItem('bina_onboarding');
@@ -1412,7 +1533,28 @@ function App() {
                             )}
                             {activeTab === 'achievements' && <AchievementsScreen achievements={userStats.achievements} onBack={() => setActiveTab('profile')} />}
                             {activeTab === 'study-plan' && <StudyPlanScreen userProfile={userProfile} onBack={() => setActiveTab('profile')} />}
-                            {activeTab === 'ai-settings' && <AISettingsScreen userStats={userStats} onBack={() => setActiveTab('profile')} onUpdateStats={(newStats: any) => { setUserStats(newStats); localStorage.setItem('bina_user_stats', JSON.stringify(newStats)); }} />}
+                            {activeTab === 'ai-settings' && (
+                                <AISettingsScreen
+                                    userStats={userStats}
+                                    onBack={() => setActiveTab('profile')}
+                                    onUpdateStats={(newStats: any) => {
+                                        setUserStats(newStats);
+                                        localStorage.setItem('bina_user_stats', JSON.stringify(newStats));
+                                    }}
+                                    notifSettings={notifSettings}
+                                    notifPermission={notifPermission}
+                                    onUpdateNotif={updateNotifSettings}
+                                    onRequestPermission={async () => {
+                                        const perm = await requestNotificationPermission();
+                                        setNotifPermission(perm);
+                                        if (perm === 'granted') {
+                                            updateNotifSettings({ ...notifSettings, enabled: true });
+                                        }
+                                    }}
+                                    onTestNotif={showTestNotification}
+                                />
+                            )}
+
                             {activeTab === 'pricing' && <PricingScreen onBack={() => setActiveTab('home')} />}
                         </motion.div>
                     )}
