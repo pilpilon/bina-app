@@ -158,5 +158,325 @@
         "example": "Restatement: meticulous ≈ very careful (שניהם = תשומת לב לפרטים)",
         "category": "Restatement",
         "difficulty": "medium"
+    },
+    {
+        "id": "e021",
+        "word": "The company's profits have been ___, showing consistent growth over the last five years.",
+        "definition": "robust — חסון, איתן",
+        "example": "תשובה: robust (= צמיחה עקבית וחזקה)",
+        "category": "Sentence Completion",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e022",
+        "word": "It is important to ___ between facts and opinions when reading the news.",
+        "definition": "distinguish — להבחין, להבדיל",
+        "example": "תשובה: distinguish (= להבדיל בין עובדות לדעות)",
+        "category": "Sentence Completion",
+        "difficulty": "easy"
+    },
+    {
+        "id": "e023",
+        "word": "The speaker's voice was barely ___ over the loud noise of the construction site.",
+        "definition": "audible — שמיע",
+        "example": "תשובה: audible (= ניתן לשמיעה)",
+        "category": "Sentence Completion",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e024",
+        "word": "Her explanation was so ___ that even those with no prior knowledge could understand it.",
+        "definition": "lucid — ברור, צלול",
+        "example": "תשובה: lucid (= ברור ונהיר)",
+        "category": "Sentence Completion",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e025",
+        "word": "The desert is a ___ environment, where very few plants and animals can survive.",
+        "definition": "harsh — קשוח, אכזרי",
+        "example": "תשובה: harsh (= סביבת חיים קשה למחיה)",
+        "category": "Sentence Completion",
+        "difficulty": "easy"
+    },
+    {
+        "id": "e026",
+        "word": "The team worked in ___ to finish the project on time.",
+        "definition": "collaboration — שיתוף פעולה",
+        "example": "תשובה: collaboration (= עבודה משותפת)",
+        "category": "Sentence Completion",
+        "difficulty": "easy"
+    },
+    {
+        "id": "e027",
+        "word": "He felt a sense of ___ after completing the difficult marathon.",
+        "definition": "accomplishment — הישג",
+        "example": "תשובה: accomplishment (= הרגשת סיפוק מהישג)",
+        "category": "Sentence Completion",
+        "difficulty": "easy"
+    },
+    {
+        "id": "e028",
+        "word": "The evidence against the suspect was ___, leading to a quick conviction.",
+        "definition": "overwhelming — מכריע, מוחץ",
+        "example": "תשובה: overwhelming (= ראיות חזקות מאוד)",
+        "category": "Sentence Completion",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e029",
+        "word": "The city has undergone a ___ transformation over the last decade.",
+        "definition": "remarkable — מדהים, ראוי לציון",
+        "example": "תשובה: remarkable (= שינוי מרשים מאוד)",
+        "category": "Sentence Completion",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e030",
+        "word": "She has a ___ talent for playing the piano, even without formal training.",
+        "definition": "natural — טבעי",
+        "example": "תשובה: natural (= כישרון מולד)",
+        "category": "Sentence Completion",
+        "difficulty": "easy"
+    },
+    {
+        "id": "e031",
+        "word": "VOCAL means the same as:",
+        "definition": "spoken / oral — קולי, מבוטא",
+        "example": "Restatement: vocal ≈ spoken (שניהם = קשור לדיבור/קול)",
+        "category": "Restatement",
+        "difficulty": "easy"
+    },
+    {
+        "id": "e032",
+        "word": "RELUCTANT means the same as:",
+        "definition": "unwilling — חסר רצון, מסויג",
+        "example": "Restatement: reluctant ≈ unwilling (שניהם = לא רוצה לעשות משהו)",
+        "category": "Restatement",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e033",
+        "word": "ADHERE means the same as:",
+        "definition": "stick to / follow — להיצמד ל-, לדבוק ב-",
+        "example": "Restatement: adhere ≈ stick to (שניהם = להיצמד/לציית)",
+        "category": "Restatement",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e034",
+        "word": "DIVERSE means the same as:",
+        "definition": "varied — מגוון",
+        "example": "Restatement: diverse ≈ varied (שניהם = כולל סוגים רבים)",
+        "category": "Restatement",
+        "difficulty": "easy"
+    },
+    {
+        "id": "e035",
+        "word": "PRUDENT means the same as:",
+        "definition": "wise / cautious — שקול, זהיר",
+        "example": "Restatement: prudent ≈ cautious (שניהם = פועל בזהירות ותבונה)",
+        "category": "Restatement",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e036",
+        "word": "ADVOCATE means the same as:",
+        "definition": "support / promote — לתמוך, להמליץ",
+        "example": "Restatement: advocate ≈ support (שניהם = לתמוך ברעיון/מטרה)",
+        "category": "Restatement",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e037",
+        "word": "TRANSIENT means the same as:",
+        "definition": "temporary — ארעי, חולף",
+        "example": "Restatement: transient ≈ temporary (שניהם = לא קבוע)",
+        "category": "Restatement",
+        "difficulty": "hard"
+    },
+    {
+        "id": "e038",
+        "word": "COHERENT means the same as:",
+        "definition": "logical / clear — עקבי, הגיוני",
+        "example": "Restatement: coherent ≈ logical (שניהם = ברור ומתקשר היטב)",
+        "category": "Restatement",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e039",
+        "word": "EVADE means the same as:",
+        "definition": "avoid / escape — לחמוק, להימנע",
+        "example": "Restatement: evade ≈ avoid (שניהם = להתרחק ממחויבות/סכנה)",
+        "category": "Restatement",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e040",
+        "word": "OBSTACLE means the same as:",
+        "definition": "barrier / hurdle — מכשול",
+        "example": "Restatement: obstacle ≈ barrier (שניהם = משהו שעומד בדרך)",
+        "category": "Restatement",
+        "difficulty": "easy"
+    },
+    {
+        "id": "e041",
+        "word": "The weather forecast was ___, as the sun shone despite predictions of rain.",
+        "definition": "inaccurate — לא מדויק",
+        "example": "תשובה: inaccurate (= התחזית לא הייתה נכונה)",
+        "category": "Sentence Completion",
+        "difficulty": "easy"
+    },
+    {
+        "id": "e042",
+        "word": "She gave a ___ performance that left the audience in awe.",
+        "definition": "stellar — כוכבי, מעולה",
+        "example": "תשובה: stellar (= הופעה מצוינת)",
+        "category": "Sentence Completion",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e043",
+        "word": "The document was so ___ that even experts found it difficult to decipher.",
+        "definition": "cryptic — מסתורי, מקודד",
+        "example": "תשובה: cryptic (= קשה להבנה, חידתי)",
+        "category": "Sentence Completion",
+        "difficulty": "hard"
+    },
+    {
+        "id": "e044",
+        "word": "He is ___ for his kindness and willingness to help others.",
+        "definition": "renowned — ידוע, מפורסם",
+        "example": "תשובה: renowned (= מוכר לטובה בזכות תכונותיו)",
+        "category": "Sentence Completion",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e045",
+        "word": "The new manager implemented a ___ of changes to improve efficiency.",
+        "definition": "host — שפע, סדרת (changes)",
+        "example": "תשובה: host (= מספר גדול של שינויים)",
+        "category": "Sentence Completion",
+        "difficulty": "hard"
+    },
+    {
+        "id": "e046",
+        "word": "The mountains were ___ in fog, making them nearly invisible.",
+        "definition": "shrouded — עטוף, מכוסה",
+        "example": "תשובה: shrouded (= מכוסה בערפל)",
+        "category": "Sentence Completion",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e047",
+        "word": "Her energy and enthusiasm are ___, inspiring everyone around her.",
+        "definition": "infectious — מדבק (במובן החיובי)",
+        "example": "תשובה: infectious (= משפיע על אחרים בצורה חיובית)",
+        "category": "Sentence Completion",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e048",
+        "word": "The treaty aimed to ___ peace between the two warring nations.",
+        "definition": "establish — לבסס, לכונן",
+        "example": "תשובה: establish (= ליצור שלום קבוע)",
+        "category": "Sentence Completion",
+        "difficulty": "easy"
+    },
+    {
+        "id": "e049",
+        "word": "The witness provided a ___ account of the events that took place.",
+        "definition": "vivid — חי, ברור מאוד",
+        "example": "תשובה: vivid (= תיאור מפורט וחי)",
+        "category": "Sentence Completion",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e050",
+        "word": "Despite the challenges, the project remains ___ and on track for completion.",
+        "definition": "viable — מעשי, בר-קיימא",
+        "example": "תשובה: viable (= עדיין ניתן לביצוע)",
+        "category": "Sentence Completion",
+        "difficulty": "hard"
+    },
+    {
+        "id": "e051",
+        "word": "CONVENTIONAL means the same as:",
+        "definition": "traditional / standard — שגרתי, מוסכם",
+        "example": "Restatement: conventional ≈ traditional (שניהם = מקובל ושגרתי)",
+        "category": "Restatement",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e052",
+        "word": "AUTHENTIC means the same as:",
+        "definition": "genuine / real — אותנטי, אמיתי",
+        "example": "Restatement: authentic ≈ genuine (שניהם = לא מזויף)",
+        "category": "Restatement",
+        "difficulty": "easy"
+    },
+    {
+        "id": "e053",
+        "word": "CUMULATIVE means the same as:",
+        "definition": "increasing / collective — מצטבר",
+        "example": "Restatement: cumulative ≈ increasing by additions (הולך ונערם)",
+        "category": "Restatement",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e054",
+        "word": "VIGILANT means the same as:",
+        "definition": "watchful / alert — עירני, דרוך",
+        "example": "Restatement: vigilant ≈ watchful (שניהם = עומד על המשמר)",
+        "category": "Restatement",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e055",
+        "word": "ELABORATE means the same as:",
+        "definition": "detailed / complex — מפורט, מורכב",
+        "example": "Restatement: elaborate ≈ detailed (שניהם = נכנס לפרטים רבים)",
+        "category": "Restatement",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e056",
+        "word": "PLAUSIBLE means the same as:",
+        "definition": "believable / reasonable — סביר, מתקבל על הדעת",
+        "example": "Restatement: plausible ≈ believable (שניהם = נשמע הגיוני)",
+        "category": "Restatement",
+        "difficulty": "hard"
+    },
+    {
+        "id": "e057",
+        "word": "ADVERSARY means the same as:",
+        "definition": "opponent / enemy — יריב, מתנגד",
+        "example": "Restatement: adversary ≈ opponent (שניהם = הצד השני בעימות)",
+        "category": "Restatement",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e058",
+        "word": "TENACIOUS means the same as:",
+        "definition": "persistent / stubborn — עקשן, דבק במטרה",
+        "example": "Restatement: tenacious ≈ persistent (שניהם = לא מוותר)",
+        "category": "Restatement",
+        "difficulty": "hard"
+    },
+    {
+        "id": "e059",
+        "word": "AESTHETIC means the same as:",
+        "definition": "appealing to beauty — אסתטי, קשור ליופי",
+        "example": "Restatement: aesthetic ≈ artistic (שניהם = קשור למראה ועיצוב)",
+        "category": "Restatement",
+        "difficulty": "medium"
+    },
+    {
+        "id": "e060",
+        "word": "PROLIFIC means the same as:",
+        "definition": "productive — פורה, יצרני",
+        "example": "Restatement: prolific ≈ productive (שניהם = מייצר בכמויות גדולות)",
+        "category": "Restatement",
+        "difficulty": "hard"
     }
 ]

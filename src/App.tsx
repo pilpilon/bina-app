@@ -9,6 +9,7 @@ import quantitativeData from './data/quantitative.json';
 import englishData from './data/english.json';
 import { useEffect } from 'react';
 import ExamScreen from './components/ExamScreen';
+import OnboardingScreen, { UserProfile } from './components/OnboardingScreen';
 
 // --- Types ---
 interface WordCard {
@@ -75,7 +76,7 @@ const NavItem = ({ icon: Icon, label, active = false, onClick }: any) => (
 
 // --- Screen Components ---
 
-const HomeScreen = ({ onStartLearning }: any) => (
+const HomeScreen = ({ onStartLearning, userProfile, userStats, getLevelName }: any) => (
     <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -101,15 +102,29 @@ const HomeScreen = ({ onStartLearning }: any) => (
                 className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-neon-purple to-neon-pink shadow-glow-purple font-black text-xl"
             >
                 <Flame className="w-6 h-6 fill-white" />
-                <span>7 ימים ברצף</span>
+                <span>{userStats.streak.count} ימים ברצף</span>
             </motion.div>
+        </div>
+
+        <div className="mb-8 px-2">
+            <div className="flex justify-between items-center mb-2">
+                <div className="text-sm font-black text-white/70 uppercase tracking-wider">רמה {userStats.level}: {getLevelName(userStats.level)}</div>
+                <div className="text-sm font-black text-electric-blue">{userStats.xp} / {userStats.level * 500} XP</div>
+            </div>
+            <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden border border-white/5">
+                <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(userStats.xp % 500) / 5}%` }}
+                    className="h-full bg-gradient-to-r from-electric-blue to-neon-purple"
+                />
+            </div>
         </div>
 
         <SmartCTA onClick={onStartLearning} />
 
         <h3 className="text-xl font-bold mb-4 pr-1">סטטיסטיקה בזמן אמת</h3>
         <div className="grid grid-cols-2 gap-4 mb-10">
-            <StatCard label="ציון חזוי" value="687" colorClass="bg-gradient-to-r from-electric-blue to-cyber-yellow bg-clip-text text-transparent" />
+            <StatCard label="ציון יעד" value={userProfile?.targetScore ?? '687'} colorClass="bg-gradient-to-r from-electric-blue to-cyber-yellow bg-clip-text text-transparent" />
             <StatCard label="תרגילים היום" value="23" />
             <StatCard label="דיוק כללי" value="89%" />
             <StatCard label="מילים נלמדו" value="142" />
@@ -204,7 +219,7 @@ const TopicCard = ({ icon: Icon, title, sub, color, bg, onClick }: any) => (
     </GlassCard>
 );
 
-const LearningScreen = ({ onBack, topic = 'vocabulary', ...props }: { onBack: () => void, topic?: string, [key: string]: any }) => {
+const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, ...props }: { onBack: () => void, topic?: string, awardXP: (n: number) => void, [key: string]: any }) => {
     const [index, setIndex] = useState(0);
     const [knownCount, setKnownCount] = useState(0);
 
@@ -296,13 +311,20 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', ...props }: { onBack: ()
                         <p className="text-text-secondary">ידעת <span className="text-electric-blue font-bold">{knownCount}</span> מתוך <span className="font-bold">{currentDataSet.length}</span> כרטיסיות</p>
                         <div className="flex gap-4 mt-2">
                             <button
-                                onClick={() => { setIndex(0); setKnownCount(0); }}
+                                onClick={() => {
+                                    setIndex(0);
+                                    setKnownCount(0);
+                                    awardXP(20);
+                                }}
                                 className="px-6 py-3 rounded-xl font-bold bg-electric-blue/20 border border-electric-blue text-electric-blue hover:bg-electric-blue/30 transition-all"
                             >
                                 שוב 🔄
                             </button>
                             <button
-                                onClick={onBack}
+                                onClick={() => {
+                                    awardXP(20);
+                                    onBack();
+                                }}
                                 className="px-6 py-3 rounded-xl font-bold bg-white/5 border border-white/10 text-text-secondary hover:bg-white/10 transition-all"
                             >
                                 חזור
@@ -314,7 +336,11 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', ...props }: { onBack: ()
                         <SwipeCard
                             key={`${topic}-${index}`}
                             {...currentWord}
-                            onSwipeLeft={() => { setKnownCount(prev => prev + 1); setIndex(prev => prev + 1); }}
+                            onSwipeLeft={() => {
+                                setKnownCount(prev => prev + 1);
+                                setIndex(prev => prev + 1);
+                                awardXP(10);
+                            }}
                             onSwipeRight={() => {
                                 if ((props as any).onMiss) (props as any).onMiss(currentWord);
                                 setIndex(prev => prev + 1);
@@ -428,7 +454,40 @@ const StatsScreen = () => {
     );
 };
 
-const ProfileScreen = () => {
+const AchievementsScreen = ({ achievements }: { achievements: string[] }) => {
+    const list = [
+        { id: 'centurion', name: '🌟 הצעד הראשון', desc: 'הגעת ל-100 XP ראשונים', icon: '🎯' },
+        { id: 'streak3', name: '🔥 התמדה', desc: '3 ימים ברצף', icon: '⚡' },
+        { id: 'marathon', name: '🏃 מרתוניסט', desc: 'סיימת סימולציה מלאה', icon: '🏆' },
+        { id: 'perfect', name: '💎 שלמות', desc: '100% דיוק בסט של 20', icon: '✨' }
+    ];
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="px-5 pt-8 pb-32"
+        >
+            <h1 className="text-3xl font-black mb-6">הישגים ותארים</h1>
+            <div className="grid grid-cols-1 gap-4">
+                {list.map(ach => {
+                    const unlocked = achievements.includes(ach.id);
+                    return (
+                        <GlassCard key={ach.id} className={`p-4 flex items-center gap-4 ${unlocked ? 'border-electric-blue/40' : 'opacity-40 grayscale'}`}>
+                            <div className="text-4xl">{ach.icon}</div>
+                            <div>
+                                <div className="font-black text-lg">{ach.name}</div>
+                                <div className="text-sm text-text-secondary">{ach.desc}</div>
+                            </div>
+                        </GlassCard>
+                    );
+                })}
+            </div>
+        </motion.div>
+    );
+};
+
+const ProfileScreen = ({ userStats, setActiveTab }: any) => {
     const [toast, setToast] = useState<string | null>(null);
 
     const showToast = (msg: string) => {
@@ -643,6 +702,36 @@ function App() {
         return saved ? JSON.parse(saved) : [];
     });
     const [showSurprise, setShowSurprise] = useState<WordCard | null>(null);
+    const [achievementToast, setAchievementToast] = useState<string | null>(null);
+
+    const showAchievementToast = (msg: string) => {
+        setAchievementToast(msg);
+        setTimeout(() => setAchievementToast(null), 4000);
+    };
+    const [userStats, setUserStats] = useState(() => {
+        const saved = localStorage.getItem('bina_user_stats');
+        if (saved) return JSON.parse(saved);
+        return {
+            xp: 0,
+            level: 1,
+            streak: { count: 1, lastDate: new Date().toISOString().split('T')[0] },
+            achievements: [] as string[],
+            categoryErrors: {} as Record<string, number>
+        };
+    });
+    const [hasOnboarded, setHasOnboarded] = useState<boolean>(() => {
+        return !!localStorage.getItem('bina_onboarding');
+    });
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
+        const saved = localStorage.getItem('bina_onboarding');
+        return saved ? JSON.parse(saved) : null;
+    });
+
+    const handleOnboardingComplete = (profile: UserProfile) => {
+        localStorage.setItem('bina_onboarding', JSON.stringify(profile));
+        setUserProfile(profile);
+        setHasOnboarded(true);
+    };
 
     useEffect(() => {
         localStorage.setItem('bina_custom_lists', JSON.stringify(customLists));
@@ -652,13 +741,88 @@ function App() {
         localStorage.setItem('bina_weak_points', JSON.stringify(weakPoints));
     }, [weakPoints]);
 
+    useEffect(() => {
+        localStorage.setItem('bina_user_stats', JSON.stringify(userStats));
+    }, [userStats]);
+
+    // Streak Maintenance Logic
+    useEffect(() => {
+        const today = new Date().toISOString().split('T')[0];
+        const lastDate = userStats.streak.lastDate;
+
+        if (lastDate !== today) {
+            const last = new Date(lastDate);
+            const now = new Date(today);
+            const diffDays = Math.floor((now.getTime() - last.getTime()) / (1000 * 3600 * 24));
+
+            if (diffDays === 1) {
+                // Consecutive day
+                setUserStats((prev: any) => ({
+                    ...prev,
+                    streak: { count: prev.streak.count + 1, lastDate: today }
+                }));
+            } else if (diffDays > 1) {
+                // Streak broken
+                setUserStats((prev: any) => ({
+                    ...prev,
+                    streak: { count: 1, lastDate: today }
+                }));
+            }
+        }
+    }, []);
+
+    const awardXP = (amount: number) => {
+        setUserStats((prev: any) => {
+            const newXP = prev.xp + amount;
+            const newLevel = Math.floor(newXP / 500) + 1;
+
+            // Check for achievements
+            let newAchievements = [...prev.achievements];
+            if (newXP >= 100 && !newAchievements.includes('centurion')) {
+                newAchievements.push('centurion');
+                setTimeout(() => showAchievementToast('🌟 הצעד הראשון: הגעת ל-100 XP!'), 500);
+            }
+
+            return { ...prev, xp: newXP, level: newLevel, achievements: newAchievements };
+        });
+    };
+
+    const recordError = (category: string) => {
+        setUserStats((prev: any) => ({
+            ...prev,
+            categoryErrors: {
+                ...prev.categoryErrors,
+                [category]: (prev.categoryErrors[category] || 0) + 1
+            }
+        }));
+    };
+
+    const getLevelName = (level: number) => {
+        const names = ["מתחיל", "לומד", "מתקדם", "מומחה", "אלוף"];
+        return names[Math.min(level - 1, names.length - 1)];
+    };
+
     const startLearning = (topic = 'vocabulary') => {
         let finalTopic = topic;
 
         if (topic === 'smart') {
             const topics = ['vocabulary', 'analogies', 'quantitative', 'english'];
-            // If we have weak points, 50% chance to pick from them
-            if (weakPoints.length > 0 && Math.random() > 0.5) {
+
+            // Smarter AI: Look for category with most errors
+            const errors = userStats.categoryErrors;
+            const categoriesWithErrors = Object.keys(errors).filter(cat => errors[cat] > 0);
+
+            if (categoriesWithErrors.length > 0) {
+                // Find category with max errors
+                const weakestCategory = categoriesWithErrors.reduce((a, b) => errors[a] > errors[b] ? a : b);
+
+                // Map the sub-category back to the main topic
+                if (vocabData.some(c => c.category === weakestCategory)) finalTopic = 'vocabulary';
+                else if (analogiesData.some(c => c.category === weakestCategory)) finalTopic = 'analogies';
+                else if (quantitativeData.some(c => c.category === weakestCategory)) finalTopic = 'quantitative';
+                else if (englishData.some(c => c.category === weakestCategory)) finalTopic = 'english';
+                else finalTopic = topics[Math.floor(Math.random() * topics.length)];
+            } else if (weakPoints.length > 0 && Math.random() > 0.6) {
                 finalTopic = 'weakPoints';
             } else {
                 finalTopic = topics[Math.floor(Math.random() * topics.length)];
@@ -681,11 +845,19 @@ function App() {
             return [...prev, card].slice(-20); // Keep last 20 weak points
         });
 
+        // Smart AI: Record error for this sub-category
+        recordError(card.category);
+        awardXP(5); // Small XP for practicing difficult items
+
         // Randomly trigger surprise after swiping unknown (higher chance for demo)
         if (Math.random() > 0.4) {
             setTimeout(() => setShowSurprise(card), 1500);
         }
     };
+
+    if (!hasOnboarded) {
+        return <OnboardingScreen onComplete={handleOnboardingComplete} />;
+    }
 
     return (
         <div className="min-h-screen bg-charcoal text-text-primary font-sans selection:bg-electric-blue/30 overflow-x-hidden scanline-overlay" dir="rtl">
@@ -711,6 +883,24 @@ function App() {
                     )}
                 </AnimatePresence>
 
+                <AnimatePresence>
+                    {achievementToast && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -50 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -50 }}
+                            className="fixed top-20 left-4 right-4 z-[110] pointer-events-none"
+                        >
+                            <div className="bg-gradient-to-r from-cyber-yellow to-neon-pink p-px rounded-xl shadow-glow-purple">
+                                <div className="bg-charcoal p-4 rounded-xl flex items-center gap-4">
+                                    <div className="text-2xl">🏆</div>
+                                    <div className="font-black text-white">{achievementToast}</div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 <AnimatePresence mode="wait">
                     {isLearning ? (
                         <LearningScreen
@@ -720,6 +910,7 @@ function App() {
                             weakPoints={weakPoints}
                             customLists={customLists}
                             onMiss={addToWeakPoints}
+                            awardXP={awardXP}
                         />
                     ) : (
                         <motion.div
@@ -736,6 +927,9 @@ function App() {
                                         if (topic === 'custom-edit') setActiveTab('custom-edit');
                                         else startLearning(topic);
                                     }}
+                                    userProfile={userProfile}
+                                    userStats={userStats}
+                                    getLevelName={getLevelName}
                                 />
                             )}
                             {activeTab === 'custom-edit' && (
@@ -744,9 +938,10 @@ function App() {
                                     onBack={() => setActiveTab('home')}
                                 />
                             )}
-                            {activeTab === 'learning' && <LearningScreen topic="vocabulary" onBack={() => setActiveTab('home')} />}
+                            {activeTab === 'learning' && <LearningScreen topic="vocabulary" onBack={() => setActiveTab('home')} awardXP={awardXP} />}
                             {activeTab === 'stats' && <StatsScreen />}
-                            {activeTab === 'profile' && <ProfileScreen />}
+                            {activeTab === 'profile' && <ProfileScreen userStats={userStats} setActiveTab={setActiveTab} />}
+                            {activeTab === 'achievements' && <AchievementsScreen achievements={userStats.achievements} />}
                         </motion.div>
                     )}
                 </AnimatePresence>

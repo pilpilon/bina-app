@@ -158,5 +158,325 @@
         "example": "Her tenacious spirit helped her overcome every obstacle",
         "category": "אוצר מילים",
         "difficulty": "medium"
+    },
+    {
+        "id": "v021",
+        "word": "ADULATION",
+        "definition": "התפעלות מופרזת, חנופה",
+        "example": "The rock star was greeted with adulation by his fans",
+        "category": "אוצר מילים",
+        "difficulty": "hard"
+    },
+    {
+        "id": "v022",
+        "word": "BENEVOLENT",
+        "definition": "נדבן, טוב לב, רוצה בטובת אחרים",
+        "example": "The benevolent billionaire donated most of his fortune to charity",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v023",
+        "word": "CANDID",
+        "definition": "גלוי לב, כנה, ישר",
+        "example": "He gave a candid interview about his struggles with addiction",
+        "category": "אוצר מילים",
+        "difficulty": "easy"
+    },
+    {
+        "id": "v024",
+        "word": "DEFERENCE",
+        "definition": "כבוד, היענות לרצון האחר מתוך יראת כבוד",
+        "example": "The young lawyer treated the judge with great deference",
+        "category": "אוצר מילים",
+        "difficulty": "hard"
+    },
+    {
+        "id": "v025",
+        "word": "ELOQUENT",
+        "definition": "רהוט, בעל לשון לימודים",
+        "example": "She made an eloquent appeal for human rights",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v026",
+        "word": "FRUGAL",
+        "definition": "חסכוני, צנוע בהוצאותיו",
+        "example": "They lead a frugal life, rarely eating out",
+        "category": "אוצר מילים",
+        "difficulty": "easy"
+    },
+    {
+        "id": "v027",
+        "word": "GREGARIOUS",
+        "definition": "חברותי, אוהב חברה",
+        "example": "Dolphins are gregarious animals, usually living in large groups",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v028",
+        "word": "HAUGHTY",
+        "definition": "יהיר, מתנשא",
+        "example": "The haughty waiter looked down on the casually dressed tourists",
+        "category": "אוצר מילים",
+        "difficulty": "hard"
+    },
+    {
+        "id": "v029",
+        "word": "IMPLACABLE",
+        "definition": "שאינו ניתן לפיסוי, נוקשה",
+        "example": "The two countries remained implacable enemies for decades",
+        "category": "אוצר מילים",
+        "difficulty": "hard"
+    },
+    {
+        "id": "v030",
+        "word": "JUBILANT",
+        "definition": "צוהל, שמח מאוד",
+        "example": "The fans were jubilant after their team won the championship",
+        "category": "אוצר מילים",
+        "difficulty": "easy"
+    },
+    {
+        "id": "v031",
+        "word": "KNACK",
+        "definition": "כישרון, מיומנות מיוחדת",
+        "example": "She has a knack for remembering names and faces",
+        "category": "אוצר מילים",
+        "difficulty": "easy"
+    },
+    {
+        "id": "v032",
+        "word": "LUCID",
+        "definition": "ברור, נהיר, צלול",
+        "example": "The professor gave a lucid explanation of a complex theory",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v033",
+        "word": "METICULOUS",
+        "definition": "מדקדק בפרטים, קפדן",
+        "example": "The artist was meticulous in his choice of colors",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v034",
+        "word": "NEFARIOUS",
+        "definition": "מרושע, שפל",
+        "example": "The villain had a nefarious plot to take over the world",
+        "category": "אוצר מילים",
+        "difficulty": "hard"
+    },
+    {
+        "id": "v035",
+        "word": "OBSTINATE",
+        "definition": "עקשן",
+        "example": "He's too obstinate to admit he was wrong",
+        "category": "אוצר מילים",
+        "difficulty": "easy"
+    },
+    {
+        "id": "v036",
+        "word": "PRUDENT",
+        "definition": "זהיר, שקול",
+        "example": "It's prudent to save some money for emergencies",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v037",
+        "word": "QUERULOUS",
+        "definition": "זעפן, מתלונן תדיר",
+        "example": "The tired child became querulous and started to cry",
+        "category": "אוצר מילים",
+        "difficulty": "hard"
+    },
+    {
+        "id": "v038",
+        "word": "REVERENCE",
+        "definition": "הערצה, כבוד רב",
+        "example": "The temple is treated with great reverence by the monks",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v039",
+        "word": "SAGACIOUS",
+        "definition": "נבון, חכם",
+        "example": "The king sought advice from his sagacious councilors",
+        "category": "אוצר מילים",
+        "difficulty": "hard"
+    },
+    {
+        "id": "v040",
+        "word": "TENACIOUS",
+        "definition": "עקשן, דבק במטרה",
+        "example": "The tenacious detective refused to give up on the cold case",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v041",
+        "word": "VENERATE",
+        "definition": "להוקיר, להעריץ",
+        "example": "Many cultures venerate their ancestors",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v042",
+        "word": "WARY",
+        "definition": "זהיר, חשדן",
+        "example": "Be wary of strangers offering you free gifts",
+        "category": "אוצר מילים",
+        "difficulty": "easy"
+    },
+    {
+        "id": "v043",
+        "word": "ZEAL",
+        "definition": "להיטות, התלהבות",
+        "example": "The new employee started his job with great zeal",
+        "category": "אוצר מילים",
+        "difficulty": "easy"
+    },
+    {
+        "id": "v044",
+        "word": "ABSTAIN",
+        "definition": "להימנע",
+        "example": "He decided to abstain from alcohol for a month",
+        "category": "אוצר מילים",
+        "difficulty": "easy"
+    },
+    {
+        "id": "v045",
+        "word": "BOISTEROUS",
+        "definition": "קולני, נמרץ, פרוע",
+        "example": "The boisterous crowd cheered when the goal was scored",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v046",
+        "word": "COMPLACENT",
+        "definition": "שבע רצון מעצמו (שלעיתים מוביל לשאננות)",
+        "example": "We cannot afford to be complacent about national security",
+        "category": "אוצר מילים",
+        "difficulty": "hard"
+    },
+    {
+        "id": "v047",
+        "word": "DILIGENT",
+        "definition": "חרוץ, שקדן",
+        "example": "A diligent student usually gets good grades",
+        "category": "אוצר מילים",
+        "difficulty": "easy"
+    },
+    {
+        "id": "v048",
+        "word": "EMPATHY",
+        "definition": "אמפתיה, הזדהות",
+        "example": "Having empathy allows you to understand how others feel",
+        "category": "אוצר מילים",
+        "difficulty": "easy"
+    },
+    {
+        "id": "v049",
+        "word": "FORBEARANCE",
+        "definition": "סבלנות, איפוק",
+        "example": "The teacher showed great forbearance with the noisy class",
+        "category": "אוצר מילים",
+        "difficulty": "hard"
+    },
+    {
+        "id": "v050",
+        "word": "HEDONIST",
+        "definition": "נהנתן",
+        "example": "He was a hedonist who spent all his money on luxury",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v051",
+        "word": "INEVITABLE",
+        "definition": "בלתי נמנע",
+        "example": "Death is an inevitable part of life",
+        "category": "אוצר מילים",
+        "difficulty": "easy"
+    },
+    {
+        "id": "v052",
+        "word": "LONGEVITY",
+        "definition": "אריכות ימים",
+        "example": "Healthy eating is key to longevity",
+        "category": "אוצר מילים",
+        "difficulty": "easy"
+    },
+    {
+        "id": "v053",
+        "word": "MUNDANE",
+        "definition": "יומיומי, שגרתי, משעמם",
+        "example": "He was tired of the mundane tasks of his office job",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v054",
+        "word": "NONCHALANT",
+        "definition": "נינוח, שאינו מתרגש",
+        "example": "She gave a nonchalant shrug when asked about the test",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v055",
+        "word": "ORATOR",
+        "definition": "נואם רהוט",
+        "example": "Martin Luther King Jr. was a famous orator",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v056",
+        "word": "PARCHED",
+        "definition": "יבש מאוד, צמא",
+        "example": "The hikers were parched after walking in the sun all day",
+        "category": "אוצר מילים",
+        "difficulty": "easy"
+    },
+    {
+        "id": "v057",
+        "word": "RECLUSIVE",
+        "definition": "מתבודד",
+        "example": "The reclusive author rarely left his home",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v058",
+        "word": "SCRUTINIZE",
+        "definition": "לבחון בקפידה",
+        "example": "The customs officer scrutinized every passport",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
+    },
+    {
+        "id": "v059",
+        "word": "TRANSIENT",
+        "definition": "ארעי, חולף",
+        "example": "The joy of winning was transient, lasting only a day",
+        "category": "אוצר מילים",
+        "difficulty": "hard"
+    },
+    {
+        "id": "v060",
+        "word": "VIGILANT",
+        "definition": "עירני, דרוך",
+        "example": "Security guards must remain vigilant at all times",
+        "category": "אוצר מילים",
+        "difficulty": "medium"
     }
 ]
