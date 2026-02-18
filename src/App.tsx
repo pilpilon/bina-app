@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+// Triggering production deployment with latest infrastructure - Commit 96f2188++
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, BookOpen, BarChart3, User, Home, Flame, ChevronRight, ChevronLeft, X, Check, TrendingUp, Calendar, Zap, Timer, Heart, Bell, BellOff } from 'lucide-react';
 import SwipeCard from './components/SwipeCard';
