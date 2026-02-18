@@ -15,9 +15,10 @@ interface Question {
 interface ExamScreenProps {
     questions: Question[];
     onClose: () => void;
+    onShowExplanation?: (item: any) => void;
 }
 
-const ExamScreen: React.FC<ExamScreenProps> = ({ questions, onClose }) => {
+const ExamScreen: React.FC<ExamScreenProps> = ({ questions, onClose, onShowExplanation }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<string, string>>({});
     const [timeLeft, setTimeLeft] = useState(1200); // 20 minutes in seconds
@@ -113,13 +114,23 @@ const ExamScreen: React.FC<ExamScreenProps> = ({ questions, onClose }) => {
                             const isCorrect = answers[q.id] === q.correctAnswer;
                             const isAnswered = !!answers[q.id];
                             return (
-                                <div key={q.id} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+                                <div key={q.id} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 group">
                                     <div className="flex items-center gap-3">
                                         <div className={`w-2 h-2 rounded-full ${isCorrect ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-neon-pink shadow-[0_0_8px_rgba(255,0,119,0.5)]'}`} />
                                         <span className="font-bold text-sm">שאלה {idx + 1}</span>
                                     </div>
-                                    <div className="text-xs font-medium text-text-secondary">
-                                        {isAnswered ? (isCorrect ? 'נכון' : 'טעות') : 'לא נענה'}
+                                    <div className="flex items-center gap-4">
+                                        {!isCorrect && isAnswered && (
+                                            <button
+                                                onClick={() => onShowExplanation?.(q)}
+                                                className="text-[10px] font-black text-electric-blue hover:text-white transition-colors bg-electric-blue/10 px-2 py-1 rounded-md border border-electric-blue/30"
+                                            >
+                                                למה טעיתי? 🤖
+                                            </button>
+                                        )}
+                                        <div className="text-xs font-medium text-text-secondary">
+                                            {isAnswered ? (isCorrect ? 'נכון' : 'טעות') : 'לא נענה'}
+                                        </div>
                                     </div>
                                 </div>
                             );
@@ -198,14 +209,14 @@ const ExamScreen: React.FC<ExamScreenProps> = ({ questions, onClose }) => {
                             key={idx}
                             onClick={() => handleAnswerSelection(option)}
                             className={`w-full p-5 rounded-2xl border transition-all text-right flex items-center justify-between group ${answers[currentQuestion.id] === option
-                                    ? 'bg-electric-blue/20 border-electric-blue text-white shadow-glow-blue'
-                                    : 'bg-white/5 border-white/10 text-text-secondary hover:bg-white/10 hover:border-white/20'
+                                ? 'bg-electric-blue/20 border-electric-blue text-white shadow-glow-blue'
+                                : 'bg-white/5 border-white/10 text-text-secondary hover:bg-white/10 hover:border-white/20'
                                 }`}
                         >
                             <span className="font-bold text-lg leading-relaxed">{option}</span>
                             <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${answers[currentQuestion.id] === option
-                                    ? 'bg-electric-blue border-electric-blue text-charcoal'
-                                    : 'border-white/20 group-hover:border-white/40'
+                                ? 'bg-electric-blue border-electric-blue text-charcoal'
+                                : 'border-white/20 group-hover:border-white/40'
                                 }`}>
                                 {answers[currentQuestion.id] === option && <CheckCircle2 className="w-4 h-4" />}
                             </div>

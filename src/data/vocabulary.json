@@ -5,7 +5,8 @@
         "definition": "נמצא בכל מקום, נפוץ מאוד",
         "example": "Smartphones have become ubiquitous in modern society",
         "category": "אוצר מילים",
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "explanation": "המילה Ubiquitous מתארת משהו שנמצא בכל מקום בו זמנית. שורש המילה מגיע מהמילה הלטינית 'ubique' שמשמעותה 'בכל מקום'. דוגמה טובה היא אוויר או טכנולוגיה מודרנית."
     },
     {
         "id": "v002",
@@ -13,7 +14,8 @@
         "definition": "חולף, זמני, קצר ימים",
         "example": "The beauty of a sunset is ephemeral",
         "category": "אוצר מילים",
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "explanation": "Ephemeral מתאר משהו קצר ימים או חולף מהר. מקור המילה ביוונית ומתייחס לדברים שנמשכים יום אחד בלבד. פרחים שנובלים מהר או רגעי אושר חולפים הם דוגמאות קלאסיות."
     },
     {
         "id": "v003",

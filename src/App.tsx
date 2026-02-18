@@ -316,6 +316,7 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
             <ExamScreen
                 questions={selected}
                 onClose={onBack}
+                onShowExplanation={(item) => (props as any).onShowExplanation?.(item)}
             />
         );
     }
@@ -612,7 +613,7 @@ const StudyPlanScreen = ({ userProfile, onBack }: any) => {
     );
 };
 
-const AISettingsScreen = ({ userStats, onBack }: any) => {
+const AISettingsScreen = ({ userStats, onBack, onUpdateStats }: any) => {
     return (
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="px-5 pt-12 pb-32">
             <button onClick={onBack} className="flex items-center gap-2 text-text-muted mb-8 font-bold">
@@ -639,6 +640,36 @@ const AISettingsScreen = ({ userStats, onBack }: any) => {
                         <div className="font-black text-xl">אנלוגיות</div>
                     </GlassCard>
                 </div>
+
+                {/* Teacher Mode Toggle */}
+                <GlassCard className="p-5 border-electric-blue/30">
+                    <h4 className="font-bold text-white/70 mb-4 text-sm uppercase">AI Teacher Mode 🤖</h4>
+                    <div className="flex items-center justify-between gap-4">
+                        <div>
+                            <div className="font-bold">הסבר אוטומטי לטעויות</div>
+                            <div className="text-xs text-text-secondary mt-1">Bina תסביר כל טעות מיד לאחר שתבצע אותה</div>
+                        </div>
+                        <button
+                            onClick={() => onUpdateStats?.({ ...userStats, teacherMode: !userStats.teacherMode })}
+                            className={`w-14 h-7 rounded-full transition-colors relative flex-shrink-0 ${userStats.teacherMode ? 'bg-electric-blue shadow-glow-blue' : 'bg-white/10'}`}
+                        >
+                            <motion.div
+                                animate={{ x: userStats.teacherMode ? 28 : 4 }}
+                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                                className="absolute top-1.5 w-4 h-4 bg-white rounded-full shadow-sm"
+                            />
+                        </button>
+                    </div>
+                    {userStats.teacherMode && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="mt-4 text-xs text-electric-blue font-bold bg-electric-blue/10 rounded-lg p-3"
+                        >
+                            ✅ מצב מורה פעיל — Bina תסביר לך כל טעות!
+                        </motion.div>
+                    )}
+                </GlassCard>
 
                 <GlassCard className="p-6">
                     <h4 className="font-bold text-white/70 mb-4 text-sm uppercase">התראות חכמות</h4>
@@ -914,6 +945,54 @@ const SmartAlert = ({ card, onClose, onAction }: any) => (
     </motion.div>
 );
 
+const AIExplanationModal = ({ item, onClose }: { item: any, onClose: () => void }) => {
+    const text = item.explanation || `כרגע אין הסבר מפורט ל"${item.word || item.id}", אבל ה-Bina ממליצה לחזור על הנושא ${item.category}.`;
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-charcoal/80 backdrop-blur-xl"
+        >
+            <GlassCard className="max-w-md w-full p-8 border-electric-blue/50 shadow-glow-blue overflow-hidden relative">
+                <div className="absolute top-0 right-0 p-4">
+                    <button onClick={onClose} className="text-text-muted hover:text-white transition-colors">
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="w-12 h-12 rounded-2xl bg-electric-blue/20 flex items-center justify-center text-electric-blue">
+                        <Zap className="w-7 h-7" />
+                    </div>
+                    <div>
+                        <div className="text-[10px] font-black tracking-widest text-electric-blue uppercase">Bina AI Explainer</div>
+                        <h3 className="text-xl font-black text-white">{item.word || "הסבר לוגי"}</h3>
+                    </div>
+                </div>
+
+                <div className="text-lg text-text-secondary leading-relaxed mb-8 pr-1 min-h-[100px]">
+                    <motion.p
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                    >
+                        {text}
+                    </motion.p>
+                </div>
+
+                <button
+                    onClick={onClose}
+                    className="w-full py-4 bg-electric-blue text-charcoal font-black rounded-xl hover:scale-[1.02] transition-all shadow-glow-blue"
+                >
+                    הבנתי, תודה!
+                </button>
+            </GlassCard>
+        </motion.div>
+    );
+};
+
 // --- Main App ---
 
 function App() {
@@ -951,13 +1030,14 @@ function App() {
                 { day: 'ב', value: 0 },
                 { day: 'ג', value: 0 },
                 { day: 'ד', value: 0 },
-                { day: 'ה', value: 0 },
                 { day: 'ו', value: 0 },
                 { day: 'ש', value: 0 },
             ],
-            favorites: [] as string[]
+            favorites: [] as string[],
+            teacherMode: false
         };
     });
+    const [showExplanation, setShowExplanation] = useState<any>(null);
     const [hasOnboarded, setHasOnboarded] = useState<boolean>(() => {
         return !!localStorage.getItem('bina_onboarding');
     });
@@ -986,7 +1066,8 @@ function App() {
                     { day: 'א', value: 0 }, { day: 'ב', value: 0 }, { day: 'ג', value: 0 },
                     { day: 'ד', value: 0 }, { day: 'ה', value: 0 }, { day: 'ו', value: 0 }, { day: 'ש', value: 0 },
                 ],
-                favorites: []
+                favorites: [],
+                teacherMode: false
             };
             setUserStats(cleanStats);
             localStorage.setItem('bina_user_stats', JSON.stringify(cleanStats));
@@ -1226,11 +1307,17 @@ function App() {
                             onBack={() => setIsLearning(false)}
                             weakPoints={weakPoints}
                             customLists={customLists}
-                            onMiss={addToWeakPoints}
+                            onMiss={(card: WordCard) => {
+                                addToWeakPoints(card);
+                                if (userStats.teacherMode) {
+                                    setShowExplanation(card);
+                                }
+                            }}
                             awardXP={awardXP}
                             recordActivity={recordActivity}
                             favorites={userStats.favorites}
                             onToggleFavorite={toggleFavorite}
+                            onShowExplanation={setShowExplanation}
                         />
                     ) : (
                         <motion.div
@@ -1280,12 +1367,22 @@ function App() {
                             )}
                             {activeTab === 'achievements' && <AchievementsScreen achievements={userStats.achievements} onBack={() => setActiveTab('profile')} />}
                             {activeTab === 'study-plan' && <StudyPlanScreen userProfile={userProfile} onBack={() => setActiveTab('profile')} />}
-                            {activeTab === 'ai-settings' && <AISettingsScreen userStats={userStats} onBack={() => setActiveTab('profile')} />}
+                            {activeTab === 'ai-settings' && <AISettingsScreen userStats={userStats} onBack={() => setActiveTab('profile')} onUpdateStats={(newStats: any) => { setUserStats(newStats); localStorage.setItem('bina_user_stats', JSON.stringify(newStats)); }} />}
                             {activeTab === 'pricing' && <PricingScreen onBack={() => setActiveTab('home')} />}
                         </motion.div>
                     )}
                 </AnimatePresence>
             </div>
+
+            {/* AI Explanation Modal */}
+            <AnimatePresence>
+                {showExplanation && (
+                    <AIExplanationModal
+                        item={showExplanation}
+                        onClose={() => setShowExplanation(null)}
+                    />
+                )}
+            </AnimatePresence>
 
             {/* Navigation Bar */}
             {!isLearning && (
