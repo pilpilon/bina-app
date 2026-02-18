@@ -848,28 +848,43 @@ const ProfileScreen = ({ userStats, userProfile, setActiveTab, onEditProfile, on
     );
 };
 
-const CustomListScreen = ({ onSave, onBack }: any) => {
+const CustomListScreen = ({ onSave, onBack, onStartLearning }: any) => {
     const [text, setText] = useState('');
+    const [saved, setSaved] = useState(false);
 
     const handleImport = () => {
-        const lines = text.split('\n');
-        const newList: WordCard[] = lines
-            .filter(line => line.includes(':') || line.includes('-'))
-            .map((line, idx) => {
-                const [word, ...defParts] = line.split(/[:\-]/);
-                return {
-                    id: `custom-${Date.now()}-${idx}`,
-                    word: word.trim(),
-                    definition: defParts.join(':').trim(),
-                    example: 'נוסף על ידי היוזר',
-                    category: 'הרשימה שלי',
-                    difficulty: 'medium'
-                };
-            });
+        const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+        const newList: WordCard[] = lines.map((line, idx) => {
+            // Support both "word : definition" and plain "word" formats
+            const hasColon = line.includes(':');
+            const hasDash = line.includes(' - ');
+            let word = line;
+            let definition = '';
+
+            if (hasColon) {
+                const [w, ...rest] = line.split(':');
+                word = w.trim();
+                definition = rest.join(':').trim();
+            } else if (hasDash) {
+                const [w, ...rest] = line.split(' - ');
+                word = w.trim();
+                definition = rest.join(' - ').trim();
+            }
+            // If no separator, word = line, definition will be filled by AI/user later
+
+            return {
+                id: `custom-${Date.now()}-${idx}`,
+                word: word,
+                definition: definition || `(${word})`,
+                example: 'מהרשימה האישית שלך',
+                category: 'הרשימה שלי',
+                difficulty: 'medium'
+            };
+        });
 
         if (newList.length > 0) {
             onSave(newList);
-            onBack();
+            setSaved(true);
         }
     };
 
@@ -881,30 +896,53 @@ const CustomListScreen = ({ onSave, onBack }: any) => {
         >
             <div className="flex items-center justify-between mb-8">
                 <button onClick={onBack} className="p-2 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
-                    <ChevronLeft className="w-6 h-6" />
+                    <ChevronRight className="w-6 h-6" />
                 </button>
-                <h2 className="text-2xl font-black text-electric-blue">ייבוא אוצר מילים</h2>
+                <h2 className="text-2xl font-black text-electric-blue">הרשימה האישית שלי</h2>
                 <div className="w-10" />
             </div>
 
             <GlassCard className="p-6 flex-1 flex flex-col gap-4">
                 <div className="text-sm text-text-secondary leading-relaxed mb-2">
-                    הכנס מילים בפורמט: <code className="text-neon-purple font-mono">מילה : פירוש</code>
-                    <br />ערוך כל מילה בשורה חדשה.
+                    <span className="font-bold text-white">הכנס מילים — כל מילה בשורה חדשה.</span>
+                    <br />
+                    <span className="text-text-muted">אפשר פשוט להדביק מילים, או להוסיף פירוש:</span>
+                    <br />
+                    <code className="text-neon-purple font-mono text-xs">Apple{"\n"}Banana : בננה{"\n"}Ubiquitous : נמצא בכל מקום</code>
                 </div>
                 <textarea
                     value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    placeholder="Apple : תפוח&#10;Banana : בננה"
+                    onChange={(e) => { setText(e.target.value); setSaved(false); }}
+                    placeholder={`Apple\nBanana\nUbiquitous : נמצא בכל מקום`}
                     className="flex-1 bg-black/40 border border-white/10 rounded-xl p-4 text-text-primary font-mono text-sm focus:outline-none focus:border-electric-blue/50 transition-colors resize-none mb-4"
                 />
-                <button
-                    onClick={handleImport}
-                    disabled={!text.trim()}
-                    className="w-full py-4 rounded-xl bg-gradient-to-r from-electric-blue to-neon-purple text-charcoal font-black text-lg shadow-glow-blue disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all"
-                >
-                    צור מבחן כרטיסיות 🚀
-                </button>
+                {saved ? (
+                    <div className="space-y-3">
+                        <div className="text-center text-emerald-400 font-bold text-sm py-2">
+                            ✅ {text.split('\n').filter(l => l.trim()).length} מילים נשמרו!
+                        </div>
+                        <button
+                            onClick={onStartLearning}
+                            className="w-full py-4 rounded-xl bg-gradient-to-r from-electric-blue to-neon-purple text-charcoal font-black text-lg shadow-glow-blue active:scale-95 transition-all"
+                        >
+                            התחל ללמוד 🚀
+                        </button>
+                        <button
+                            onClick={() => setSaved(false)}
+                            className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-text-secondary font-bold text-sm"
+                        >
+                            ערוך רשימה
+                        </button>
+                    </div>
+                ) : (
+                    <button
+                        onClick={handleImport}
+                        disabled={!text.trim()}
+                        className="w-full py-4 rounded-xl bg-gradient-to-r from-electric-blue to-neon-purple text-charcoal font-black text-lg shadow-glow-blue disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all"
+                    >
+                        שמור רשימה ✨
+                    </button>
+                )}
             </GlassCard>
         </motion.div>
     );
@@ -1302,7 +1340,7 @@ function App() {
                 <AnimatePresence mode="wait">
                     {isLearning ? (
                         <LearningScreen
-                            key="learning"
+                            key={`learning-${learningTopic}`}
                             topic={learningTopic}
                             onBack={() => setIsLearning(false)}
                             weakPoints={weakPoints}
@@ -1342,7 +1380,14 @@ function App() {
                             )}
                             {activeTab === 'custom-edit' && (
                                 <CustomListScreen
-                                    onSave={(list: WordCard[]) => setCustomLists(list)}
+                                    onSave={(list: WordCard[]) => {
+                                        setCustomLists(list);
+                                        localStorage.setItem('bina_custom_lists', JSON.stringify(list));
+                                    }}
+                                    onStartLearning={() => {
+                                        setActiveTab('home');
+                                        setTimeout(() => startLearning('custom'), 100);
+                                    }}
                                     onBack={() => setActiveTab('home')}
                                 />
                             )}
