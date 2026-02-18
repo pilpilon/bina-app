@@ -24,7 +24,7 @@ import {
     type NotificationSettings,
     defaultNotificationSettings,
 } from './utils/notifications';
-import { auth, signInWithGoogle, logout as firebaseLogout, db, doc, setDoc, getDoc, onSnapshot, getRedirectResult } from './utils/firebase';
+import { auth, signInWithGoogle, logout as firebaseLogout, db, doc, setDoc, getDoc, onSnapshot } from './utils/firebase';
 import { openPaddleCheckout, initializePaddle } from './utils/paddle';
 
 // --- Types ---
@@ -1824,20 +1824,6 @@ function App() {
         if (notifSettings.enabled && getPermissionStatus() === 'granted') {
             scheduleSmartNotifications(notifSettings, weakPoints.length, userProfile?.examDate);
         }
-
-        // Handle Redirect Result (Google Sign-in)
-        getRedirectResult(auth)
-            .then((result) => {
-                if (result?.user) {
-                    console.log("Logged in via redirect", result.user);
-                }
-            })
-            .catch((error) => {
-                console.error("Redirect Error", error);
-                if (error.code === 'auth/unauthorized-domain') {
-                    alert('domain Error: ' + window.location.hostname + ' is not authorized.');
-                }
-            });
 
         // Firebase Auth Listener
         const unsubscribeAuth = auth.onAuthStateChanged(async (firebaseUser) => {
