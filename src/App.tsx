@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, BookOpen, BarChart3, User, Home, Flame, ChevronRight, ChevronLeft, X, Check, TrendingUp, Calendar, Zap } from 'lucide-react';
+import { Target, BookOpen, BarChart3, User, Home, Flame, ChevronRight, ChevronLeft, X, Check, TrendingUp, Calendar, Zap, Timer } from 'lucide-react';
 import SwipeCard from './components/SwipeCard';
 import PerformanceChart from './components/PerformanceChart';
 import vocabData from './data/vocabulary.json';
@@ -8,6 +8,7 @@ import analogiesData from './data/analogies.json';
 import quantitativeData from './data/quantitative.json';
 import englishData from './data/english.json';
 import { useEffect } from 'react';
+import ExamScreen from './components/ExamScreen';
 
 // --- Types ---
 interface WordCard {
@@ -148,6 +149,14 @@ const HomeScreen = ({ onStartLearning }: any) => (
                 bg="bg-neon-pink/20"
                 onClick={() => onStartLearning('vocabulary')}
             />
+            <TopicCard
+                icon={Timer}
+                title="מרתון - סימולציה"
+                sub="20 דקות | 20 שאלות"
+                color="text-emerald-400"
+                bg="bg-emerald-400/20"
+                onClick={() => onStartLearning('marathon')}
+            />
         </div>
 
         <div className="mt-8 mb-4 flex items-center justify-between">
@@ -225,6 +234,23 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', ...props }: { onBack: ()
 
     const currentTopicInfo = topicTitles[topic] || topicTitles.vocabulary;
 
+    if (topic === 'marathon') {
+        // Generate 20 questions for the marathon
+        const allQuestions = [...vocabData, ...analogiesData, ...quantitativeData, ...englishData];
+        const shuffled = allQuestions.sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, 20).map(q => ({
+            ...q,
+            correctAnswer: (q as any).definition || (q as any).answer || (q as any).word // Simple mapping for demo
+        }));
+
+        return (
+            <ExamScreen
+                questions={selected}
+                onClose={onBack}
+            />
+        );
+    }
+
     return (
         <motion.div
             initial={{ opacity: 0, x: 50 }}
@@ -242,6 +268,7 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', ...props }: { onBack: ()
                 </div>
                 <div className="w-10" /> {/* Spacer */}
             </div>
+            {/* ... rest of existing LearningScreen content ... */}
 
             <div className="mb-8">
                 <div className="flex justify-between items-center mb-2 text-xs font-bold text-text-secondary">
@@ -636,6 +663,12 @@ function App() {
             } else {
                 finalTopic = topics[Math.floor(Math.random() * topics.length)];
             }
+        }
+
+        if (topic === 'marathon') {
+            setLearningTopic('marathon');
+            setIsLearning(true);
+            return;
         }
 
         setLearningTopic(finalTopic);
