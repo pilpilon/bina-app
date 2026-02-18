@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, BookOpen, BarChart3, User, Home, Flame, ChevronRight, ChevronLeft, X, Check, TrendingUp, Calendar, Zap, Timer } from 'lucide-react';
+import { Target, BookOpen, BarChart3, User, Home, Flame, ChevronRight, ChevronLeft, X, Check, TrendingUp, Calendar, Zap, Timer, Heart } from 'lucide-react';
 import SwipeCard from './components/SwipeCard';
 import PerformanceChart from './components/PerformanceChart';
 import vocabData from './data/vocabulary.json';
@@ -128,6 +128,48 @@ const HomeScreen = ({ onStartLearning, userProfile, userStats, getLevelName }: a
 
             <SmartCTA onClick={onStartLearning} />
 
+            {/* Pro Banner */}
+            <GlassCard
+                className="p-5 mb-8 bg-gradient-to-r from-neon-purple/20 to-neon-pink/20 border-neon-purple/30 cursor-pointer overflow-hidden relative group"
+                onClick={() => onStartLearning('pricing')}
+            >
+                <motion.div
+                    animate={{ x: [0, 50, 0] }}
+                    transition={{ duration: 10, repeat: Infinity }}
+                    className="absolute -top-10 -right-10 w-32 h-32 bg-neon-pink/10 blur-3xl rounded-full"
+                />
+                <div className="relative z-10 flex items-center justify-between">
+                    <div>
+                        <div className="text-xs font-black text-neon-pink uppercase tracking-widest mb-1">מבצע זמן מוגבל</div>
+                        <div className="text-lg font-black text-white">קבל Bina Pro ב-30% הנחה!</div>
+                        <div className="text-xs text-text-secondary">גישה חופשית לכל הסברי ה-AI</div>
+                    </div>
+                    <div className="bg-neon-pink text-white px-3 py-1 rounded-lg font-black text-sm">שדרוג</div>
+                </div>
+            </GlassCard>
+
+            {/* Favorites Section */}
+            {userStats.favorites?.length > 0 && (
+                <div className="mb-8">
+                    <h3 className="text-xl font-bold mb-4 pr-1">מועדפים שלי ({userStats.favorites.length})</h3>
+                    <GlassCard
+                        className="p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all group border-neon-pink/30 shadow-glow-pink/10"
+                        onClick={() => onStartLearning('favorites')}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 bg-neon-pink/10 rounded-xl flex items-center justify-center text-neon-pink group-hover:scale-110 transition-transform">
+                                <Heart className="w-7 h-7 fill-neon-pink" />
+                            </div>
+                            <div>
+                                <div className="font-bold text-lg">חזרה על המועדפים</div>
+                                <div className="text-xs text-text-secondary">מבחן ממוקד על המילים ששמרת</div>
+                            </div>
+                        </div>
+                        <ChevronLeft className="w-6 h-6 text-neon-pink" />
+                    </GlassCard>
+                </div>
+            )}
+
             <h3 className="text-xl font-bold mb-4 pr-1">סטטיסטיקה בזמן אמת</h3>
             <div className="grid grid-cols-2 gap-4 mb-10">
                 <StatCard label="ציון יעד" value={userProfile?.targetScore ?? '687'} colorClass="bg-gradient-to-r from-electric-blue to-cyber-yellow bg-clip-text text-transparent" />
@@ -226,7 +268,7 @@ const TopicCard = ({ icon: Icon, title, sub, color, bg, onClick }: any) => (
     </GlassCard>
 );
 
-const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity, ...props }: { onBack: () => void, topic?: string, awardXP: (n: number) => void, recordActivity: (xp: number, cat: string, correct: boolean) => void, [key: string]: any }) => {
+const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity, favorites = [], onToggleFavorite, ...props }: { onBack: () => void, topic?: string, awardXP: (n: number) => void, recordActivity: (xp: number, cat: string, correct: boolean) => void, favorites?: string[], onToggleFavorite?: (id: string) => void, [key: string]: any }) => {
     const [index, setIndex] = useState(0);
     const [knownCount, setKnownCount] = useState(0);
 
@@ -237,6 +279,10 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
             case 'english': return englishData;
             case 'weakPoints': return (props as any).weakPoints || [];
             case 'custom': return (props as any).customLists || [];
+            case 'favorites': {
+                const allData = [...vocabData, ...analogiesData, ...quantitativeData, ...englishData];
+                return allData.filter(item => favorites.includes(item.id));
+            }
             default: return vocabData;
         }
     };
@@ -251,7 +297,8 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
         quantitative: { title: 'חשיבה כמותית', sub: 'אלגברה וגיאומטריה', category: 'כמותי' },
         english: { title: 'אנגלית', sub: 'Sentence Completion', category: 'אנגלית' },
         weakPoints: { title: 'חיזוק חולשות', sub: 'מבוסס על ביצועים', category: 'חיזוק' },
-        custom: { title: 'הרשימה שלי', sub: 'מילים שייבאת', category: 'אישי' }
+        custom: { title: 'הרשימה שלי', sub: 'מילים שייבאת', category: 'אישי' },
+        favorites: { title: 'מועדפים', sub: 'מילים ששמרת', category: 'מועדפים' }
     };
 
     const currentTopicInfo = topicTitles[topic] || topicTitles.vocabulary;
@@ -342,6 +389,8 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
                         <SwipeCard
                             key={`${topic}-${index}`}
                             {...currentWord}
+                            isFavorite={favorites.includes(currentWord.id)}
+                            onToggleFavorite={() => onToggleFavorite?.(currentWord.id)}
                             onSwipeLeft={() => {
                                 setKnownCount(prev => prev + 1);
                                 setIndex(prev => prev + 1);
@@ -605,6 +654,53 @@ const AISettingsScreen = ({ userStats, onBack }: any) => {
     );
 };
 
+const PricingScreen = ({ onBack }: any) => {
+    const plans = [
+        { name: 'חינם', price: '0₪', features: ['גישה לבנק שאלות בסיסי', 'סטטיסטיקה יומית', 'תמיכה בקהילה'], active: true },
+        { name: 'Bina Pro', price: '49₪', period: '/חודש', features: ['הסברי AI לכל שאלה', 'תוכנית לימודים דינמית', 'גישה לכל הקטגוריות', 'ניתוח חולשות מתקדם'], popular: true },
+        { name: 'Elite', price: '499₪', period: ' חד פעמי', features: ['גישה לכל החיים', 'מפגש ייעוץ אישי עם AI', '20 סימולציות מלאות', 'ליווי עד הבחינה'] }
+    ];
+
+    return (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, x: 0 }} className="px-5 pt-12 pb-32">
+            <button onClick={onBack} className="flex items-center gap-2 text-text-muted mb-8 font-bold">
+                <ChevronRight className="w-5 h-5" />
+                <span>חזור</span>
+            </button>
+            <h2 className="text-3xl font-black mb-2 text-white">בחר את המסלול שלך</h2>
+            <p className="text-text-secondary mb-8">כל מה שצריך כדי להגיע ל-800</p>
+
+            <div className="space-y-4">
+                {plans.map((plan, i) => (
+                    <GlassCard key={i} className={`p-6 border-2 transition-all ${plan.popular ? 'border-electric-blue shadow-glow-blue scale-[1.02]' : 'border-white/5'}`}>
+                        {plan.popular && <div className="text-[10px] font-black text-electric-blue uppercase mb-2 tracking-widest">הכי פופולרי</div>}
+                        <div className="flex justify-between items-end mb-4">
+                            <div>
+                                <h4 className="text-xl font-black text-white">{plan.name}</h4>
+                            </div>
+                            <div className="text-right">
+                                <span className="text-2xl font-black text-white">{plan.price}</span>
+                                <span className="text-xs text-text-secondary">{plan.period}</span>
+                            </div>
+                        </div>
+                        <ul className="space-y-2 mb-6">
+                            {plan.features.map((f, j) => (
+                                <li key={j} className="flex items-center gap-2 text-sm text-text-secondary">
+                                    <Check className="w-4 h-4 text-emerald-400" />
+                                    <span>{f}</span>
+                                </li>
+                            ))}
+                        </ul>
+                        <button className={`w-full py-3 rounded-xl font-black transition-all ${plan.popular ? 'bg-electric-blue text-charcoal' : 'bg-white/5 border border-white/10 text-white'}`}>
+                            {plan.active ? 'המסלול הנוכחי' : 'הצטרף עכשיו'}
+                        </button>
+                    </GlassCard>
+                ))}
+            </div>
+        </motion.div>
+    );
+};
+
 const ProfileScreen = ({ userStats, userProfile, setActiveTab, onEditProfile, onLogout }: any) => {
     const [toast, setToast] = useState<string | null>(null);
 
@@ -858,7 +954,8 @@ function App() {
                 { day: 'ה', value: 0 },
                 { day: 'ו', value: 0 },
                 { day: 'ש', value: 0 },
-            ]
+            ],
+            favorites: [] as string[]
         };
     });
     const [hasOnboarded, setHasOnboarded] = useState<boolean>(() => {
@@ -888,7 +985,8 @@ function App() {
                 activityHistory: [
                     { day: 'א', value: 0 }, { day: 'ב', value: 0 }, { day: 'ג', value: 0 },
                     { day: 'ד', value: 0 }, { day: 'ה', value: 0 }, { day: 'ו', value: 0 }, { day: 'ש', value: 0 },
-                ]
+                ],
+                favorites: []
             };
             setUserStats(cleanStats);
             localStorage.setItem('bina_user_stats', JSON.stringify(cleanStats));
@@ -995,6 +1093,17 @@ function App() {
 
     const awardXP = (amount: number) => recordActivity(amount);
 
+    const toggleFavorite = (id: string) => {
+        setUserStats((prev: any) => {
+            const currentFavs = prev.favorites || [];
+            const isFav = currentFavs.includes(id);
+            const newFavs = isFav
+                ? currentFavs.filter((fid: string) => fid !== id)
+                : [...currentFavs, id];
+            return { ...prev, favorites: newFavs };
+        });
+    };
+
     const recordError = (category: string) => recordActivity(0, category, false);
 
     const getLevelName = (level: number) => {
@@ -1028,6 +1137,8 @@ function App() {
                 finalTopic = topics[Math.floor(Math.random() * topics.length)];
             }
         }
+
+        if (topic === 'favorites') finalTopic = 'favorites';
 
         if (topic === 'marathon') {
             setLearningTopic('marathon');
@@ -1118,6 +1229,8 @@ function App() {
                             onMiss={addToWeakPoints}
                             awardXP={awardXP}
                             recordActivity={recordActivity}
+                            favorites={userStats.favorites}
+                            onToggleFavorite={toggleFavorite}
                         />
                     ) : (
                         <motion.div
@@ -1132,6 +1245,7 @@ function App() {
                                 <HomeScreen
                                     onStartLearning={(topic: string) => {
                                         if (topic === 'custom-edit') setActiveTab('custom-edit');
+                                        else if (topic === 'pricing') setActiveTab('pricing');
                                         else startLearning(topic);
                                     }}
                                     userProfile={userProfile}
@@ -1167,6 +1281,7 @@ function App() {
                             {activeTab === 'achievements' && <AchievementsScreen achievements={userStats.achievements} onBack={() => setActiveTab('profile')} />}
                             {activeTab === 'study-plan' && <StudyPlanScreen userProfile={userProfile} onBack={() => setActiveTab('profile')} />}
                             {activeTab === 'ai-settings' && <AISettingsScreen userStats={userStats} onBack={() => setActiveTab('profile')} />}
+                            {activeTab === 'pricing' && <PricingScreen onBack={() => setActiveTab('home')} />}
                         </motion.div>
                     )}
                 </AnimatePresence>

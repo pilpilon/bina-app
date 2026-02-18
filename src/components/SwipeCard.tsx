@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { Heart } from 'lucide-react';
 
 interface SwipeCardProps {
     word: string;
@@ -8,9 +9,11 @@ interface SwipeCardProps {
     category: string;
     onSwipeRight: () => void;
     onSwipeLeft: () => void;
+    isFavorite?: boolean;
+    onToggleFavorite?: () => void;
 }
 
-const SwipeCard: React.FC<SwipeCardProps> = ({ word, definition, example, category, onSwipeRight, onSwipeLeft }) => {
+const SwipeCard: React.FC<SwipeCardProps> = ({ word, definition, example, category, onSwipeRight, onSwipeLeft, isFavorite, onToggleFavorite }) => {
     const x = useMotionValue(0);
     const rotate = useTransform(x, [-200, 200], [-25, 25]);
     const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
@@ -34,6 +37,19 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ word, definition, example, catego
                 onDragEnd={handleDragEnd}
                 className="absolute inset-0 glass-card p-8 flex flex-col justify-center items-center text-center cursor-grab active:cursor-grabbing border-2 border-electric-blue/30 overflow-hidden shadow-2xl group"
             >
+                {/* Favorite Toggle */}
+                <motion.button
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleFavorite?.();
+                    }}
+                    className="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/20 hover:bg-black/40 transition-colors"
+                >
+                    <Heart className={`w-6 h-6 transition-colors ${isFavorite ? 'fill-neon-pink text-neon-pink' : 'text-white/50'}`} />
+                </motion.button>
+
                 {/* Dynamic direction glow */}
                 <motion.div
                     style={{
