@@ -436,7 +436,7 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
     );
 };
 
-const StatsScreen = ({ userStats, userProfile }: any) => {
+const StatsScreen = ({ userStats, userProfile, setActiveTab }: any) => {
     const accuracyData = [
         {
             label: 'כמותי',
@@ -546,6 +546,18 @@ const StatsScreen = ({ userStats, userProfile }: any) => {
                     ))}
                 </div>
             </div>
+
+            {/* AI Analysis CTA */}
+            {setActiveTab && (
+                <button
+                    onClick={() => setActiveTab('ai-analysis')}
+                    className="w-full mt-8 py-4 rounded-2xl bg-gradient-to-r from-electric-blue/10 to-neon-purple/10 border border-electric-blue/20 text-white font-black flex items-center justify-center gap-3 hover:from-electric-blue/20 hover:to-neon-purple/20 transition-all group"
+                >
+                    <Zap className="w-5 h-5 text-electric-blue group-hover:scale-110 transition-transform" />
+                    ניתוח AI מלא של החולשות שלך
+                    <ChevronLeft className="w-5 h-5 text-text-muted" />
+                </button>
+            )}
         </motion.div>
     );
 };
@@ -619,6 +631,257 @@ const StudyPlanScreen = ({ userProfile, onBack }: any) => {
                         </GlassCard>
                     </div>
                 ))}
+            </div>
+        </motion.div>
+    );
+};
+
+// ─── AI Weakness Analysis Screen ───────────────────────────────────────────
+
+const AIAnalysisScreen = ({ userStats, weakPoints, onBack, onStartLearning }: any) => {
+    const categoryErrors: Record<string, number> = userStats.categoryErrors || {};
+    const categoryTotal: Record<string, number> = userStats.categoryTotal || {};
+
+    // Build per-category stats
+    const categories = [
+        { key: 'אוצר מילים', label: 'אוצר מילים', icon: '📖', color: '#00D9FF', topic: 'vocabulary' },
+        { key: 'אנלוגיות', label: 'אנלוגיות', icon: '🔗', color: '#B026FF', topic: 'analogies' },
+        { key: 'כמותי', label: 'כמותי', icon: '📐', color: '#FFD700', topic: 'quantitative' },
+        { key: 'אנגלית', label: 'אנגלית', icon: '🇬🇧', color: '#FF0077', topic: 'english' },
+    ];
+
+    const catStats = categories.map(cat => {
+        // Sum all sub-categories that match this main category
+        const total = Object.entries(categoryTotal)
+            .filter(([k]) => k.toLowerCase().includes(cat.key.toLowerCase()) || cat.key.toLowerCase().includes(k.toLowerCase()))
+            .reduce((s, [, v]) => s + (v as number), 0) || categoryTotal[cat.key] || 0;
+        const errors = Object.entries(categoryErrors)
+            .filter(([k]) => k.toLowerCase().includes(cat.key.toLowerCase()) || cat.key.toLowerCase().includes(k.toLowerCase()))
+            .reduce((s, [, v]) => s + (v as number), 0) || categoryErrors[cat.key] || 0;
+        const accuracy = total > 0 ? Math.round(((total - errors) / total) * 100) : null;
+        return { ...cat, total, errors, accuracy };
+    });
+
+    // Sort by accuracy ascending (weakest first)
+    const sorted = [...catStats].sort((a, b) => {
+        if (a.accuracy === null && b.accuracy === null) return 0;
+        if (a.accuracy === null) return 1;
+        if (b.accuracy === null) return -1;
+        return a.accuracy - b.accuracy;
+    });
+
+    const hasData = catStats.some(c => c.total > 0);
+
+    // AI Insight generation
+    const weakest = sorted.find(c => c.accuracy !== null);
+    const strongest = [...sorted].reverse().find(c => c.accuracy !== null);
+
+    const getInsightColor = (acc: number | null) => {
+        if (acc === null) return 'text-text-muted';
+        if (acc >= 85) return 'text-emerald-400';
+        if (acc >= 65) return 'text-cyber-yellow';
+        return 'text-neon-pink';
+    };
+
+    const getBarColor = (acc: number | null) => {
+        if (acc === null) return 'bg-white/10';
+        if (acc >= 85) return 'bg-emerald-400';
+        if (acc >= 65) return 'bg-cyber-yellow';
+        return 'bg-neon-pink';
+    };
+
+    const getGrade = (acc: number | null) => {
+        if (acc === null) return '—';
+        if (acc >= 90) return 'מצוין';
+        if (acc >= 75) return 'טוב';
+        if (acc >= 60) return 'בינוני';
+        return 'חלש';
+    };
+
+    // Sub-category heatmap from weakPoints
+    const subCatCounts: Record<string, number> = {};
+    (weakPoints || []).forEach((card: any) => {
+        const cat = card.category || 'אחר';
+        subCatCounts[cat] = (subCatCounts[cat] || 0) + 1;
+    });
+    const topWeakSubs = Object.entries(subCatCounts)
+        .sort(([, a], [, b]) => (b as number) - (a as number))
+        .slice(0, 5);
+
+    return (
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="px-5 pt-12 pb-32 space-y-6">
+            <button onClick={onBack} className="flex items-center gap-2 text-text-muted font-bold">
+                <ChevronRight className="w-5 h-5" />
+                <span>חזור</span>
+            </button>
+
+            <div>
+                <h2 className="text-3xl font-black mb-1">ניתוח AI 🧠</h2>
+                <p className="text-text-secondary text-sm">ניתוח מעמיק של החוזקות והחולשות שלך</p>
+            </div>
+
+            {/* AI Summary Card */}
+            {hasData ? (
+                <GlassCard className="p-5 border-electric-blue/30 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-electric-blue via-neon-purple to-neon-pink" />
+                    <div className="flex items-start gap-3 mb-4">
+                        <div className="w-10 h-10 bg-electric-blue/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <Zap className="w-6 h-6 text-electric-blue" />
+                        </div>
+                        <div>
+                            <div className="text-[10px] font-black tracking-widest text-electric-blue uppercase mb-1">Bina AI Insight</div>
+                            <p className="text-sm text-text-secondary leading-relaxed">
+                                {weakest && strongest && weakest.key !== strongest.key ? (
+                                    <>
+                                        <span className="text-white font-bold">{strongest.label}</span> היא החוזקה שלך ({strongest.accuracy}% דיוק).{' '}
+                                        <span className="text-neon-pink font-bold">{weakest.label}</span> דורשת תשומת לב — {weakest.accuracy}% דיוק.{' '}
+                                        מומלץ להתמקד בנושא זה בסשן הבא.
+                                    </>
+                                ) : weakest ? (
+                                    <>
+                                        ה-AI זיהה שהנושא הכי חלש שלך הוא <span className="text-neon-pink font-bold">{weakest.label}</span> עם {weakest.accuracy}% דיוק.
+                                        מומלץ לתרגל אותו עכשיו!
+                                    </>
+                                ) : (
+                                    'המשך ללמוד כדי שה-AI יוכל לנתח את הביצועים שלך.'
+                                )}
+                            </p>
+                        </div>
+                    </div>
+                    {weakest && (
+                        <button
+                            onClick={() => onStartLearning?.(weakest.topic)}
+                            className="w-full py-3 rounded-xl bg-electric-blue/10 border border-electric-blue/30 text-electric-blue font-black text-sm hover:bg-electric-blue/20 transition-colors"
+                        >
+                            🎯 תרגל {weakest.label} עכשיו
+                        </button>
+                    )}
+                </GlassCard>
+            ) : (
+                <GlassCard className="p-6 text-center border-white/5">
+                    <div className="text-4xl mb-3">🤖</div>
+                    <div className="font-black text-lg mb-2">ה-AI עדיין לומד אותך</div>
+                    <p className="text-text-secondary text-sm">תרגל כמה סטים כדי שנוכל לנתח את הביצועים שלך</p>
+                </GlassCard>
+            )}
+
+            {/* Category Accuracy Bars */}
+            <div>
+                <h3 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-neon-purple" />
+                    דיוק לפי קטגוריה
+                </h3>
+                <div className="space-y-4">
+                    {sorted.map((cat) => (
+                        <GlassCard key={cat.key} className="p-4">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xl">{cat.icon}</span>
+                                    <div>
+                                        <div className="font-black">{cat.label}</div>
+                                        <div className="text-xs text-text-muted">{cat.total} שאלות | {cat.errors} טעויות</div>
+                                    </div>
+                                </div>
+                                <div className="text-left">
+                                    <div className={`text-2xl font-black ${getInsightColor(cat.accuracy)}`}>
+                                        {cat.accuracy !== null ? `${cat.accuracy}%` : '—'}
+                                    </div>
+                                    <div className="text-xs text-text-muted text-left">{getGrade(cat.accuracy)}</div>
+                                </div>
+                            </div>
+                            <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: cat.accuracy !== null ? `${cat.accuracy}%` : '0%' }}
+                                    transition={{ duration: 0.8, ease: 'easeOut', delay: 0.1 }}
+                                    className={`h-full rounded-full ${getBarColor(cat.accuracy)}`}
+                                    style={{ boxShadow: cat.accuracy !== null && cat.accuracy >= 85 ? '0 0 8px rgba(52,211,153,0.5)' : undefined }}
+                                />
+                            </div>
+                        </GlassCard>
+                    ))}
+                </div>
+            </div>
+
+            {/* Sub-category Heatmap */}
+            {topWeakSubs.length > 0 && (
+                <div>
+                    <h3 className="text-lg font-black mb-4 flex items-center gap-2">
+                        <Target className="w-5 h-5 text-neon-pink" />
+                        נושאים לחיזוק (מהרשימה האדומה)
+                    </h3>
+                    <div className="space-y-2">
+                        {topWeakSubs.map(([sub, count], idx) => {
+                            const maxCount = topWeakSubs[0][1] as number;
+                            const pct = Math.round(((count as number) / maxCount) * 100);
+                            return (
+                                <div key={sub} className="flex items-center gap-3">
+                                    <div className="w-6 text-xs font-black text-text-muted text-center">#{idx + 1}</div>
+                                    <div className="flex-1">
+                                        <div className="flex justify-between text-sm mb-1">
+                                            <span className="font-bold">{sub}</span>
+                                            <span className="text-neon-pink font-black">{count as number} טעויות</span>
+                                        </div>
+                                        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                            <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${pct}%` }}
+                                                transition={{ duration: 0.6, delay: idx * 0.1 }}
+                                                className="h-full bg-gradient-to-r from-neon-pink to-neon-purple rounded-full"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Recommendations */}
+            <div>
+                <h3 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-cyber-yellow" />
+                    המלצות לסשן הבא
+                </h3>
+                <div className="space-y-3">
+                    {weakest && weakest.accuracy !== null && weakest.accuracy < 75 && (
+                        <GlassCard className="p-4 border-neon-pink/20 flex items-start gap-3">
+                            <span className="text-2xl">🎯</span>
+                            <div>
+                                <div className="font-black text-sm">התמקד ב{weakest.label}</div>
+                                <div className="text-xs text-text-secondary mt-1">דיוק של {weakest.accuracy}% — 15 דקות ביום יכולות לשפר ב-10%</div>
+                            </div>
+                        </GlassCard>
+                    )}
+                    {(weakPoints || []).length > 3 && (
+                        <GlassCard className="p-4 border-cyber-yellow/20 flex items-start gap-3">
+                            <span className="text-2xl">🔄</span>
+                            <div>
+                                <div className="font-black text-sm">חזור על {weakPoints.length} מילים שגויות</div>
+                                <div className="text-xs text-text-secondary mt-1">הרשימה האדומה שלך מכילה פריטים שדורשים חזרה</div>
+                            </div>
+                        </GlassCard>
+                    )}
+                    {strongest && strongest.accuracy !== null && strongest.accuracy >= 85 && (
+                        <GlassCard className="p-4 border-emerald-400/20 flex items-start gap-3">
+                            <span className="text-2xl">⚡</span>
+                            <div>
+                                <div className="font-black text-sm">{strongest.label} — שמור על הרמה!</div>
+                                <div className="text-xs text-text-secondary mt-1">דיוק של {strongest.accuracy}% — תרגול קצר פעמיים בשבוע מספיק</div>
+                            </div>
+                        </GlassCard>
+                    )}
+                    {!hasData && (
+                        <GlassCard className="p-4 border-electric-blue/20 flex items-start gap-3">
+                            <span className="text-2xl">🚀</span>
+                            <div>
+                                <div className="font-black text-sm">התחל לתרגל!</div>
+                                <div className="text-xs text-text-secondary mt-1">לאחר 20 שאלות ה-AI יוכל לנתח את הביצועים שלך</div>
+                            </div>
+                        </GlassCard>
+                    )}
+                </div>
             </div>
         </motion.div>
     );
@@ -1521,7 +1784,7 @@ function App() {
                                     onMiss={addToWeakPoints}
                                 />
                             )}
-                            {activeTab === 'stats' && <StatsScreen userStats={userStats} userProfile={userProfile} />}
+                            {activeTab === 'stats' && <StatsScreen userStats={userStats} userProfile={userProfile} setActiveTab={setActiveTab} />}
                             {activeTab === 'profile' && (
                                 <ProfileScreen
                                     userStats={userStats}
@@ -1533,6 +1796,18 @@ function App() {
                             )}
                             {activeTab === 'achievements' && <AchievementsScreen achievements={userStats.achievements} onBack={() => setActiveTab('profile')} />}
                             {activeTab === 'study-plan' && <StudyPlanScreen userProfile={userProfile} onBack={() => setActiveTab('profile')} />}
+                            {activeTab === 'ai-analysis' && (
+                                <AIAnalysisScreen
+                                    userStats={userStats}
+                                    weakPoints={weakPoints}
+                                    onBack={() => setActiveTab('stats')}
+                                    onStartLearning={(topic: string) => {
+                                        setActiveTab('home');
+                                        setTimeout(() => startLearning(topic), 100);
+                                    }}
+                                />
+                            )}
+
                             {activeTab === 'ai-settings' && (
                                 <AISettingsScreen
                                     userStats={userStats}
