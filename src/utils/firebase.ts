@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -17,25 +17,20 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
-export { auth, db, googleProvider, signInWithPopup, signOut, doc, setDoc, getDoc, onSnapshot };
+// Configure provider
+googleProvider.setCustomParameters({
+    prompt: 'select_account'
+});
+
+export { auth, db, googleProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, doc, setDoc, getDoc, onSnapshot };
 
 export const signInWithGoogle = async () => {
     try {
-        const result = await signInWithPopup(auth, googleProvider);
-        return result.user;
+        // Switching to redirect for better compatibility with COOP policies on Vercel
+        await signInWithRedirect(auth, googleProvider);
     } catch (error: any) {
-        console.error("Error signing in with Google", error);
-
-        // Detailed error for common deployment issues
-        if (error.code === 'auth/popup-blocked') {
-            alert('הדפדפן חסם את החלון הקופץ. אנא אפשר חלונות קופצים עבור אתר זה.');
-        } else if (error.code === 'auth/unauthorized-domain') {
-            alert('הדומיין הזה (bina-app.vercel.app) לא מורשה לכניסה עם Google. אנא הגדר אותו ב-Firebase Console.');
-        } else if (error.code === 'auth/popup-closed-by-user') {
-            // Silently fail if user closed it
-        } else {
-            alert('שגיאה בהתחברות: ' + error.message);
-        }
+        console.error("Error initiating Google sign-in", error);
+        alert('שגיאה בגישה ל-Google: ' + error.message);
         throw error;
     }
 };
