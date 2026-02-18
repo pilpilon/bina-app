@@ -120,70 +120,6 @@ const PaywallOverlay = ({ title, sub, onUpgrade, onRefer }: any) => (
     </motion.div>
 );
 
-const DebugToolbar = ({ userStats, onUpdate }: any) => {
-    const [isOpen, setIsOpen] = React.useState(false);
-
-    if (!isOpen) return (
-        <button
-            onClick={() => setIsOpen(true)}
-            className="fixed bottom-24 right-4 z-[200] w-12 h-12 bg-charcoal border border-white/10 rounded-full flex items-center justify-center shadow-glow-purple text-xl hover:scale-110 transition-all"
-        >
-            🛠️
-        </button>
-    );
-
-    return (
-        <div className="fixed bottom-24 right-4 left-4 z-[200] bg-charcoal border border-white/10 rounded-2xl p-4 shadow-2xl">
-            <div className="flex justify-between items-center mb-4">
-                <h4 className="font-black text-white text-xs uppercase tracking-widest">🛠️ Debug Tools</h4>
-                <button onClick={() => setIsOpen(false)} className="text-text-muted hover:text-white"><X className="w-4 h-4" /></button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-                <button
-                    onClick={() => onUpdate({ ...userStats, dailySwipes: 0 })}
-                    className="p-2 bg-white/5 rounded-lg text-[10px] font-bold text-electric-blue border border-electric-blue/20"
-                >
-                    Reset Swipes (0/10)
-                </button>
-                <button
-                    onClick={() => onUpdate({ ...userStats, dailySwipes: 10 })}
-                    className="p-2 bg-white/5 rounded-lg text-[10px] font-bold text-neon-pink border border-neon-pink/20"
-                >
-                    Max Swipes (10/10)
-                </button>
-                <button
-                    onClick={() => onUpdate({ ...userStats, credits: (userStats.credits || 0) + 50 })}
-                    className="p-2 bg-white/5 rounded-lg text-[10px] font-bold text-cyber-yellow border border-cyber-yellow/20"
-                >
-                    Add +50 Credits
-                </button>
-                <button
-                    onClick={() => {
-                        const past = new Date();
-                        past.setMinutes(past.getMinutes() - 1);
-                        onUpdate({ ...userStats, tierExpiry: past.toISOString() });
-                    }}
-                    className="p-2 bg-white/5 rounded-lg text-[10px] font-bold text-text-muted border border-white/10"
-                >
-                    Expire Tier Now
-                </button>
-                <button
-                    onClick={() => onUpdate({ ...userStats, tier: 'free', tierExpiry: null })}
-                    className="p-2 bg-white/5 rounded-lg text-[10px] font-bold text-white border border-white/10"
-                >
-                    Set Tier: Free
-                </button>
-                <button
-                    onClick={() => onUpdate({ ...userStats, tier: 'pro', tierExpiry: null })}
-                    className="p-2 bg-white/5 rounded-lg text-[10px] font-bold text-neon-purple border border-neon-purple/20"
-                >
-                    Set Tier: Pro
-                </button>
-            </div>
-        </div>
-    );
-};
-
 // --- Screen Components ---
 
 const HomeScreen = ({ onStartLearning, userProfile, userStats, getLevelName }: any) => {
@@ -1388,14 +1324,6 @@ const ProfileScreen = ({ userStats, userProfile, user, setActiveTab, onEditProfi
                                 <>מימוש 10 קרדיטים ליום Plus ⚡️</>
                             )}
                         </button>
-
-                        {/* Simulation / Debug UI (User requested to see this) */}
-                        <button
-                            onClick={() => onSimulateFriend?.()}
-                            className="w-full py-2 bg-white/5 border border-white/10 text-emerald-400 font-bold text-[10px] rounded-lg hover:bg-white/10 transition-all uppercase tracking-widest"
-                        >
-                            🛠️ סימולציית הצטרפות חבר (+10)
-                        </button>
                     </div>
                 </GlassCard>
             </div>
@@ -2396,15 +2324,6 @@ function App() {
                             <NavItem icon={User} label="פרופיל" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
                         </nav>
                     )}
-
-                    {/* Debug Toolbar */}
-                    <DebugToolbar
-                        userStats={userStats}
-                        onUpdate={(newStats: any) => {
-                            setUserStats(newStats);
-                            localStorage.setItem('bina_user_stats', JSON.stringify(newStats));
-                        }}
-                    />
                 </div>
             } />
         </Routes>
