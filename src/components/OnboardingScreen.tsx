@@ -578,7 +578,9 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, onCance
 
     // Sync with user prop (important for Google Redirect flow)
     useEffect(() => {
+        console.log("Onboarding: user prop updated:", user?.email);
         if (user && step === 0) {
+            console.log("Onboarding: Skipping welcome screen for user:", user.email);
             setStep(1);
             if (user.displayName && !profile.name) {
                 setProfile(prev => ({ ...prev, name: user.displayName }));
@@ -634,6 +636,11 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, onCance
                             />
                         )}
                     </AnimatePresence>
+                </div>
+
+                {/* Debug Info */}
+                <div className="p-2 text-[8px] text-text-muted/30 text-center uppercase tracking-tighter">
+                    Debug: Step {step} | User: {user ? user.email : 'None'}
                 </div>
             </div>
         </div>
