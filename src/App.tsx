@@ -2157,6 +2157,7 @@ function App() {
                 onCancel={handleOnboardingCancel}
                 onGoogleLogin={signInWithGoogle}
                 initialProfile={userProfile}
+                user={user}
             />
         );
     }

@@ -14,6 +14,7 @@ interface OnboardingScreenProps {
     onCancel?: () => void;
     onGoogleLogin?: () => void;
     initialProfile?: UserProfile | null;
+    user?: any;
 }
 
 // ─── Step 1: Welcome ────────────────────────────────────────────────────────
@@ -563,13 +564,16 @@ const StepDots = ({ step }: { step: number }) => (
 
 // ─── Main Onboarding Screen ──────────────────────────────────────────────────
 
-const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, onCancel, onGoogleLogin, initialProfile }) => {
-    const [step, setStep] = useState(initialProfile ? 1 : 0);
-    const [profile, setProfile] = useState<UserProfile>(initialProfile || {
-        name: '',
-        targetScore: 680,
-        examDate: '',
-        dailyMinutes: 30,
+const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, onCancel, onGoogleLogin, initialProfile, user }) => {
+    const [step, setStep] = useState((initialProfile || user) ? 1 : 0);
+    const [profile, setProfile] = useState<UserProfile>(() => {
+        if (initialProfile) return initialProfile;
+        return {
+            name: user?.displayName || '',
+            targetScore: 680,
+            examDate: '',
+            dailyMinutes: 30,
+        };
     });
 
     const handleBack = () => {
