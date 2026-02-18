@@ -1180,7 +1180,7 @@ const AISettingsScreen = ({ userStats, onBack, onUpdateStats, notifSettings, not
     );
 };
 
-const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan }: any) => {
+const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user }: any) => {
     const plans = [
         {
             id: 'free',
@@ -2340,6 +2340,7 @@ function App() {
                                         <PricingScreen
                                             onBack={() => setActiveTab('home')}
                                             currentTier={userStats.tier}
+                                            user={user}
                                             onSelectPlan={(tier: any) => {
                                                 setUserStats((prev: any) => ({ ...prev, tier }));
                                                 setActiveTab('home');

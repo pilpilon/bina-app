@@ -3,7 +3,7 @@
 // TO THE USER: 
 // 1. Get your Client-side Token from: Paddle Dashboard > Developer Tools > Authentication
 // 2. Paste it below
-export const PADDLE_CLIENT_TOKEN = "YOUR_PADDLE_CLIENT_TOKEN_HERE";
+export const PADDLE_CLIENT_TOKEN = "live_3bf3c6931cb5e4af8f0b7300c6a";
 
 // Initialize Paddle
 export const initializePaddle = () => {
