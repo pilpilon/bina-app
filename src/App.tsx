@@ -120,6 +120,63 @@ const PaywallOverlay = ({ title, sub, onUpgrade, onRefer }: any) => (
     </motion.div>
 );
 
+// --- Smart Upsell Banner ---
+
+const SmartUpsellBanner = ({ userStats, onUpgrade }: { userStats: any; onUpgrade: () => void }) => {
+    const [dismissed, setDismissed] = React.useState(false);
+    const swipeLimit = 10;
+    const swipesUsed = userStats.dailySwipes || 0;
+    const swipePercent = swipesUsed / swipeLimit;
+
+    // Only show if user has done at least 3 swipes (they've engaged) or is near the limit
+    const shouldShow = swipesUsed >= 3 || swipePercent >= 0.5;
+
+    if (!shouldShow || dismissed) return null;
+
+    const isNearLimit = swipePercent >= 0.7;
+
+    const message = isNearLimit
+        ? { tag: '⚠️ כמעט הגעת לגבול', title: `נשארו לך ${swipeLimit - swipesUsed} תרגולים היום`, sub: 'שדרג ל-Plus לתרגול ללא הגבלה', color: 'from-cyber-yellow/20 to-neon-pink/20', border: 'border-cyber-yellow/30', tagColor: 'text-cyber-yellow' }
+        : { tag: '✨ מומלץ עבורך', title: 'גישה לכל הסברי ה-AI', sub: 'הבן כל שאלה לעומק עם Bina Plus', color: 'from-neon-purple/15 to-electric-blue/15', border: 'border-neon-purple/20', tagColor: 'text-neon-purple' };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className={`mb-6 rounded-2xl p-4 bg-gradient-to-r ${message.color} border ${message.border} relative overflow-hidden`}
+        >
+            <button
+                onClick={() => setDismissed(true)}
+                className="absolute top-2 left-3 text-text-muted hover:text-white text-lg leading-none"
+                aria-label="סגור"
+            >×</button>
+            <div className="flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                    <div className={`text-[10px] font-black uppercase tracking-widest mb-1 ${message.tagColor}`}>{message.tag}</div>
+                    <div className="text-sm font-black text-white leading-tight">{message.title}</div>
+                    <div className="text-[11px] text-text-secondary mt-0.5">{message.sub}</div>
+                </div>
+                <button
+                    onClick={onUpgrade}
+                    className="shrink-0 bg-gradient-to-r from-electric-blue to-neon-purple text-white px-3 py-2 rounded-xl font-black text-xs shadow-glow-blue hover:scale-105 active:scale-95 transition-all"
+                >
+                    שדרג
+                </button>
+            </div>
+            {isNearLimit && (
+                <div className="mt-3 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${swipePercent * 100}%` }}
+                        className="h-full bg-gradient-to-r from-cyber-yellow to-neon-pink rounded-full"
+                    />
+                </div>
+            )}
+        </motion.div>
+    );
+};
+
 // --- Screen Components ---
 
 const HomeScreen = ({ onStartLearning, userProfile, userStats, getLevelName }: any) => {
@@ -174,25 +231,8 @@ const HomeScreen = ({ onStartLearning, userProfile, userStats, getLevelName }: a
 
             <SmartCTA onClick={onStartLearning} />
 
-            {/* Pro Banner */}
-            <GlassCard
-                className="p-5 mb-8 bg-gradient-to-r from-neon-purple/20 to-neon-pink/20 border-neon-purple/30 cursor-pointer overflow-hidden relative group"
-                onClick={() => onStartLearning('pricing')}
-            >
-                <motion.div
-                    animate={{ x: [0, 50, 0] }}
-                    transition={{ duration: 10, repeat: Infinity }}
-                    className="absolute -top-10 -right-10 w-32 h-32 bg-neon-pink/10 blur-3xl rounded-full"
-                />
-                <div className="relative z-10 flex items-center justify-between">
-                    <div>
-                        <div className="text-xs font-black text-neon-pink uppercase tracking-widest mb-1">מבצע זמן מוגבל</div>
-                        <div className="text-lg font-black text-white">קבל Bina Pro ב-30% הנחה!</div>
-                        <div className="text-xs text-text-secondary">גישה חופשית לכל הסברי ה-AI</div>
-                    </div>
-                    <div className="bg-neon-pink text-white px-3 py-1 rounded-lg font-black text-sm">שדרוג</div>
-                </div>
-            </GlassCard>
+            {/* Smart Upsell Banner — only for free users, context-aware */}
+            {userStats.tier === 'free' && <SmartUpsellBanner userStats={userStats} onUpgrade={() => onStartLearning('pricing')} />}
 
             {/* Favorites Section */}
             {userStats.favorites?.length > 0 && (
