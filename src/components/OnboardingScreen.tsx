@@ -576,6 +576,16 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, onCance
         };
     });
 
+    // Sync with user prop (important for Google Redirect flow)
+    useEffect(() => {
+        if (user && step === 0) {
+            setStep(1);
+            if (user.displayName && !profile.name) {
+                setProfile(prev => ({ ...prev, name: user.displayName }));
+            }
+        }
+    }, [user, step, profile.name]);
+
     const handleBack = () => {
         if (step === 1 && initialProfile && onCancel) {
             onCancel();
