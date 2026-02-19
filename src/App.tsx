@@ -833,7 +833,7 @@ const AchievementsScreen = ({ achievements, onBack }: { achievements: string[], 
             </button>
             <h1 className="text-3xl font-black mb-6">הישגים ותארים</h1>
             <div className="grid grid-cols-1 gap-4">
-                {list.map(ach => {
+                {list.map((ach: any) => {
                     const unlocked = achievements.includes(ach.id);
                     return (
                         <GlassCard key={ach.id} className={`p-4 flex items-center gap-4 ${unlocked ? 'border-electric-blue/40' : 'opacity-40 grayscale'}`}>
@@ -846,7 +846,7 @@ const AchievementsScreen = ({ achievements, onBack }: { achievements: string[], 
                     );
                 })}
             </div>
-        </motion.div>
+        </motion.div >
     );
 };
 
@@ -1368,6 +1368,41 @@ const AISettingsScreen = ({ userStats, onBack, onUpdateStats, notifSettings, not
 
 const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user, onLogin }: any) => {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'semester'>('semester'); // Default to semester as it's the "deal"
+    const [promoCode, setPromoCode] = useState('');
+    const [promoStatus, setPromoStatus] = useState<'none' | 'success' | 'info' | 'error'>('none');
+    const [promoMessage, setPromoMessage] = useState('');
+
+    const handleApplyPromo = () => {
+        const code = promoCode.trim().toUpperCase();
+        if (!code) return;
+
+        // 1. Full Access Codes (Case Sensitive for added security, but here we use Upper for UX)
+        if (code === 'BINA-PRO-2026' || code === 'BINA-GIFT-FREE') {
+            onSelectPlan?.('pro');
+            setPromoStatus('success');
+            setPromoMessage('✨ קוד תקין! Bina Pro נפתח עבורך ללא הגבלה.');
+            // Save to localStorage immediately via selecting plan
+            return;
+        }
+
+        if (code === 'BINA-PLUS-2026') {
+            onSelectPlan?.('plus');
+            setPromoStatus('success');
+            setPromoMessage('✨ קוד תקין! Bina Plus נפתח עבורך ללא הגבלה.');
+            return;
+        }
+
+        // 2. Paddle Discount Codes (These are set up in Paddle Dashboard)
+        if (code === 'OFF10' || code === 'STUDENT10' || code === 'EARLYBIRD') {
+            setPromoStatus('info');
+            setPromoMessage('🎫 קוד פעיל! הזינו את הקוד בשלב התשלום ב-Paddle לקבלת 10% הנחה.');
+            return;
+        }
+
+        // 3. Invalid
+        setPromoStatus('error');
+        setPromoMessage('❌ קוד לא תקין. נסה שוב או פנה לתמיכה.');
+    };
 
     const plans = [
         {
@@ -1490,7 +1525,7 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user, onLog
             </div>
 
             <div className="space-y-6">
-                {plans.map((plan) => {
+                {plans.map((plan: any) => {
                     const isCurrent = currentTier === plan.id;
                     return (
                         <GlassCard
@@ -1513,7 +1548,7 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user, onLog
                                 </div>
                             </div>
                             <ul className="space-y-3 mb-8">
-                                {plan.features.map((f, j) => (
+                                {plan.features.map((f: string, j: number) => (
                                     <li key={j} className="flex items-start gap-2 text-sm text-text-secondary">
                                         <div className="mt-1 flex-shrink-0">
                                             <Check className="w-4 h-4 text-emerald-400" />
@@ -1548,6 +1583,44 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user, onLog
                         </GlassCard>
                     );
                 })}
+            </div>
+
+            {/* Promo Code Section */}
+            <div className="mt-12 max-w-[400px] mx-auto">
+                <GlassCard className="p-5 border-white/5">
+                    <div className="text-sm font-bold text-white mb-3">יש לך קוד קופון?</div>
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            value={promoCode}
+                            onChange={(e) => setPromoCode(e.target.value)}
+                            placeholder="הכנס קוד כאן..."
+                            className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-electric-blue/50"
+                        />
+                        <button
+                            onClick={handleApplyPromo}
+                            className="bg-white/5 border border-white/10 px-4 py-2 rounded-lg text-xs font-black text-white hover:bg-white/10 transition-colors"
+                        >
+                            הפעל
+                        </button>
+                    </div>
+
+                    <AnimatePresence>
+                        {promoStatus !== 'none' && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className={`mt-3 p-3 rounded-lg text-[10px] font-bold ${promoStatus === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                    promoStatus === 'info' ? 'bg-electric-blue/10 text-electric-blue border border-electric-blue/20' :
+                                        'bg-neon-pink/10 text-neon-pink border border-neon-pink/20'
+                                    }`}
+                            >
+                                {promoMessage}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </GlassCard>
             </div>
 
             <p className="mt-8 text-center text-[10px] text-text-muted leading-relaxed px-8">
