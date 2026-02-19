@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 // Triggering production deployment with latest infrastructure - Commit 96f2188++
 import { Routes, Route, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, BookOpen, BarChart3, User, Home, Flame, ChevronRight, ChevronLeft, X, Check, TrendingUp, Calendar, Zap, Timer, Heart, Bell, BellOff } from 'lucide-react';
+import { History, Target, BookOpen, BarChart3, User, Home, Flame, ChevronRight, ChevronLeft, X, Check, TrendingUp, Calendar, Zap, Timer, Heart, Bell, BellOff } from 'lucide-react';
 import SwipeCard from './components/SwipeCard';
 import PerformanceChart from './components/PerformanceChart';
 import vocabData from './data/vocabulary.json';
@@ -13,6 +13,7 @@ import { useEffect } from 'react';
 import { TermsOfService, PrivacyPolicy } from './components/LegalPages';
 import ExamScreen from './components/ExamScreen';
 import HistoryScreen from './components/HistoryScreen';
+import { SimulationScreen } from './components/SimulationScreen';
 import { PaywallOverlay } from './components/PaywallOverlay';
 import OnboardingScreen, { UserProfile } from './components/OnboardingScreen';
 import {
@@ -243,9 +244,7 @@ const HomeScreen = ({ onStartLearning, userProfile, userStats, getLevelName }: a
                     className="flex-1 p-4 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-white/5 transition-all group border-electric-blue/30 shadow-glow-blue/10"
                     onClick={() => onStartLearning('history')}
                 >
-                    <div className="w-8 h-8 text-electric-blue group-hover:scale-110 transition-transform flex items-center justify-center">
-                        <span className="text-2xl">📜</span>
-                    </div>
+                    <History className="w-8 h-8 text-electric-blue group-hover:scale-110 transition-transform" />
                     <div className="font-bold text-sm">היסטוריה</div>
                 </GlassCard>
             </div>
@@ -294,11 +293,11 @@ const HomeScreen = ({ onStartLearning, userProfile, userStats, getLevelName }: a
                 />
                 <TopicCard
                     icon={Timer}
-                    title="מרתון - סימולציה"
-                    sub="20 דקות | 20 שאלות"
+                    title="סימולציה מלאה"
+                    sub="8 פרקים | זמן אמת"
                     color="text-emerald-400"
                     bg="bg-emerald-400/20"
-                    onClick={() => onStartLearning('marathon')}
+                    onClick={() => onStartLearning('simulation')}
                 />
             </div>
 
@@ -444,6 +443,20 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
                 onClose={onBack}
                 onShowExplanation={(item) => (props as any).onShowExplanation?.(item)}
                 onFinish={onFinish || (() => { })}
+            />
+        );
+    }
+
+    if (topic === 'simulation') {
+        const allQuestions = [...vocabData, ...analogiesData, ...quantitativeData, ...englishData];
+        return (
+            <SimulationScreen
+                isPro={userStats.tier === 'pro' || userStats.tier === 'plus'}
+                onBack={onBack}
+                onFinish={onFinish || (() => { })}
+                onUpgrade={onUpgrade}
+                userStats={userStats}
+                questionsPool={allQuestions}
             />
         );
     }
@@ -674,8 +687,16 @@ const StatsScreen = ({ userStats, userProfile, setActiveTab }: any) => {
                     <h1 className="text-3xl font-black text-text-primary">סטטיסטיקה</h1>
                     <p className="text-sm text-text-secondary">התקדמות אישית וניתוח AI</p>
                 </div>
-                <div className="w-12 h-12 glass-card-dark flex items-center justify-center text-neon-purple border-neon-purple/30">
-                    <BarChart3 className="w-6 h-6" />
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setActiveTab('history')}
+                        className="w-12 h-12 glass-card-dark flex items-center justify-center text-text-secondary hover:text-white border-white/10 hover:bg-white/5 transition-colors"
+                    >
+                        <History className="w-6 h-6" />
+                    </button>
+                    <div className="w-12 h-12 glass-card-dark flex items-center justify-center text-neon-purple border-neon-purple/30">
+                        <BarChart3 className="w-6 h-6" />
+                    </div>
                 </div>
             </header>
 
