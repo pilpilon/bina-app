@@ -55,14 +55,53 @@ export function getPermissionStatus(): NotificationPermission {
     return Notification.permission;
 }
 
-export function showTestNotification() {
-    if (Notification.permission !== 'granted') return;
-    const n = new Notification('Bina 📚 — בדיקת התראה', {
-        body: 'מערכת ההתראות פעילה! נתראה בשעת הלמידה 🚀',
-        icon: '/icon-192.png',
-        tag: 'bina-test',
-    });
-    setTimeout(() => n.close(), 5000);
+export async function showTestNotification() {
+    if (!('Notification' in window)) {
+        alert('הדפדפן שלך לא תומך בהתראות.');
+        return;
+    }
+
+    // Request permission if not yet decided
+    if (Notification.permission === 'default') {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') {
+            alert('לא ניתנה הרשאה להתראות. אנא אפשר אותן בהגדרות הדפדפן.');
+            return;
+        }
+    }
+
+    if (Notification.permission !== 'granted') {
+        alert('התראות חסומות. אנא אפשר אותן בהגדרות הדפדפן → ' + window.location.hostname);
+        return;
+    }
+
+    const notifPayload = {
+        body: 'מערכת ההתראות פעילה! נתראה בשעת הלמידה 🔥',
+        icon: '/vite.svg',
+        badge: '/vite.svg',
+        tag: 'bina-test-' + Date.now(),
+    };
+
+    // Try service worker first (works in PWA/installed context)
+    try {
+        if ('serviceWorker' in navigator) {
+            const reg = await navigator.serviceWorker.ready;
+            await reg.showNotification('Bina 📚 — בדיקת התראה!', notifPayload);
+            return; // Success via SW
+        }
+    } catch (swError) {
+        console.warn('SW notification failed, trying fallback:', swError);
+    }
+
+    // Fallback: direct Notification API
+    try {
+        const n = new Notification('Bina 📚 — בדיקת התראה!', notifPayload);
+        n.onclick = () => { window.focus(); n.close(); };
+        setTimeout(() => n.close(), 6000);
+    } catch (e) {
+        console.error('Notification Error:', e);
+        alert('שגיאה: ' + (e as Error).message);
+    }
 }
 
 export function scheduleSmartNotifications(
@@ -110,7 +149,7 @@ export function scheduleSmartNotifications(
 
         new Notification(title, {
             body,
-            icon: '/icon-192.png',
+            icon: '/vite.svg',
             tag: 'bina-daily',
             requireInteraction: false,
         });

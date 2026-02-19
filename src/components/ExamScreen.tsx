@@ -88,6 +88,24 @@ const ExamScreen: React.FC<ExamScreenProps> = ({ questions, onClose, onShowExpla
         };
     };
 
+    // Stabilize options to avoid re-shuffling on every timer tick
+    const currentQuestion = questions[currentIndex];
+
+    const options = useMemo(() => {
+        if (!currentQuestion) return [];
+        if (currentQuestion.options && currentQuestion.options.length > 0) return currentQuestion.options;
+
+        const correct = currentQuestion.definition || currentQuestion.correctAnswer || '';
+
+        // Pick 3 random distractors that aren't the correct answer from the whole pool
+        const distractors = [...distractorPool]
+            .filter(d => d !== correct)
+            .sort(() => Math.random() - 0.5)
+            .slice(0, 3);
+
+        return [correct, ...distractors].sort(() => Math.random() - 0.5);
+    }, [currentIndex, currentQuestion?.id, distractorPool]);
+
     if (isFinished) {
         const stats = calculateScore();
         return (
@@ -157,23 +175,6 @@ const ExamScreen: React.FC<ExamScreenProps> = ({ questions, onClose, onShowExpla
             </motion.div>
         );
     }
-
-    const currentQuestion = questions[currentIndex];
-
-    // Stabilize options to avoid re-shuffling on every timer tick
-    const options = useMemo(() => {
-        if (currentQuestion.options && currentQuestion.options.length > 0) return currentQuestion.options;
-
-        const correct = currentQuestion.definition || currentQuestion.correctAnswer || '';
-
-        // Pick 3 random distractors that aren't the correct answer from the whole pool
-        const distractors = [...distractorPool]
-            .filter(d => d !== correct)
-            .sort(() => Math.random() - 0.5)
-            .slice(0, 3);
-
-        return [correct, ...distractors].sort(() => Math.random() - 0.5);
-    }, [currentIndex, currentQuestion.id, distractorPool]);
 
     return (
         <motion.div

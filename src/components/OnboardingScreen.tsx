@@ -265,6 +265,7 @@ const GoalStep = ({
                     min={new Date().toISOString().split('T')[0]}
                     onChange={(e) => onChange({ examDate: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-text-primary font-bold text-sm focus:outline-none focus:border-neon-purple/50 transition-colors [color-scheme:dark]"
+                    max="2030-12-31"
                 />
             </div>
 

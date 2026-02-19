@@ -231,30 +231,57 @@ const HomeScreen = ({ onStartLearning, userProfile, userStats, getLevelName }: a
 
             <SmartCTA onClick={onStartLearning} />
 
+            {/* First Mission card — only for brand new users */}
+            {userStats.xp === 0 && (
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6 rounded-2xl p-5 bg-gradient-to-r from-emerald-500/15 to-electric-blue/15 border border-emerald-400/25 cursor-pointer"
+                    onClick={() => onStartLearning('vocabulary')}
+                >
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 bg-emerald-400/15 rounded-2xl flex items-center justify-center text-2xl shrink-0">🎯</div>
+                        <div className="flex-1">
+                            <div className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-0.5">משימה ראשונה</div>
+                            <div className="font-black text-white text-sm">התחל את המסע שלך!</div>
+                            <div className="text-xs text-text-secondary">10 כרטיסיות ראשונות • ~3 דקות</div>
+                        </div>
+                        <ChevronLeft className="w-5 h-5 text-emerald-400 shrink-0" />
+                    </div>
+                </motion.div>
+            )}
+
             {/* Smart Upsell Banner — only for free users, context-aware */}
             {userStats.tier === 'free' && <SmartUpsellBanner userStats={userStats} onUpgrade={() => onStartLearning('pricing')} />}
 
             {/* Favorites Section */}
-            {userStats.favorites?.length > 0 && (
-                <div className="mb-8">
-                    <h3 className="text-xl font-bold mb-4 pr-1">מועדפים שלי ({userStats.favorites.length})</h3>
-                    <GlassCard
-                        className="p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all group border-neon-pink/30 shadow-glow-pink/10"
-                        onClick={() => onStartLearning('favorites')}
-                    >
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-neon-pink/10 rounded-xl flex items-center justify-center text-neon-pink group-hover:scale-110 transition-transform">
-                                <Heart className="w-7 h-7 fill-neon-pink" />
+            <div className="mb-8">
+                {userStats.favorites?.length > 0 ? (
+                    <>
+                        <h3 className="text-xl font-bold mb-4 pr-1">מועדפים שלי ({userStats.favorites.length})</h3>
+                        <GlassCard
+                            className="p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all group border-neon-pink/30 shadow-glow-pink/10"
+                            onClick={() => onStartLearning('favorites')}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-neon-pink/10 rounded-xl flex items-center justify-center text-neon-pink group-hover:scale-110 transition-transform">
+                                    <Heart className="w-7 h-7 fill-neon-pink" />
+                                </div>
+                                <div>
+                                    <div className="font-bold text-lg">חזרה על המועדפים</div>
+                                    <div className="text-xs text-text-secondary">מבחן ממוקד על המילים ששמרת</div>
+                                </div>
                             </div>
-                            <div>
-                                <div className="font-bold text-lg">חזרה על המועדפים</div>
-                                <div className="text-xs text-text-secondary">מבחן ממוקד על המילים ששמרת</div>
-                            </div>
-                        </div>
-                        <ChevronLeft className="w-6 h-6 text-neon-pink" />
+                            <ChevronLeft className="w-6 h-6 text-neon-pink" />
+                        </GlassCard>
+                    </>
+                ) : (
+                    <GlassCard className="p-4 flex items-center gap-3 border-dashed border-white/10 opacity-60">
+                        <Heart className="w-5 h-5 text-neon-pink/50 shrink-0" />
+                        <p className="text-xs text-text-muted">לחץ ⭐ על כרטיסייה כדי לשמור אותה למועדפים</p>
                     </GlassCard>
-                </div>
-            )}
+                )}
+            </div>
 
             <h3 className="text-xl font-bold mb-4 pr-1">סטטיסטיקה בזמן אמת</h3>
             <div className="grid grid-cols-2 gap-4 mb-10">
@@ -357,6 +384,7 @@ const TopicCard = ({ icon: Icon, title, sub, color, bg, onClick }: any) => (
 const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity, favorites = [], onToggleFavorite, userStats, onUpgrade, onRefer, ...props }: { onBack: () => void, topic?: string, awardXP: (n: number) => void, recordActivity: (xp: number, cat: string, correct: boolean) => void, favorites?: string[], onToggleFavorite?: (id: string) => void, userStats: any, onUpgrade: () => void, onRefer: () => void, [key: string]: any }) => {
     const [index, setIndex] = useState(0);
     const [knownCount, setKnownCount] = useState(0);
+    const [exitX, setExitX] = useState(0);
 
     const isLimitHit = userStats.tier === 'free' && (userStats.dailySwipes || 0) >= 10;
 
@@ -375,7 +403,11 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
         }
     };
 
-    const currentDataSet = getDataSet();
+    const currentDataSet = useMemo(() => {
+        const data = getDataSet();
+        // Shuffle the data to ensure randomness
+        return [...data].sort(() => Math.random() - 0.5);
+    }, [topic]);
     const isFinished = index >= currentDataSet.length;
     const currentWord = !isFinished ? currentDataSet[index] : currentDataSet[0];
 
@@ -394,11 +426,48 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
     const marathonQuestions = useMemo(() => {
         if (topic !== 'marathon') return [];
         const allQuestions = [...vocabData, ...analogiesData, ...quantitativeData, ...englishData];
+
+        // Group by category for smarter distractors
+        const byCategory: Record<string, any[]> = {};
+        allQuestions.forEach(q => {
+            const cat = q.category || 'general';
+            if (!byCategory[cat]) byCategory[cat] = [];
+            byCategory[cat].push(q);
+        });
+
         const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
-        return shuffled.slice(0, 20).map(q => ({
-            ...q,
-            correctAnswer: (q as any).definition || (q as any).answer || (q as any).word
-        }));
+
+        return shuffled.slice(0, 20).map(q => {
+            const correct = (q as any).definition || (q as any).answer || (q as any).word;
+            const category = q.category || 'general';
+
+            // Get distractors from SAME category
+            const categoryPool = byCategory[category] || allQuestions;
+            const potentialDistractors = categoryPool
+                .map(i => (i as any).definition || (i as any).answer || (i as any).word)
+                .filter(a => a && a !== correct);
+
+            // Shuffle and pick 3
+            const distractors = potentialDistractors.sort(() => 0.5 - Math.random()).slice(0, 3);
+
+            // If not enough same-category distractors, fallback to general pool (rare)
+            if (distractors.length < 3) {
+                const generalDistractors = allQuestions
+                    .map(i => (i as any).definition || (i as any).answer || (i as any).word)
+                    .filter(a => a && a !== correct && !distractors.includes(a))
+                    .sort(() => 0.5 - Math.random())
+                    .slice(0, 3 - distractors.length);
+                distractors.push(...generalDistractors);
+            }
+
+            const options = [correct, ...distractors].sort(() => 0.5 - Math.random());
+
+            return {
+                ...q,
+                correctAnswer: correct,
+                options
+            };
+        });
     }, [topic]);
 
     if (topic === 'marathon') {
@@ -456,54 +525,97 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="glass-card p-8 text-center flex flex-col items-center gap-6 w-full max-w-[360px]"
+                        className="w-full max-w-[360px] text-center"
                     >
-                        <div className="text-6xl">🎉</div>
-                        <h2 className="text-2xl font-black text-electric-blue">סיימת את הסט!</h2>
-                        <p className="text-text-secondary">ידעת <span className="text-electric-blue font-bold">{knownCount}</span> מתוך <span className="font-bold">{currentDataSet.length}</span> כרטיסיות</p>
-                        <div className="flex gap-4 mt-2">
+                        {/* Trophy */}
+                        <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: 'spring', delay: 0.1 }}
+                            className="text-7xl mb-4"
+                        >
+                            {knownCount / currentDataSet.length >= 0.8 ? '🏆' : knownCount / currentDataSet.length >= 0.2 ? '🌟' : '💪'}
+                        </motion.div>
+
+                        <h2 className="text-2xl font-black text-white mb-1">
+                            {knownCount / currentDataSet.length >= 0.8 ? 'מצוין!' : knownCount / currentDataSet.length >= 0.2 ? 'עבודה טובה!' : 'לא נורא!'}
+                        </h2>
+                        <p className="text-text-secondary text-sm mb-6">סיימת את הסט בהצלחה</p>
+
+                        {/* Stats row */}
+                        <div className="grid grid-cols-3 gap-3 mb-6">
+                            <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
+                                <div className="text-2xl font-black text-electric-blue">+{knownCount * 10}</div>
+                                <div className="text-[10px] text-text-muted uppercase tracking-wider mt-0.5">XP</div>
+                            </div>
+                            <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
+                                <div className="text-2xl font-black text-emerald-400">{Math.round((knownCount / currentDataSet.length) * 100)}%</div>
+                                <div className="text-[10px] text-text-muted uppercase tracking-wider mt-0.5">דיוק</div>
+                            </div>
+                            <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
+                                <div className="text-2xl font-black text-neon-purple">{currentDataSet.length}</div>
+                                <div className="text-[10px] text-text-muted uppercase tracking-wider mt-0.5">כרטיסיות</div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3">
                             <button
                                 onClick={() => {
                                     setIndex(0);
                                     setKnownCount(0);
                                     awardXP(20);
                                 }}
-                                className="px-6 py-3 rounded-xl font-bold bg-electric-blue/20 border border-electric-blue text-electric-blue hover:bg-electric-blue/30 transition-all"
+                                className="flex-1 py-3 rounded-xl font-bold text-sm bg-white/5 border border-white/10 text-text-secondary hover:bg-white/10 transition-all"
                             >
                                 שוב 🔄
                             </button>
                             <button
                                 onClick={() => {
-                                    awardXP(20);
+                                    awardXP(knownCount * 10);
                                     onBack();
                                 }}
-                                className="px-6 py-3 rounded-xl font-bold bg-white/5 border border-white/10 text-text-secondary hover:bg-white/10 transition-all"
+                                className="flex-1 py-3 rounded-xl font-black text-sm bg-gradient-to-r from-electric-blue to-neon-purple text-white shadow-glow-blue hover:scale-[1.02] active:scale-[0.98] transition-all"
                             >
-                                חזור
+                                בית →
                             </button>
                         </div>
                     </motion.div>
                 ) : (
-                    <AnimatePresence mode="wait">
-                        <SwipeCard
+                    <AnimatePresence mode="wait" custom={exitX}>
+                        <motion.div
                             key={`${topic}-${index}`}
-                            {...currentWord}
-                            isFavorite={favorites.includes(currentWord.id)}
-                            onToggleFavorite={() => onToggleFavorite?.(currentWord.id)}
-                            disabled={isLimitHit}
-                            onSwipeLeft={() => {
-                                if (isLimitHit) return;
-                                setKnownCount(prev => prev + 1);
-                                setIndex(prev => prev + 1);
-                                recordActivity(10, currentTopicInfo.category, true);
+                            custom={exitX}
+                            variants={{
+                                initial: { opacity: 0, scale: 0.8, x: 0 },
+                                animate: { opacity: 1, scale: 1, x: 0 },
+                                exit: (x) => ({ x: x, opacity: 0, scale: 0.9, transition: { duration: 0.2 } })
                             }}
-                            onSwipeRight={() => {
-                                if (isLimitHit) return;
-                                if ((props as any).onMiss) (props as any).onMiss(currentWord);
-                                setIndex(prev => prev + 1);
-                                recordActivity(5, currentTopicInfo.category, false);
-                            }}
-                        />
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            className="absolute inset-0 flex items-center justify-center p-4"
+                        >
+                            <SwipeCard
+                                {...currentWord}
+                                isFavorite={favorites.includes(currentWord.id)}
+                                onToggleFavorite={() => onToggleFavorite?.(currentWord.id)}
+                                disabled={isLimitHit}
+                                onSwipeLeft={() => {
+                                    if (isLimitHit) return;
+                                    setExitX(-300); // Fly left
+                                    setKnownCount(prev => prev + 1);
+                                    setIndex(prev => prev + 1);
+                                    recordActivity(10, currentTopicInfo.category, true);
+                                }}
+                                onSwipeRight={() => {
+                                    if (isLimitHit) return;
+                                    setExitX(300); // Fly right
+                                    if ((props as any).onMiss) (props as any).onMiss(currentWord);
+                                    setIndex(prev => prev + 1);
+                                    recordActivity(5, currentTopicInfo.category, false);
+                                }}
+                            />
+                        </motion.div>
                     </AnimatePresence>
                 )}
             </div>
@@ -532,21 +644,21 @@ const StatsScreen = ({ userStats, userProfile, setActiveTab }: any) => {
             label: 'כמותי',
             value: userStats.categoryTotal?.['כמותי']
                 ? Math.round(((userStats.categoryTotal['כמותי'] - (userStats.categoryErrors['כמותי'] || 0)) / userStats.categoryTotal['כמותי']) * 100)
-                : 82,
+                : 0,
             color: '#00D9FF'
         },
         {
             label: 'מילולי',
             value: userStats.categoryTotal?.['מילולי']
                 ? Math.round(((userStats.categoryTotal['מילולי'] - (userStats.categoryErrors['מילולי'] || 0)) / userStats.categoryTotal['מילולי']) * 100)
-                : 75,
+                : 0,
             color: '#B026FF'
         },
         {
             label: 'אנגלית',
             value: userStats.categoryTotal?.['אנגלית']
                 ? Math.round(((userStats.categoryTotal['אנגלית'] - (userStats.categoryErrors['אנגלית'] || 0)) / userStats.categoryTotal['אנגלית']) * 100)
-                : 91,
+                : 0,
             color: '#FFD700'
         }
     ];
@@ -637,11 +749,60 @@ const StatsScreen = ({ userStats, userProfile, setActiveTab }: any) => {
                 </div>
             </div>
 
+            {/* Weakest Category Insight */}
+            {(() => {
+                const cats = [
+                    { key: 'אוצר מילים', topic: 'vocabulary', icon: '📖' },
+                    { key: 'מילולי', topic: 'analogies', icon: '🔗' },
+                    { key: 'כמותי', topic: 'quantitative', icon: '📐' },
+                    { key: 'אנגלית', topic: 'english', icon: '🇬🇧' },
+                ];
+                const withStats = cats
+                    .map(c => {
+                        const total = userStats.categoryTotal?.[c.key] || 0;
+                        const errors = userStats.categoryErrors?.[c.key] || 0;
+                        const acc = total > 0 ? Math.round(((total - errors) / total) * 100) : null;
+                        return { ...c, total, errors, acc };
+                    })
+                    .filter(c => c.total > 0);
+
+                if (withStats.length === 0) return null;
+                const weakest = withStats.reduce((a, b) => (a.acc! < b.acc! ? a : b));
+
+                return (
+                    <div className="mb-8">
+                        <div className="flex items-center gap-2 mb-4">
+                            <span className="text-lg">⚠️</span>
+                            <h3 className="text-xl font-bold">חולשה עיקרית</h3>
+                        </div>
+                        <GlassCard className="p-5 border-neon-pink/20 bg-neon-pink/5">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-3xl">{weakest.icon}</span>
+                                    <div>
+                                        <div className="font-black text-white">{weakest.key}</div>
+                                        <div className="text-xs text-neon-pink font-bold">{weakest.acc}% דיוק • {weakest.errors} שגיאות</div>
+                                    </div>
+                                </div>
+                                {setActiveTab && (
+                                    <button
+                                        onClick={() => setActiveTab('home')}
+                                        className="px-3 py-2 bg-neon-pink text-white font-black text-xs rounded-xl hover:scale-105 active:scale-95 transition-all"
+                                    >
+                                        תרגל עכשיו
+                                    </button>
+                                )}
+                            </div>
+                        </GlassCard>
+                    </div>
+                );
+            })()}
+
             {/* AI Analysis CTA */}
             {setActiveTab && (
                 <button
                     onClick={() => setActiveTab('ai-analysis')}
-                    className="w-full mt-8 py-4 rounded-2xl bg-gradient-to-r from-electric-blue/10 to-neon-purple/10 border border-electric-blue/20 text-white font-black flex items-center justify-center gap-3 hover:from-electric-blue/20 hover:to-neon-purple/20 transition-all group"
+                    className="w-full mt-4 py-4 rounded-2xl bg-gradient-to-r from-electric-blue/10 to-neon-purple/10 border border-electric-blue/20 text-white font-black flex items-center justify-center gap-3 hover:from-electric-blue/20 hover:to-neon-purple/20 transition-all group"
                 >
                     <Zap className="w-5 h-5 text-electric-blue group-hover:scale-110 transition-transform" />
                     ניתוח AI מלא של החולשות שלך
@@ -689,10 +850,23 @@ const AchievementsScreen = ({ achievements, onBack }: { achievements: string[], 
     );
 };
 
-const StudyPlanScreen = ({ userProfile, onBack }: any) => {
+const StudyPlanScreen = ({ userProfile, userStats, onBack }: any) => {
     const examDate = userProfile?.examDate ? new Date(userProfile.examDate) : new Date();
     const daysLeft = Math.max(0, Math.ceil((examDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
     const weeksLeft = Math.ceil(daysLeft / 7);
+    const isFree = userStats?.tier === 'free';
+
+    const todayFocus = [
+        { day: 0, label: 'אוצר מילים', icon: '📖', sub: '10 מילים חדשות' },
+        { day: 1, label: 'אנלוגיות', icon: '🔗', sub: 'חשיבה מילולית' },
+        { day: 2, label: 'כמותי', icon: '📐', sub: 'אלגברה וגיאומטריה' },
+        { day: 3, label: 'אנגלית', icon: '🇬🇧', sub: 'Sentence Completion' },
+        { day: 4, label: 'חזרה כללית', icon: '🔄', sub: 'כל הנושאים' },
+        { day: 5, label: 'מרתון', icon: '🏃', sub: 'סימולציה מלאה' },
+        { day: 6, label: 'מנוחה', icon: '🙏', sub: 'יום מנוחה מומלץ' },
+    ];
+    const todayIdx = new Date().getDay();
+    const today = todayFocus[todayIdx];
 
     const roadmap = [
         { title: 'שבוע יישור קו', desc: 'חזרה על יסודות האלגברה ואוצר מילים בסיסי', status: 'completed' },
@@ -708,19 +882,43 @@ const StudyPlanScreen = ({ userProfile, onBack }: any) => {
                 <span>חזור</span>
             </button>
             <h2 className="text-3xl font-black mb-2 text-neon-purple">תוכנית הלימודים</h2>
-            <p className="text-text-secondary mb-8">נותרו {daysLeft} ימים (כ-{weeksLeft} שבועות) למבחן</p>
+            <p className="text-text-secondary mb-6">נותרו {daysLeft} ימים (כא-{weeksLeft} שבועות) למבחן</p>
 
-            <div className="space-y-6 relative">
-                <div className="absolute top-0 right-4 bottom-0 w-0.5 bg-white/5" />
-                {roadmap.map((item, idx) => (
-                    <div key={idx} className="relative pr-10">
-                        <div className={`absolute right-3 top-2 w-3 h-3 rounded-full border-2 ${item.status === 'completed' ? 'bg-emerald-400 border-emerald-400' : item.status === 'current' ? 'bg-neon-purple border-neon-purple shadow-glow-purple' : 'bg-charcoal border-white/20'}`} />
-                        <GlassCard className={`p-4 ${item.status === 'upcoming' ? 'opacity-50' : ''}`}>
-                            <h4 className="font-black text-lg">{item.title}</h4>
-                            <p className="text-sm text-text-secondary">{item.desc}</p>
-                        </GlassCard>
+            {/* Today's Focus — always visible, even for free users */}
+            <GlassCard className="p-5 mb-8 border-electric-blue/20 bg-electric-blue/5">
+                <div className="text-[10px] font-black text-electric-blue uppercase tracking-widest mb-3">היום מתמקדים על</div>
+                <div className="flex items-center gap-4">
+                    <span className="text-4xl">{today.icon}</span>
+                    <div>
+                        <div className="font-black text-white text-lg">{today.label}</div>
+                        <div className="text-xs text-text-secondary">{today.sub}</div>
                     </div>
-                ))}
+                </div>
+            </GlassCard>
+
+            {/* Weekly roadmap — blurred for free users */}
+            <div className="relative">
+                <div className="space-y-6 relative">
+                    <div className="absolute top-0 right-4 bottom-0 w-0.5 bg-white/5" />
+                    {roadmap.map((item, idx) => (
+                        <div key={idx} className={`relative pr-10 ${isFree && idx > 0 ? 'blur-sm pointer-events-none select-none' : ''}`}>
+                            <div className={`absolute right-3 top-2 w-3 h-3 rounded-full border-2 ${item.status === 'completed' ? 'bg-emerald-400 border-emerald-400' : item.status === 'current' ? 'bg-neon-purple border-neon-purple shadow-glow-purple' : 'bg-charcoal border-white/20'}`} />
+                            <GlassCard className={`p-4 ${item.status === 'upcoming' ? 'opacity-50' : ''}`}>
+                                <h4 className="font-black text-lg">{item.title}</h4>
+                                <p className="text-sm text-text-secondary">{item.desc}</p>
+                            </GlassCard>
+                        </div>
+                    ))}
+                </div>
+                {isFree && (
+                    <div className="absolute inset-0 flex items-center justify-center" style={{ top: '80px' }}>
+                        <div className="bg-charcoal/80 backdrop-blur-sm rounded-2xl p-5 text-center border border-white/10 mx-4">
+                            <div className="text-2xl mb-2">🔒</div>
+                            <div className="font-black text-white mb-1">תוכנית AI מלאה</div>
+                            <div className="text-xs text-text-secondary mb-3">שדרג ל-Plus לראות את כל השבועות</div>
+                        </div>
+                    </div>
+                )}
             </div>
         </motion.div>
     );
@@ -996,7 +1194,7 @@ const AIAnalysisScreen = ({ userStats, weakPoints, onBack, onStartLearning }: an
     );
 };
 
-const AISettingsScreen = ({ userStats, onBack, onUpdateStats, notifSettings, notifPermission, onUpdateNotif, onRequestPermission, onTestNotif }: any) => {
+const AISettingsScreen = ({ userStats, onBack, onUpdateStats, notifSettings, notifPermission, onUpdateNotif, onRequestPermission, onTestNotif, onUpgrade }: any) => {
     const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
         <button
             onClick={() => onChange(!value)}
@@ -1058,10 +1256,22 @@ const AISettingsScreen = ({ userStats, onBack, onUpdateStats, notifSettings, not
                 </div>
                 <div className="flex items-center justify-between">
                     <span className="text-sm text-text-secondary">הפעל הסברים אוטומטיים</span>
-                    <Toggle value={!!userStats.teacherMode} onChange={(v) => onUpdateStats?.({ ...userStats, teacherMode: v })} />
+                    {userStats.tier === 'free' ? (
+                        <button
+                            onClick={() => onUpgrade?.()}
+                            className="flex items-center gap-2 bg-neon-pink/10 border border-neon-pink/30 text-neon-pink px-3 py-1.5 rounded-xl text-xs font-black hover:bg-neon-pink/20 transition-colors"
+                        >
+                            🔒 PRO בלבד
+                        </button>
+                    ) : (
+                        <Toggle
+                            value={!!userStats.teacherMode}
+                            onChange={(v) => onUpdateStats?.({ ...userStats, teacherMode: v })}
+                        />
+                    )}
                 </div>
                 <AnimatePresence>
-                    {userStats.teacherMode && (
+                    {userStats.tier !== 'free' && userStats.teacherMode && (
                         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
                             className="mt-3 text-xs text-electric-blue font-bold bg-electric-blue/10 rounded-lg p-3">
                             ✅ מצב מורה פעיל — Bina תסביר לך כל טעות!
@@ -1143,7 +1353,7 @@ const AISettingsScreen = ({ userStats, onBack, onUpdateStats, notifSettings, not
                             {/* Test button */}
                             <button
                                 onClick={onTestNotif}
-                                className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-text-secondary font-bold text-sm hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
+                                className="w-full py-3 rounded-xl bg-electric-blue/10 border border-electric-blue/30 text-electric-blue font-bold text-sm hover:bg-electric-blue/20 transition-colors flex items-center justify-center gap-2 shadow-glow-blue"
                             >
                                 <Bell className="w-4 h-4" />
                                 שלח התראת בדיקה עכשיו
@@ -1156,7 +1366,9 @@ const AISettingsScreen = ({ userStats, onBack, onUpdateStats, notifSettings, not
     );
 };
 
-const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user }: any) => {
+const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user, onLogin }: any) => {
+    const [billingCycle, setBillingCycle] = useState<'monthly' | 'semester'>('semester'); // Default to semester as it's the "deal"
+
     const plans = [
         {
             id: 'free',
@@ -1174,9 +1386,10 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user }: any
         {
             id: 'plus',
             name: 'Bina Plus',
-            price: '₪39',
-            period: '/חודש',
-            save: '₪149 ל-6 חודשים (חוסך 36%)',
+            price: billingCycle === 'monthly' ? '₪39' : '₪149',
+            period: billingCycle === 'monthly' ? '/חודש' : '/6 חודשים',
+            // In monthly view, show the semester deal. In semester view, show the effective monthly price.
+            save: billingCycle === 'monthly' ? 'חסוך 36% במנוי חצי-שנתי' : 'שווה ל-24.8₪ לחודש (36% הנחה)',
             features: [
                 'תרגול ללא הגבלה',
                 'כל הקטגוריות (כולל כמותי ואנגלית)',
@@ -1186,14 +1399,15 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user }: any
             ],
             cta: 'שדרוג ל-Plus',
             popular: true,
-            tier: 'plus'
+            tier: 'plus',
+            priceId: billingCycle === 'monthly' ? 'pri_01khs94ykm1pk6xv7nvsjzf3vg' : 'pri_01khsfvrx105rzeqrta7871xtt'
         },
         {
             id: 'pro',
             name: 'Bina Pro',
-            price: '₪59',
-            period: '/חודש',
-            save: '₪199 ל-6 חודשים (חוסך 44%)',
+            price: billingCycle === 'monthly' ? '₪59' : '₪199',
+            period: billingCycle === 'monthly' ? '/חודש' : '/6 חודשים',
+            save: billingCycle === 'monthly' ? 'חסוך 44% במנוי חצי-שנתי' : 'שווה ל-33.1₪ לחודש (44% הנחה)',
             features: [
                 'כל מה שיש ב-Plus',
                 'הסברי AI לכל טעות 🧠',
@@ -1202,7 +1416,8 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user }: any
                 'תג "ציון מובטח" בפרופיל'
             ],
             cta: 'עבור ל-Pro',
-            tier: 'pro'
+            tier: 'pro',
+            priceId: billingCycle === 'monthly' ? 'pri_01khs97cjrpkr3qew3m6b6hdpw' : 'pri_01khsfya5xbqtvt3fkbj8pap0m'
         }
     ];
 
@@ -1214,7 +1429,64 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user }: any
             </button>
             <div className="text-center mb-8">
                 <h2 className="text-4xl font-black mb-2 bg-gradient-to-r from-electric-blue via-neon-purple to-neon-pink bg-clip-text text-transparent italic">Bina Premium</h2>
-                <p className="text-text-secondary text-sm">הדרך הכי קלה להגיע ל-800</p>
+                <p className="text-text-secondary text-sm mb-6">הדרך הכי קלה להגיע ל-800</p>
+
+                {/* Guest Warning */}
+                <AnimatePresence>
+                    {!user && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                            animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
+                            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                            className="max-w-[400px] mx-auto text-right"
+                        >
+                            <GlassCard className="p-4 border-cyber-yellow/40 bg-cyber-yellow/5 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 w-1.5 h-full bg-cyber-yellow" />
+                                <div className="flex items-start gap-4">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 text-cyber-yellow mb-2">
+                                            <Zap className="w-5 h-5" />
+                                            <span className="font-black text-sm uppercase tracking-tighter">שים לב: אתה גולש כאורח</span>
+                                        </div>
+                                        <p className="text-xs text-text-secondary leading-relaxed mb-4">
+                                            התקדמות ורכישות נשמרים כרגע <span className="text-white font-bold underline">רק על המכשיר הזה</span>.
+                                            כדי להבטיח את המנוי שלך בכל מקום, מומלץ להתחבר לפני הרכישה.
+                                        </p>
+                                        <button
+                                            onClick={onLogin}
+                                            className="w-full py-2.5 bg-white text-charcoal rounded-lg font-black text-xs hover:bg-cyber-yellow transition-all flex items-center justify-center gap-2 shadow-glow-yellow"
+                                        >
+                                            <User className="w-4 h-4" />
+                                            התחבר עם Google עכשיו
+                                        </button>
+                                    </div>
+                                </div>
+                            </GlassCard>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Billing Cycle Toggle */}
+                <div className="grid grid-cols-2 bg-white/5 p-1 rounded-xl border border-white/10 relative w-full max-w-[340px] mx-auto">
+                    <div
+                        className="absolute top-1 bottom-1 rounded-lg bg-white/10 transition-all duration-300 w-[calc(50%-4px)]"
+                        style={{
+                            left: billingCycle === 'semester' ? '4px' : 'calc(50% + 4px)',
+                        }}
+                    />
+                    <button
+                        onClick={() => setBillingCycle('semester')}
+                        className={`relative z-10 py-2 rounded-lg text-sm font-bold transition-colors w-full ${billingCycle === 'semester' ? 'text-white' : 'text-text-muted hover:text-white'}`}
+                    >
+                        חצי שנתי <span className="text-emerald-400 text-[10px] mr-1">-40%</span>
+                    </button>
+                    <button
+                        onClick={() => setBillingCycle('monthly')}
+                        className={`relative z-10 py-2 rounded-lg text-sm font-bold transition-colors w-full ${billingCycle === 'monthly' ? 'text-white' : 'text-text-muted hover:text-white'}`}
+                    >
+                        חודשי
+                    </button>
+                </div>
             </div>
 
             <div className="space-y-6">
@@ -1257,8 +1529,14 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user }: any
                                         onSelectPlan?.(plan.tier);
                                     } else {
                                         // Trigger Paddle Checkout
+                                        // @ts-ignore
+                                        if (plan.priceId.includes('PLACEHOLDER')) {
+                                            alert('מוצר זה עדיין לא קיים במערכת (ממתין ל-ID מ-Paddle)');
+                                            return;
+                                        }
                                         openPaddleCheckout(
-                                            plan.id === 'plus' ? 'pri_01khs94ykm1pk6xv7nvsjzf3vg' : 'pri_01khs97cjrpkr3qew3m6b6hdpw',
+                                            // @ts-ignore
+                                            plan.priceId,
                                             user?.email
                                         );
                                     }
@@ -1279,11 +1557,11 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user }: any
                 ו
                 <Link to="/privacy" className="text-electric-blue hover:underline">מדיניות הפרטיות</Link>.
             </p>
-        </motion.div>
+        </motion.div >
     );
 };
 
-const ProfileScreen = ({ userStats, userProfile, user, setActiveTab, onEditProfile, onLogout, onRedeem, onSimulateFriend, showToast }: any) => {
+const ProfileScreen = ({ userStats, userProfile, user, setActiveTab, onEditProfile, onLogout, onRedeem, onSimulateFriend, showToast, onGoogleLogin }: any) => {
     const settings = [
         { icon: User, label: 'עריכת פרופיל', color: 'text-electric-blue', action: () => onEditProfile() },
         { icon: Zap, label: 'הגדרות AI אישיות', color: 'text-cyber-yellow', action: () => setActiveTab('ai-settings') },
@@ -1292,7 +1570,12 @@ const ProfileScreen = ({ userStats, userProfile, user, setActiveTab, onEditProfi
         { icon: X, label: 'התנתקות', color: 'text-neon-pink', action: () => onLogout() }
     ];
 
-    const examDateStr = userProfile?.examDate ? new Date(userProfile.examDate).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' }) : 'ספטמבר 2024';
+    const examDate = userProfile?.examDate ? new Date(userProfile.examDate) : new Date();
+    // Validate year to prevent "51225" bugs
+    const isValidDate = !isNaN(examDate.getTime()) && examDate.getFullYear() < 2030 && examDate.getFullYear() > 2020;
+    const safeExamDate = isValidDate ? examDate : new Date(new Date().setMonth(new Date().getMonth() + 3));
+
+    const examDateStr = isValidDate ? safeExamDate.toLocaleDateString('he-IL', { month: 'long', year: 'numeric' }) : 'תאריך לא תקין';
     const dailyMinutesMax = userProfile?.dailyMinutes || 60;
     const dailyQuestionsProgress = Math.min(100, (userStats.dailyQuestions / 50) * 100);
     const dailyTimeProgress = Math.min(100, ((userStats.activityHistory?.find((h: any) => h.day === ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'][new Date().getDay()])?.value || 0) / dailyMinutesMax) * 100);
@@ -1326,6 +1609,74 @@ const ProfileScreen = ({ userStats, userProfile, user, setActiveTab, onEditProfi
                     </div>
                 </div>
             </div>
+
+            {(!user || user.isAnonymous) && (
+                <GlassCard className="p-5 mb-6 mx-5 border-neon-purple/30 bg-gradient-to-r from-neon-purple/10 to-transparent">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-white p-2 rounded-full">
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="font-bold text-white">שמירת התקדמות בענן ☁️</h3>
+                            <p className="text-xs text-text-secondary">התחבר כדי לגבות את הנתונים שלך</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={onGoogleLogin}
+                        className="w-full mt-4 py-3 bg-white text-charcoal font-black rounded-xl hover:bg-gray-100 transition-colors shadow-glow-white"
+                    >
+                        התחברות עם Google
+                    </button>
+                </GlassCard>
+            )}
+
+            <div className="flex flex-col items-center justify-center mb-6">
+                <div className="flex items-center gap-3 text-text-secondary text-sm bg-white/5 px-4 py-2 rounded-full border border-white/10">
+                    <Calendar className="w-4 h-4" />
+                    <span>מועד המבחן: {examDateStr}</span>
+                </div>
+
+                {/* Exam Countdown */}
+                <div className="mt-6 w-full max-w-[280px]">
+                    {(() => {
+                        const exam = userProfile?.examDate ? new Date(userProfile.examDate) : new Date();
+                        const now = new Date();
+                        const safeExam = (!isNaN(exam.getTime()) && exam.getFullYear() < 2030) ? exam : new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+
+                        const diffTime = Math.max(0, safeExam.getTime() - now.getTime());
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        const totalDays = 90; // Assuming 3 month prep
+                        const progress = Math.min(100, Math.max(0, ((totalDays - diffDays) / totalDays) * 100));
+
+                        return (
+                            <div className="relative pt-1">
+                                <div className="flex mb-2 items-center justify-between">
+                                    <div>
+                                        <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-neon-purple bg-neon-purple/20">
+                                            ספירה לאחור
+                                        </span>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-xs font-semibold inline-block text-neon-purple">
+                                            {diffDays} ימים
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-neon-purple/20">
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${progress}%` }}
+                                        className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-neon-purple shadow-glow-purple"
+                                    />
+                                </div>
+                            </div>
+                        );
+                    })()}
+                </div>
+            </div>
+
+            {/* Debug Crash Button (Dev only) */}
+            {/* <button onClick={() => { throw new Error("Test Crash"); }} className="absolute top-4 left-4 text-[10px] text-red-500 opacity-20 hover:opacity-100">🚫</button> */}
 
             {/* Referral UI */}
             <div className="mb-6">
@@ -1427,11 +1778,19 @@ const ProfileScreen = ({ userStats, userProfile, user, setActiveTab, onEditProfi
     );
 };
 
-const CustomListScreen = ({ onSave, onBack, onStartLearning }: any) => {
-    const [text, setText] = useState('');
+const CustomListScreen = ({ initialData = [], onSave, onBack, onStartLearning }: any) => {
+    const [text, setText] = useState(() => {
+        if (!initialData || initialData.length === 0) return '';
+        return initialData.map((item: any) => {
+            if (item.example && item.example !== 'מהרשימה האישית שלך') {
+                return `${item.word} : ${item.definition} : ${item.example}`;
+            }
+            return `${item.word} : ${item.definition}`;
+        }).join('\n');
+    });
     const [saved, setSaved] = useState(false);
     const [translating, setTranslating] = useState(false);
-    const [preview, setPreview] = useState<{ word: string; definition: string }[]>([]);
+    const [preview, setPreview] = useState<{ word: string; definition: string; example?: string }[]>([]);
 
     // Detect if a string is Hebrew
     const isHebrew = (str: string) => /[\u05d0-\u05ea]/.test(str);
@@ -1456,45 +1815,51 @@ const CustomListScreen = ({ onSave, onBack, onStartLearning }: any) => {
     };
 
     const handleImport = async () => {
-        const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+        const lines = text.split('\n').map((l: string) => l.trim()).filter(Boolean);
         if (lines.length === 0) return;
 
         setTranslating(true);
         setPreview([]);
 
         const newList: WordCard[] = [];
-        const previewItems: { word: string; definition: string }[] = [];
+        const previewItems: { word: string; definition: string; example?: string }[] = [];
 
         for (let idx = 0; idx < lines.length; idx++) {
             const line = lines[idx];
-            const hasColon = line.includes(':');
-            const hasDash = line.includes(' - ');
             let word = line;
             let definition = '';
+            let example = '';
 
-            if (hasColon) {
-                const [w, ...rest] = line.split(':');
-                word = w.trim();
-                definition = rest.join(':').trim();
-            } else if (hasDash) {
-                const [w, ...rest] = line.split(' - ');
-                word = w.trim();
-                definition = rest.join(' - ').trim();
+            // Handle multiple separators: colon (:) or dash ( - )
+            const parts = line.split(/[:]| - /).map((p: string) => p.trim());
+            word = parts[parts.length > 0 ? 0 : 0] || '';
+
+            if (parts.length >= 3) {
+                word = parts[0];
+                definition = parts[1];
+                example = parts[2];
+            } else if (parts.length === 2) {
+                word = parts[0];
+                definition = parts[1];
+            } else {
+                word = parts[0];
             }
 
             // Auto-translate if no definition provided
-            if (!definition) {
+            if (!definition && word) {
                 definition = await translateWord(word);
             }
 
-            previewItems.push({ word, definition });
+            const finalExample = example || `נסו להשתמש במילה "${word}" במשפט.`;
+
+            previewItems.push({ word, definition, example: finalExample });
             setPreview([...previewItems]); // Live update
 
             newList.push({
                 id: `custom-${Date.now()}-${idx}`,
                 word,
                 definition,
-                example: 'מהרשימה האישית שלך',
+                example: finalExample,
                 category: 'הרשימה שלי',
                 difficulty: 'medium'
             });
@@ -1541,7 +1906,12 @@ const CustomListScreen = ({ onSave, onBack, onStartLearning }: any) => {
                                 transition={{ delay: i * 0.03 }}
                                 className="flex items-center justify-between bg-black/30 rounded-xl px-4 py-3 border border-white/5"
                             >
-                                <span className="font-black text-white">{item.word}</span>
+                                <div className="flex-1">
+                                    <div className="font-black text-white">{item.word}</div>
+                                    {item.example && item.example !== `נסו להשתמש במילה "${item.word}" במשפט.` && (
+                                        <div className="text-[10px] text-text-muted italic">"{item.example}"</div>
+                                    )}
+                                </div>
                                 <span className="text-text-secondary text-sm">{item.definition}</span>
                             </motion.div>
                         ))}
@@ -1558,7 +1928,12 @@ const CustomListScreen = ({ onSave, onBack, onStartLearning }: any) => {
                                 animate={{ opacity: 1, x: 0 }}
                                 className="flex items-center justify-between bg-black/30 rounded-xl px-4 py-3 border border-white/5"
                             >
-                                <span className="font-black text-white">{item.word}</span>
+                                <div className="flex-1">
+                                    <div className="font-black text-white">{item.word}</div>
+                                    {item.example && item.example !== `נסו להשתמש במילה "${item.word}" במשפט.` && (
+                                        <div className="text-[10px] text-text-muted italic">"{item.example}"</div>
+                                    )}
+                                </div>
                                 <span className="text-text-secondary text-sm">{item.definition}</span>
                             </motion.div>
                         ))}
@@ -1677,7 +2052,7 @@ const AIExplanationModal = ({ item, onClose, tier = 'free', onUpgrade }: { item:
                     </div>
                 </div>
 
-                <div className={`text-lg text-text-secondary leading-relaxed mb-8 pr-1 min-h-[100px] relative ${isLocked ? 'overflow-hidden' : ''}`}>
+                <div className={`text-lg text-text-secondary leading-relaxed mb-8 pr-1 min-h-[200px] relative ${isLocked ? 'overflow-hidden' : ''}`}>
                     {isLocked ? (
                         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center bg-charcoal/20 backdrop-blur-md rounded-xl p-4">
                             <div className="w-10 h-10 bg-neon-pink/20 rounded-full flex items-center justify-center mb-3">
@@ -1797,19 +2172,30 @@ function App() {
         const unsubscribeAuth = auth.onAuthStateChanged(async (firebaseUser) => {
             setUser(firebaseUser);
             if (firebaseUser) {
-                // Fetch cloud data
-                const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-                if (userDoc.exists()) {
-                    const cloudData = userDoc.data();
-                    if (cloudData.stats) setUserStats(cloudData.stats);
-                    if (cloudData.profile) {
-                        setUserProfile(cloudData.profile);
-                        setHasOnboarded(true);
-                    }
-                } else {
-                    // New Google user with no saved profile — auto-create a basic profile
-                    // so they skip the welcome screen and go straight to goal setup
-                    console.log("New Google user, no cloud profile found.");
+                try {
+                    // Fetch cloud data with a timeout to prevent hanging
+                    const fetchUserData = async () => {
+                        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+                        if (userDoc.exists()) {
+                            const cloudData = userDoc.data();
+                            if (cloudData.stats) setUserStats(cloudData.stats);
+                            if (cloudData.profile) {
+                                setUserProfile(cloudData.profile);
+                                setHasOnboarded(true);
+                            }
+                        } else {
+                            console.log("New User or No Profile in Cloud");
+                        }
+                    };
+
+                    // Race between fetch and 8s timeout
+                    await Promise.race([
+                        fetchUserData(),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
+                    ]);
+                } catch (error) {
+                    console.error("Error fetching user data (offline or timeout):", error);
+                    // Fallback to local storage is already handled by initial state
                 }
             }
             setLoading(false);
@@ -1818,15 +2204,20 @@ function App() {
         return () => unsubscribeAuth();
     }, []);
 
-    // Sync to Firestore on change
+    // Sync to Firestore on change with debounce (30s)
     useEffect(() => {
-        if (user) {
+        if (!user) return;
+
+        const timer = setTimeout(() => {
             setDoc(doc(db, 'users', user.uid), {
                 stats: userStats,
                 profile: userProfile,
                 lastUpdated: new Date().toISOString()
             }, { merge: true });
-        }
+            console.log("Cloud Sync: Firestore updated (debounced)");
+        }, 30000);
+
+        return () => clearTimeout(timer);
     }, [userStats, userProfile, user]);
 
     // Re-schedule when settings change
@@ -2104,7 +2495,7 @@ function App() {
 
         // Randomly trigger surprise after swiping unknown (higher chance for demo)
         if (Math.random() > 0.4) {
-            setTimeout(() => setShowSurprise(card), 1500);
+            setTimeout(() => setShowSurprise(card), 6000);
         }
     };
 
@@ -2246,6 +2637,7 @@ function App() {
                                     )}
                                     {activeTab === 'custom-edit' && (
                                         <CustomListScreen
+                                            initialData={customLists}
                                             onSave={(list: WordCard[]) => {
                                                 setCustomLists(list);
                                                 localStorage.setItem('bina_custom_lists', JSON.stringify(list));
@@ -2271,6 +2663,8 @@ function App() {
                                             onRefer={() => {
                                                 setActiveTab('profile');
                                             }}
+                                            favorites={userStats.favorites}
+                                            onToggleFavorite={toggleFavorite}
                                         />
                                     )}
                                     {activeTab === 'stats' && <StatsScreen userStats={userStats} userProfile={userProfile} setActiveTab={setActiveTab} />}
@@ -2285,18 +2679,20 @@ function App() {
                                             onRedeem={redeemCredits}
                                             onSimulateFriend={simulateFriendSignup}
                                             showToast={showGlobalToast}
+                                            onGoogleLogin={signInWithGoogle}
                                         />
                                     )}
                                     {activeTab === 'achievements' && <AchievementsScreen achievements={userStats.achievements} onBack={() => setActiveTab('profile')} />}
-                                    {activeTab === 'study-plan' && <StudyPlanScreen userProfile={userProfile} onBack={() => setActiveTab('profile')} />}
+                                    {activeTab === 'study-plan' && <StudyPlanScreen userProfile={userProfile} userStats={userStats} onBack={() => setActiveTab('profile')} />}
                                     {activeTab === 'ai-analysis' && (
                                         <AIAnalysisScreen
                                             userStats={userStats}
                                             weakPoints={weakPoints}
                                             onBack={() => setActiveTab('stats')}
                                             onStartLearning={(topic: string) => {
-                                                setActiveTab('home');
-                                                setTimeout(() => startLearning(topic), 100);
+                                                // Directly start learning without switching activeTab first
+                                                // This prevents unmounting/remounting issues and race conditions
+                                                startLearning(topic);
                                             }}
                                         />
                                     )}
@@ -2320,6 +2716,7 @@ function App() {
                                                 }
                                             }}
                                             onTestNotif={showTestNotification}
+                                            onUpgrade={() => setActiveTab('pricing')}
                                         />
                                     )}
 
@@ -2328,6 +2725,7 @@ function App() {
                                             onBack={() => setActiveTab('home')}
                                             currentTier={userStats.tier}
                                             user={user}
+                                            onLogin={signInWithGoogle}
                                             onSelectPlan={(tier: any) => {
                                                 setUserStats((prev: any) => ({ ...prev, tier }));
                                                 setActiveTab('home');

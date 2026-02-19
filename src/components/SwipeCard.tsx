@@ -36,6 +36,8 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ word, definition, example, catego
                 style={{ x, rotate, opacity }}
                 drag={disabled ? false : "x"}
                 dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.6}
+                dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
                 onDragEnd={handleDragEnd}
                 className={`absolute inset-0 glass-card p-8 flex flex-col justify-center items-center text-center border-2 border-electric-blue/30 overflow-hidden shadow-2xl group ${disabled ? 'cursor-default grayscale opacity-50' : 'cursor-grab active:cursor-grabbing'}`}
             >
@@ -72,7 +74,7 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ word, definition, example, catego
                     {category}
                 </div>
 
-                <h2 className="text-4xl md:text-5xl font-black mb-6 bg-gradient-to-r from-electric-blue to-cyber-yellow bg-clip-text text-transparent">
+                <h2 className={`${word.length > 50 ? 'text-2xl' : word.length > 20 ? 'text-3xl' : 'text-4xl md:text-5xl'} font-black mb-6 bg-gradient-to-r from-electric-blue to-cyber-yellow bg-clip-text text-transparent px-2`}>
                     {word}
                 </h2>
 
