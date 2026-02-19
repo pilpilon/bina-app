@@ -3,13 +3,21 @@ import { Zap, BookOpen, Calculator, PenTool } from 'lucide-react';
 export interface SimulationChapter {
     id: string;
     title: string;
-    type: 'verbal' | 'quantitative' | 'english';
+    type: 'verbal' | 'quantitative' | 'english' | 'hibbur';
     duration: number; // in seconds (20 mins = 1200)
     questionCount: number;
     icon: any;
 }
 
 export const SIMULATION_STRUCTURE: SimulationChapter[] = [
+    {
+        id: 'chap_writing',
+        title: 'מטלת כתיבה (חיבור)',
+        type: 'hibbur',
+        duration: 1800, // 30 minutes
+        questionCount: 1,
+        icon: PenTool
+    },
     {
         id: 'chap_1',
         title: 'חשיבה מילולית - פרק 1',

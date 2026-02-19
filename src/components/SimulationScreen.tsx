@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Timer, ArrowLeft, ArrowRight, CheckCircle, Clock, AlertTriangle, Play, Pause, XCircle } from 'lucide-react';
 import { SIMULATION_STRUCTURE, MINI_SIMULATION_STRUCTURE, SimulationChapter } from '../data/simulationData';
 import { PaywallOverlay } from './PaywallOverlay';
+import { WritingScreen } from './WritingScreen';
 
 interface SimulationScreenProps {
     isPro: boolean;
@@ -227,6 +228,20 @@ export const SimulationScreen: React.FC<SimulationScreenProps> = ({ isPro, onBac
         );
     }
 
+    // Writing Screen
+    if (currentChapter.type === 'hibbur') {
+        return (
+            <WritingScreen
+                duration={currentChapter.duration}
+                onFinish={(result) => {
+                    // Save writing result (mock for now) and next chapter
+                    handleNextChapter();
+                }}
+                onExit={handleExit}
+            />
+        );
+    }
+
     // Active Exam UI
     return (
         <div className="h-screen bg-charcoal text-white flex flex-col relative">
@@ -304,8 +319,8 @@ export const SimulationScreen: React.FC<SimulationScreenProps> = ({ isPro, onBac
                                         key={optIdx}
                                         onClick={() => setAnswers({ ...answers, [`${currentChapterIndex}-${idx}`]: opt })}
                                         className={`p-4 text-right rounded-xl border transition-all ${answers[`${currentChapterIndex}-${idx}`] === opt
-                                                ? 'bg-electric-blue/20 border-electric-blue text-electric-blue font-bold'
-                                                : 'bg-black/20 border-white/10 hover:border-white/30 text-text-secondary'
+                                            ? 'bg-electric-blue/20 border-electric-blue text-electric-blue font-bold'
+                                            : 'bg-black/20 border-white/10 hover:border-white/30 text-text-secondary'
                                             }`}
                                     >
                                         {opt}
