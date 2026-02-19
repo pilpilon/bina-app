@@ -1515,7 +1515,7 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user, onLog
                         onClick={() => setBillingCycle('semester')}
                         className={`relative z-10 py-2 rounded-lg text-sm font-bold transition-colors w-full ${billingCycle === 'semester' ? 'text-white' : 'text-text-muted hover:text-white'}`}
                     >
-                        חצי שנתי <span className="text-emerald-400 text-[10px] mr-1">-40%</span>
+                        חצי שנתי <span className="text-emerald-400 text-[10px] mr-1">-28%</span>
                     </button>
                     <button
                         onClick={() => setBillingCycle('monthly')}
@@ -2575,7 +2575,7 @@ function App() {
 
         // Randomly trigger surprise after swiping unknown (higher chance for demo)
         if (Math.random() > 0.4) {
-            setTimeout(() => setShowSurprise(card), 6000);
+            setTimeout(() => setShowSurprise(card), 15000);
         }
     };
 
