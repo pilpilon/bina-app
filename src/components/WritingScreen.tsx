@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Timer, AlertTriangle, CheckCircle, FileText } from 'lucide-react';
+import { Timer, AlertTriangle, CheckCircle, FileText, Loader } from 'lucide-react';
 
 interface WritingScreenProps {
     duration: number; // in seconds
@@ -43,18 +43,40 @@ export const WritingScreen: React.FC<WritingScreenProps> = ({ duration, onFinish
         return `${m}:${s < 10 ? '0' : ''}${s}`;
     };
 
-    const handleFinish = () => {
-        // Basic validation: at least 15 lines or 100 words? 
-        // Real exam requires 25-50 lines. Let's be lenient for MVP.
-        const isValid = lineCount >= 10 || wordCount >= 100;
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-        onFinish({
-            score: isValid ? 100 : 50, // Participation score
-            details: 'מטלת כתיבה',
-            text: text,
-            wordCount,
-            lineCount
-        });
+    const handleFinish = async () => {
+        // Basic validation
+        if (lineCount < 3 && wordCount < 20) {
+            setShowWarning(true);
+            setTimeout(() => setShowWarning(false), 3000);
+            return;
+        }
+
+        setIsAnalyzing(true);
+
+        try {
+            const { analyzeWriting } = await import('../services/aiScoring');
+            const analysis = await analyzeWriting(text);
+
+            onFinish({
+                score: analysis.score,
+                details: 'מטלת כתיבה (נבדק ע"י AI)',
+                text: text,
+                wordCount,
+                feedback: analysis.feedback
+            });
+        } catch (e) {
+            // Fallback if AI fails (network etc)
+            onFinish({
+                score: 80,
+                details: 'מטלת כתיבה (שגיאה ב-AI, ציון מוערך)',
+                text: text,
+                wordCount
+            });
+        } finally {
+            setIsAnalyzing(false);
+        }
     };
 
     return (
@@ -99,17 +121,18 @@ export const WritingScreen: React.FC<WritingScreenProps> = ({ duration, onFinish
                     </div>
 
                     <button
-                        onClick={() => {
-                            if (lineCount < 10) {
-                                setShowWarning(true);
-                                setTimeout(() => setShowWarning(false), 3000);
-                            } else {
-                                handleFinish();
-                            }
-                        }}
-                        className="px-8 py-3 bg-electric-blue text-charcoal font-black rounded-xl hover:scale-105 transition-transform shadow-glow-blue"
+                        onClick={handleFinish}
+                        disabled={isAnalyzing}
+                        className="px-8 py-3 bg-electric-blue text-charcoal font-black rounded-xl hover:scale-105 transition-transform shadow-glow-blue disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
-                        הגש מטלה 📝
+                        {isAnalyzing ? (
+                            <>
+                                <Loader className="w-4 h-4 animate-spin" />
+                                מנתח...
+                            </>
+                        ) : (
+                            'הגש מטלה 📝'
+                        )}
                     </button>
                 </div>
 

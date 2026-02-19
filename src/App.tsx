@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 // Triggering production deployment with latest infrastructure - Commit 96f2188++
 import { Routes, Route, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { History, Target, BookOpen, BarChart3, User, Home, Flame, ChevronRight, ChevronLeft, X, Check, TrendingUp, Calendar, Zap, Timer, Heart, Bell, BellOff } from 'lucide-react';
+import { History, Target, BookOpen, BarChart3, User, Home, Flame, ChevronRight, ChevronLeft, X, Check, TrendingUp, Calendar, Zap, Timer, Heart, Bell, BellOff, Loader } from 'lucide-react';
 import SwipeCard from './components/SwipeCard';
 import PerformanceChart from './components/PerformanceChart';
 import vocabData from './data/vocabulary.json';
@@ -15,6 +15,7 @@ import ExamScreen from './components/ExamScreen';
 import HistoryScreen from './components/HistoryScreen';
 import { SimulationScreen } from './components/SimulationScreen';
 import { PaywallOverlay } from './components/PaywallOverlay';
+import { explainQuestion, explainTerm } from './services/aiScoring';
 import OnboardingScreen, { UserProfile } from './components/OnboardingScreen';
 import {
     loadNotificationSettings,
@@ -469,6 +470,7 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
                 onBack={onBack}
                 onUpgrade={onUpgrade}
                 onRefer={onRefer}
+                teacherMode={userStats.teacherMode}
             />
         );
     }
@@ -1257,7 +1259,7 @@ const AISettingsScreen = ({ userStats, onBack, onUpdateStats, notifSettings, not
                 </div>
                 <div className="flex items-center justify-between">
                     <span className="text-sm text-text-secondary">הפעל הסברים אוטומטיים</span>
-                    {userStats.tier === 'free' ? (
+                    {userStats.tier !== 'pro' ? (
                         <button
                             onClick={() => onUpgrade?.()}
                             className="flex items-center gap-2 bg-neon-pink/10 border border-neon-pink/30 text-neon-pink px-3 py-1.5 rounded-xl text-xs font-black hover:bg-neon-pink/20 transition-colors"
@@ -1272,7 +1274,7 @@ const AISettingsScreen = ({ userStats, onBack, onUpdateStats, notifSettings, not
                     )}
                 </div>
                 <AnimatePresence>
-                    {userStats.tier !== 'free' && userStats.teacherMode && (
+                    {userStats.tier === 'pro' && userStats.teacherMode && (
                         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
                             className="mt-3 text-xs text-electric-blue font-bold bg-electric-blue/10 rounded-lg p-3">
                             ✅ מצב מורה פעיל — Bina תסביר לך כל טעות!
@@ -2106,8 +2108,39 @@ const SmartAlert = ({ card, onClose, onAction }: any) => (
 );
 
 const AIExplanationModal = ({ item, onClose, tier = 'free', onUpgrade }: { item: any, onClose: () => void, tier?: string, onUpgrade?: () => void }) => {
-    const isLocked = tier !== 'pro';
-    const text = item.explanation || `כרגע אין הסבר מפורט ל"${item.word || item.id}", אבל ה-Bina ממליצה לחזור על הנושא ${item.category}.`;
+    const isLocked = tier !== 'pro'; // Only Pro users get AI explanations
+
+    // Fallback to existing explanation if available (e.g. from static data)
+    const [explanation, setExplanation] = useState<string | null>(item.explanation || null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        // If locked or already has explanation, don't fetch
+        if (isLocked || explanation) return;
+
+        const fetchExplanation = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                let result;
+                // Detect if it's a Question (has options) or a WordCard
+                if (item.options) {
+                    result = await explainQuestion(item, item.userAnswer || "");
+                } else {
+                    result = await explainTerm(item);
+                }
+                setExplanation(result);
+            } catch (err) {
+                console.error("AI Error:", err);
+                setError("לא הצלחתי לייצר הסבר. נסה שוב.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchExplanation();
+    }, [item, isLocked]);
 
     return (
         <motion.div
@@ -2115,55 +2148,71 @@ const AIExplanationModal = ({ item, onClose, tier = 'free', onUpgrade }: { item:
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-charcoal/80 backdrop-blur-xl"
+            dir="rtl"
         >
-            <GlassCard className="max-w-md w-full p-8 border-electric-blue/50 shadow-glow-blue overflow-hidden relative">
-                <div className="absolute top-0 right-0 p-4">
+            <GlassCard className="max-w-md w-full p-8 border-electric-blue/50 shadow-glow-blue overflow-hidden relative min-h-[400px] flex flex-col">
+                <div className="absolute top-0 right-0 p-4 z-20">
                     <button onClick={onClose} className="text-text-muted hover:text-white transition-colors">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
 
                 <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 rounded-2xl bg-electric-blue/20 flex items-center justify-center text-electric-blue">
+                    <div className="w-12 h-12 rounded-2xl bg-electric-blue/20 flex items-center justify-center text-electric-blue shrink-0">
                         <Zap className="w-7 h-7" />
                     </div>
                     <div>
                         <div className="text-[10px] font-black tracking-widest text-electric-blue uppercase">Bina AI Explainer</div>
-                        <h3 className="text-xl font-black text-white">{item.word || "הסבר לוגי"}</h3>
+                        <h3 className="text-xl font-black text-white truncate max-w-[220px]">{item.word || (item.question ? "תיקון טעות" : "הסבר מפורט")}</h3>
                     </div>
                 </div>
 
-                <div className={`text-lg text-text-secondary leading-relaxed mb-8 pr-1 min-h-[200px] relative ${isLocked ? 'overflow-hidden' : ''}`}>
+                <div className={`flex-1 text-lg text-text-secondary leading-relaxed mb-8 pr-1 relative overflow-y-auto custom-scrollbar ${isLocked ? 'overflow-hidden' : ''}`}>
                     {isLocked ? (
                         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center bg-charcoal/20 backdrop-blur-md rounded-xl p-4">
-                            <div className="w-10 h-10 bg-neon-pink/20 rounded-full flex items-center justify-center mb-3">
-                                <Zap className="w-6 h-6 text-neon-pink" />
+                            <div className="w-16 h-16 bg-neon-pink/20 rounded-full flex items-center justify-center mb-4">
+                                <Zap className="w-8 h-8 text-neon-pink" />
                             </div>
-                            <div className="text-sm font-black text-white mb-1 italic">הסברי Bina Pro 🔒</div>
-                            <div className="text-[10px] text-text-secondary mb-4">השדרוג שיעזור לך להבין כל טעות לעומק</div>
+                            <div className="text-lg font-black text-white mb-2 italic">הסברי Bina Pro 🔒</div>
+                            <div className="text-sm text-text-secondary mb-6">השדרוג שיעזור לך להבין כל טעות לעומק</div>
                             <button
                                 onClick={onUpgrade}
-                                className="text-xs font-black bg-neon-pink text-white px-4 py-2 rounded-lg shadow-glow-pink hover:scale-105 transition-all"
+                                className="text-sm font-black bg-gradient-to-r from-neon-pink to-cyber-yellow text-white px-6 py-3 rounded-xl shadow-glow-pink hover:scale-105 transition-all"
                             >
-                                שדרוג ל-Pro
+                                שדרג ל-Pro
                             </button>
                         </div>
                     ) : (
-                        <motion.p
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                        >
-                            {text}
-                        </motion.p>
+                        <>
+                            {loading ? (
+                                <div className="flex flex-col items-center justify-center h-full opacity-70">
+                                    <Loader className="w-10 h-10 text-electric-blue animate-spin mb-4" />
+                                    <p className="text-sm animate-pulse">המורה בודק את התשובה...</p>
+                                </div>
+                            ) : error ? (
+                                <div className="text-red-400 text-center py-10">
+                                    <p className="font-bold mb-2">אופס!</p>
+                                    <p className="text-sm">{error}</p>
+                                </div>
+                            ) : (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.2 }}
+                                    className="whitespace-pre-wrap"
+                                >
+                                    {explanation}
+                                </motion.div>
+                            )}
+                        </>
                     )}
                 </div>
 
                 <button
                     onClick={onClose}
-                    className="w-full py-4 bg-white/5 border border-white/10 text-text-secondary font-black rounded-xl hover:bg-white/10 transition-all"
+                    className="w-full py-4 bg-white/5 border border-white/10 text-text-secondary font-black rounded-xl hover:bg-white/10 transition-all shrink-0"
                 >
-                    סגור
+                    הבנתי, תודה
                 </button>
             </GlassCard>
         </motion.div>
@@ -2254,6 +2303,7 @@ function App() {
             score: result.score,
             total: result.total,
             details: 'מרתון כללי', // We can refine this later
+            examData: result.examData // Save full data for review
         };
         const updatedHistory = [newEntry, ...history];
         setHistory(updatedHistory);
@@ -2392,7 +2442,8 @@ function App() {
             setUserStats((prev: any) => ({
                 ...prev,
                 tier: 'free',
-                tierExpiry: null
+                tierExpiry: null,
+                teacherMode: false // Reset AI Teacher Mode on expiry
             }));
         }
 

@@ -129,38 +129,97 @@ export const SimulationScreen: React.FC<SimulationScreenProps> = ({ isPro, onBac
         return () => clearInterval(timer);
     }, [showBreak]);
 
+    // Track full history for scoring/review
+    const [fullExamHistory, setFullExamHistory] = useState<any[]>([]);
+
     const handleChapterEnd = () => {
+        // Save current chapter data
+        const chapterData = {
+            chapterId: currentChapter.id,
+            type: currentChapter.type,
+            questions: chapterQuestions,
+            answers: answers // answers for this chapter
+        };
+
+        setFullExamHistory(prev => [...prev, chapterData]);
+
         if (currentChapterIndex < structure.length - 1) {
             setShowBreak(true);
             setBreakTime(60);
         } else {
-            finishSimulation();
+            // Wait for state update to finish? 
+            // Better to pass the NEW history to finish
+            finishSimulation([...fullExamHistory, chapterData]);
         }
     };
 
     const handleNextChapter = () => {
         setShowBreak(false);
+        setAnswers({}); // Reset answers for next chapter
         setCurrentChapterIndex(prev => prev + 1);
     };
 
-    const finishSimulation = () => {
-        // Calculate Score
-        // This is a placeholder for the complex weighted logic
-        const score = Math.floor(Math.random() * (800 - 400) + 400); // Mock randomized score
+    const finishSimulation = (finalHistory: any[]) => {
+        // Calculate Real Score (200-800)
+        let totalCorrect = 0;
+        let totalQuestions = 0;
+
+        let verbalCorrect = 0;
+        let quantCorrect = 0;
+        let englishCorrect = 0;
+
+        let verbalTotal = 0;
+        let quantTotal = 0;
+        let englishTotal = 0;
+
+        finalHistory.forEach(chapter => {
+            if (chapter.type === 'hibbur') return; // Writing is separate
+
+            chapter.questions.forEach((q: any) => {
+                totalQuestions++;
+                const userAnswer = chapter.answers[q.id];
+                const isCorrect = userAnswer === q.correctAnswer;
+
+                if (chapter.type === 'verbal') {
+                    verbalTotal++;
+                    if (isCorrect) verbalCorrect++;
+                } else if (chapter.type === 'quantitative') {
+                    quantTotal++;
+                    if (isCorrect) quantCorrect++;
+                } else if (chapter.type === 'english') {
+                    englishTotal++;
+                    if (isCorrect) englishCorrect++;
+                }
+            });
+        });
+
+        // Simple weighted scoring (approximate)
+        // Verbal = 40%, Quant = 40%, English = 20%
+        // Score = 200 + (V% * 240) + (Q% * 240) + (E% * 120)
+
+        const vScore = verbalTotal > 0 ? (verbalCorrect / verbalTotal) * 240 : 0;
+        const qScore = quantTotal > 0 ? (quantCorrect / quantTotal) * 240 : 0;
+        const eScore = englishTotal > 0 ? (englishCorrect / englishTotal) * 120 : 0;
+
+        const calculatedScore = Math.round(200 + vScore + qScore + eScore);
 
         onFinish({
-            score: score,
-            total: structure.reduce((acc, curr) => acc + curr.questionCount, 0),
-            details: isPro ? 'סימולציה מלאה' : 'מיני-סימולציה'
+            score: calculatedScore,
+            total: totalQuestions,
+            details: isPro ? 'סימולציה מלאה' : 'מיני-סימולציה',
+            examData: finalHistory // Pass full data for review
         });
     };
 
     const handleExit = () => {
         // Just go back, maybe without saving if they exit early?
         // Or save as incomplete? 
-        // For now, let's treat it as "Finish" but maybe lower score or just cancel?
-        // User asked "does it save?". Let's save what they have.
-        finishSimulation();
+        // For now, let's treat it as "Finish" but pass what we have so far
+
+        // Add current chapter partial progress if needed, but complicating logic.
+        // Let's just save up to the PREVIOUS completed chapter to avoid skewing data with incomplete answers.
+
+        finishSimulation(fullExamHistory);
     };
 
     const formatTime = (seconds: number) => {
@@ -234,7 +293,12 @@ export const SimulationScreen: React.FC<SimulationScreenProps> = ({ isPro, onBac
             <WritingScreen
                 duration={currentChapter.duration}
                 onFinish={(result) => {
-                    // Save writing result (mock for now) and next chapter
+                    // Save writing result
+                    setFullExamHistory(prev => [...prev, {
+                        chapterId: 'chap_writing',
+                        type: 'hibbur',
+                        result: result
+                    }]);
                     handleNextChapter();
                 }}
                 onExit={handleExit}

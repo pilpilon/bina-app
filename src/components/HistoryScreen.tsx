@@ -1,7 +1,9 @@
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Clock, Award, Lock, ChevronRight } from 'lucide-react';
 import { PaywallOverlay } from './PaywallOverlay';
+
+import { ReviewScreen } from './ReviewScreen';
 
 interface ExamResult {
     id: string;
@@ -9,6 +11,7 @@ interface ExamResult {
     score: number;
     total: number;
     details: string; // e.g., "מרתון כללי" or specific category
+    examData?: any[];
 }
 
 interface HistoryScreenProps {
@@ -17,9 +20,11 @@ interface HistoryScreenProps {
     onBack: () => void;
     onUpgrade: () => void;
     onRefer: () => void;
+    teacherMode: boolean;
 }
 
-const HistoryScreen: React.FC<HistoryScreenProps> = ({ history, isPro, onBack, onUpgrade, onRefer }) => {
+const HistoryScreen: React.FC<HistoryScreenProps> = ({ history, isPro, onBack, onUpgrade, onRefer, teacherMode }) => {
+    const [reviewMode, setReviewMode] = React.useState(false);
     // Sort history by date (newest first)
     const sortedHistory = useMemo(() => {
         return [...history].sort((a, b) => b.date - a.date);
@@ -154,18 +159,47 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ history, isPro, onBack, o
                         </div>
 
                         <p className="text-xs text-text-muted mb-6">
-                            פירוט תשובות מלא אינו זמין עבור מבחן זה.
+                            לחץ על "סקור מבחן" כדי לראות את השאלות והתשובות שלך.
                         </p>
 
-                        <button
-                            onClick={() => setSelectedExam(null)}
-                            className="w-full py-4 rounded-xl bg-white/10 hover:bg-white/20 font-bold text-white transition-colors"
-                        >
-                            סגור
-                        </button>
+                        <div className="flex flex-col gap-3">
+                            {selectedExam.examData && (
+                                <button
+                                    onClick={() => setReviewMode(true)}
+                                    className="w-full py-4 rounded-xl bg-electric-blue text-charcoal font-black hover:scale-[1.02] transition-transform shadow-glow-blue flex items-center justify-center gap-2"
+                                >
+                                    סקור מבחן (עם AI) 🤖
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setSelectedExam(null)}
+                                className="w-full py-4 rounded-xl bg-white/10 hover:bg-white/20 font-bold text-white transition-colors"
+                            >
+                                סגור
+                            </button>
+                        </div>
                     </motion.div>
                 </div>
             )}
+
+            <AnimatePresence>
+                {reviewMode && selectedExam && selectedExam.examData && (
+                    <motion.div
+                        initial={{ opacity: 0, x: '100%' }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: '100%' }}
+                        className="fixed inset-0 z-[100] bg-charcoal"
+                    >
+                        <ReviewScreen
+                            examData={selectedExam.examData}
+                            onBack={() => setReviewMode(false)}
+                            teacherMode={teacherMode && isPro}
+                            isPro={isPro}
+                            onUpgrade={onUpgrade}
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 };
