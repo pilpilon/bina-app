@@ -1421,10 +1421,11 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user, onLog
         {
             id: 'plus',
             name: 'Bina Plus',
-            price: billingCycle === 'monthly' ? '₪39' : '₪149',
+            price: billingCycle === 'monthly' ? '₪19.90' : '₪89',
+            originalPrice: billingCycle === 'monthly' ? '₪39' : '₪149',
             period: billingCycle === 'monthly' ? '/חודש' : '/6 חודשים',
-            // In monthly view, show the semester deal. In semester view, show the effective monthly price.
-            save: billingCycle === 'monthly' ? 'חסוך 36% במנוי חצי-שנתי' : 'שווה ל-24.8₪ לחודש (36% הנחה)',
+            // Effective monthly price label
+            save: billingCycle === 'monthly' ? 'מחיר השקה מיוחד 🔥' : 'שווה ל-14.8₪ לחודש (חסוך 25%)',
             features: [
                 'תרגול ללא הגבלה',
                 'כל הקטגוריות (כולל כמותי ואנגלית)',
@@ -1440,9 +1441,10 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user, onLog
         {
             id: 'pro',
             name: 'Bina Pro',
-            price: billingCycle === 'monthly' ? '₪59' : '₪199',
+            price: billingCycle === 'monthly' ? '₪29.90' : '₪129',
+            originalPrice: billingCycle === 'monthly' ? '₪59' : '₪199',
             period: billingCycle === 'monthly' ? '/חודש' : '/6 חודשים',
-            save: billingCycle === 'monthly' ? 'חסוך 44% במנוי חצי-שנתי' : 'שווה ל-33.1₪ לחודש (44% הנחה)',
+            save: billingCycle === 'monthly' ? 'מחיר השקה מיוחד 🔥' : 'שווה ל-21.5₪ לחודש (חסוך 28%)',
             features: [
                 'כל מה שיש ב-Plus',
                 'הסברי AI לכל טעות 🧠',
@@ -1543,6 +1545,11 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user, onLog
                                     {plan.save && <div className="text-[10px] font-bold text-emerald-400 mt-1 uppercase tracking-wider">{plan.save}</div>}
                                 </div>
                                 <div className="text-right">
+                                    {plan.originalPrice && (
+                                        <div className="text-xs text-text-muted line-through mb-1">
+                                            {plan.originalPrice}
+                                        </div>
+                                    )}
                                     <span className="text-3xl font-black text-white">{plan.price}</span>
                                     {plan.period && <span className="text-sm text-text-secondary">{plan.period}</span>}
                                 </div>
