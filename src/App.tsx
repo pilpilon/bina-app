@@ -12,6 +12,8 @@ import englishData from './data/english.json';
 import { useEffect } from 'react';
 import { TermsOfService, PrivacyPolicy } from './components/LegalPages';
 import ExamScreen from './components/ExamScreen';
+import HistoryScreen from './components/HistoryScreen';
+import { PaywallOverlay } from './components/PaywallOverlay';
 import OnboardingScreen, { UserProfile } from './components/OnboardingScreen';
 import {
     loadNotificationSettings,
@@ -90,35 +92,8 @@ const NavItem = ({ icon: Icon, label, active = false, onClick }: any) => (
     </button>
 );
 
-const PaywallOverlay = ({ title, sub, onUpgrade, onRefer }: any) => (
-    <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="absolute inset-0 z-[50] flex flex-col items-center justify-center p-6 text-center bg-charcoal/60 backdrop-blur-md rounded-3xl"
-    >
-        <div className="w-20 h-20 bg-neon-purple/20 rounded-full flex items-center justify-center mb-6 shadow-glow-purple">
-            <Zap className="w-10 h-10 text-neon-purple" />
-        </div>
-        <h2 className="text-2xl font-black mb-2 text-white">{title}</h2>
-        <p className="text-text-secondary text-sm mb-8 leading-relaxed max-w-[240px]">
-            {sub}
-        </p>
-        <div className="w-full space-y-3">
-            <button
-                onClick={onUpgrade}
-                className="w-full py-4 bg-gradient-to-r from-electric-blue to-neon-purple text-charcoal font-black rounded-xl shadow-glow-blue active:scale-95 transition-all"
-            >
-                שדרוג עכשיו 🚀
-            </button>
-            <button
-                onClick={onRefer}
-                className="w-full py-3 bg-white/5 border border-white/10 text-text-secondary font-bold text-sm rounded-xl hover:bg-white/10 transition-all"
-            >
-                הזמנת חברים וקבלת ימים בחינם 🎁
-            </button>
-        </div>
-    </motion.div>
-);
+// PaywallOverlay is now imported
+
 
 // --- Smart Upsell Banner ---
 
@@ -254,33 +229,25 @@ const HomeScreen = ({ onStartLearning, userProfile, userStats, getLevelName }: a
             {/* Smart Upsell Banner — only for free users, context-aware */}
             {userStats.tier === 'free' && <SmartUpsellBanner userStats={userStats} onUpgrade={() => onStartLearning('pricing')} />}
 
-            {/* Favorites Section */}
-            <div className="mb-8">
-                {userStats.favorites?.length > 0 ? (
-                    <>
-                        <h3 className="text-xl font-bold mb-4 pr-1">מועדפים שלי ({userStats.favorites.length})</h3>
-                        <GlassCard
-                            className="p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all group border-neon-pink/30 shadow-glow-pink/10"
-                            onClick={() => onStartLearning('favorites')}
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-neon-pink/10 rounded-xl flex items-center justify-center text-neon-pink group-hover:scale-110 transition-transform">
-                                    <Heart className="w-7 h-7 fill-neon-pink" />
-                                </div>
-                                <div>
-                                    <div className="font-bold text-lg">חזרה על המועדפים</div>
-                                    <div className="text-xs text-text-secondary">מבחן ממוקד על המילים ששמרת</div>
-                                </div>
-                            </div>
-                            <ChevronLeft className="w-6 h-6 text-neon-pink" />
-                        </GlassCard>
-                    </>
-                ) : (
-                    <GlassCard className="p-4 flex items-center gap-3 border-dashed border-white/10 opacity-60">
-                        <Heart className="w-5 h-5 text-neon-pink/50 shrink-0" />
-                        <p className="text-xs text-text-muted">לחץ ⭐ על כרטיסייה כדי לשמור אותה למועדפים</p>
-                    </GlassCard>
-                )}
+            {/* Favorites Section & History */}
+            <div className="mb-8 flex gap-3">
+                <GlassCard
+                    className="flex-1 p-4 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-white/5 transition-all group border-neon-pink/30 shadow-glow-pink/10"
+                    onClick={() => onStartLearning('favorites')}
+                >
+                    <Heart className="w-8 h-8 text-neon-pink group-hover:scale-110 transition-transform" />
+                    <div className="font-bold text-sm">מועדפים</div>
+                </GlassCard>
+
+                <GlassCard
+                    className="flex-1 p-4 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-white/5 transition-all group border-electric-blue/30 shadow-glow-blue/10"
+                    onClick={() => onStartLearning('history')}
+                >
+                    <div className="w-8 h-8 text-electric-blue group-hover:scale-110 transition-transform flex items-center justify-center">
+                        <span className="text-2xl">📜</span>
+                    </div>
+                    <div className="font-bold text-sm">היסטוריה</div>
+                </GlassCard>
             </div>
 
             <h3 className="text-xl font-bold mb-4 pr-1">סטטיסטיקה בזמן אמת</h3>
@@ -381,7 +348,7 @@ const TopicCard = ({ icon: Icon, title, sub, color, bg, onClick }: any) => (
     </GlassCard>
 );
 
-const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity, favorites = [], onToggleFavorite, userStats, onUpgrade, onRefer, ...props }: { onBack: () => void, topic?: string, awardXP: (n: number) => void, recordActivity: (xp: number, cat: string, correct: boolean) => void, favorites?: string[], onToggleFavorite?: (id: string) => void, userStats: any, onUpgrade: () => void, onRefer: () => void, [key: string]: any }) => {
+const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity, favorites = [], onToggleFavorite, userStats, onUpgrade, onRefer, history = [], onFinish, ...props }: { onBack: () => void, topic?: string, awardXP: (n: number) => void, recordActivity: (xp: number, cat: string, correct: boolean) => void, favorites?: string[], onToggleFavorite?: (id: string) => void, userStats: any, onUpgrade: () => void, onRefer: () => void, history?: any[], onFinish?: (result: any) => void, [key: string]: any }) => {
     const [index, setIndex] = useState(0);
     const [knownCount, setKnownCount] = useState(0);
     const [exitX, setExitX] = useState(0);
@@ -476,6 +443,19 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
                 questions={marathonQuestions}
                 onClose={onBack}
                 onShowExplanation={(item) => (props as any).onShowExplanation?.(item)}
+                onFinish={onFinish || (() => { })}
+            />
+        );
+    }
+
+    if (topic === 'history') {
+        return (
+            <HistoryScreen
+                history={history}
+                isPro={userStats.tier === 'pro' || userStats.tier === 'plus'}
+                onBack={onBack}
+                onUpgrade={onUpgrade}
+                onRefer={onRefer}
             />
         );
     }
@@ -2240,6 +2220,25 @@ function App() {
         return saved ? JSON.parse(saved) : null;
     });
 
+    // History State
+    const [history, setHistory] = useState<any[]>(() => {
+        const saved = localStorage.getItem('examHistory');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    const handleSaveExam = (result: any) => {
+        const newEntry = {
+            id: Date.now().toString(),
+            date: Date.now(),
+            score: result.score,
+            total: result.total,
+            details: 'מרתון כללי', // We can refine this later
+        };
+        const updatedHistory = [newEntry, ...history];
+        setHistory(updatedHistory);
+        localStorage.setItem('examHistory', JSON.stringify(updatedHistory));
+    };
+
     // Register service worker and schedule notifications on mount
     useEffect(() => {
         registerServiceWorker();
@@ -2673,6 +2672,8 @@ function App() {
                                     onBack={() => setIsLearning(false)}
                                     weakPoints={weakPoints}
                                     customLists={customLists}
+                                    history={history}
+                                    onFinish={handleSaveExam}
                                     onMiss={(card: WordCard) => {
                                         addToWeakPoints(card);
                                         if (userStats.teacherMode) {

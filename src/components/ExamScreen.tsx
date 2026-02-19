@@ -13,12 +13,13 @@ interface Question {
 }
 
 interface ExamScreenProps {
-    questions: Question[];
+    questions: any[];
     onClose: () => void;
     onShowExplanation?: (item: any) => void;
+    onFinish: (result: { score: number; total: number; correct: number }) => void;
 }
 
-const ExamScreen: React.FC<ExamScreenProps> = ({ questions, onClose, onShowExplanation }) => {
+const ExamScreen: React.FC<ExamScreenProps> = ({ questions, onClose, onShowExplanation, onFinish }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<string, string>>({});
     const [timeLeft, setTimeLeft] = useState(1200); // 20 minutes in seconds
@@ -108,6 +109,15 @@ const ExamScreen: React.FC<ExamScreenProps> = ({ questions, onClose, onShowExpla
 
     if (isFinished) {
         const stats = calculateScore();
+        // Call onFinish once when finished state is reached
+        React.useEffect(() => {
+            onFinish({
+                score: stats.percentage,
+                total: stats.total,
+                correct: stats.correct
+            });
+        }, []);
+
         return (
             <motion.div
                 className="px-5 pt-12 pb-32 flex flex-col items-center gap-8 text-center"
@@ -221,7 +231,7 @@ const ExamScreen: React.FC<ExamScreenProps> = ({ questions, onClose, onShowExpla
                 </div>
 
                 <div className="space-y-4">
-                    {options.map((option, idx) => (
+                    {options.map((option: string, idx: number) => (
                         <button
                             key={idx}
                             onClick={() => handleAnswerSelection(option)}
