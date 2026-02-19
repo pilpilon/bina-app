@@ -435,30 +435,30 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
             byCategory[cat].push(q);
         });
 
+        // Shuffle and pick 20 questions
         const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
+        const selectedQuestions = shuffled.slice(0, 20);
 
-        return shuffled.slice(0, 20).map(q => {
+        return selectedQuestions.map(q => {
             const correct = (q as any).definition || (q as any).answer || (q as any).word;
             const category = q.category || 'general';
 
-            // Get distractors from SAME category
-            const categoryPool = byCategory[category] || allQuestions;
+            // Get distractors from SAME category ONLY
+            // We do NOT fallback to general pool to avoid mixing English/Hebrew/Analogies
+            const categoryPool = byCategory[category] || [];
+
             const potentialDistractors = categoryPool
                 .map(i => (i as any).definition || (i as any).answer || (i as any).word)
                 .filter(a => a && a !== correct);
 
             // Shuffle and pick 3
-            const distractors = potentialDistractors.sort(() => 0.5 - Math.random()).slice(0, 3);
+            // If we don't have enough distractors in the category (unlikely for proper data),
+            // we will have fewer options rather than bad options.
+            const distractors = potentialDistractors
+                .sort(() => 0.5 - Math.random())
+                .slice(0, 3);
 
-            // If not enough same-category distractors, fallback to general pool (rare)
-            if (distractors.length < 3) {
-                const generalDistractors = allQuestions
-                    .map(i => (i as any).definition || (i as any).answer || (i as any).word)
-                    .filter(a => a && a !== correct && !distractors.includes(a))
-                    .sort(() => 0.5 - Math.random())
-                    .slice(0, 3 - distractors.length);
-                distractors.push(...generalDistractors);
-            }
+            // Should always be 3, but if data is missing, we prioritize correctness of type over quantity
 
             const options = [correct, ...distractors].sort(() => 0.5 - Math.random());
 

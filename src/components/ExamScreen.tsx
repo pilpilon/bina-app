@@ -84,7 +84,7 @@ const ExamScreen: React.FC<ExamScreenProps> = ({ questions, onClose, onShowExpla
         return {
             correct,
             total: questions.length,
-            percentage: Math.round((correct / questions.length) * 100)
+            percentage: questions.length > 0 ? Math.round((correct / questions.length) * 100) : 0
         };
     };
 
@@ -110,8 +110,6 @@ const ExamScreen: React.FC<ExamScreenProps> = ({ questions, onClose, onShowExpla
         const stats = calculateScore();
         return (
             <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
                 className="px-5 pt-12 pb-32 flex flex-col items-center gap-8 text-center"
             >
                 <div className="w-24 h-24 bg-gradient-to-br from-electric-blue to-neon-purple rounded-3xl flex items-center justify-center shadow-glow-blue rotate-3">
