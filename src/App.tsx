@@ -2258,8 +2258,8 @@ function App() {
         const updatedHistory = [newEntry, ...history];
         setHistory(updatedHistory);
         localStorage.setItem('examHistory', JSON.stringify(updatedHistory));
-        setIsLearning(false);
-        setActiveTab('history');
+        setLearningTopic('history');
+        setIsLearning(true);
     };
 
     // Register service worker and schedule notifications on mount

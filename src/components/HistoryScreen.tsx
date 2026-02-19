@@ -35,6 +35,8 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ history, isPro, onBack, o
         }).format(new Date(timestamp));
     };
 
+    const [selectedExam, setSelectedExam] = React.useState<ExamResult | null>(null);
+
     return (
         <motion.div
             initial={{ opacity: 0, x: 50 }}
@@ -66,8 +68,6 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ history, isPro, onBack, o
             {/* List */}
             <div className="flex-1 overflow-y-auto space-y-4 relative">
                 {sortedHistory.map((exam, index) => {
-                    // Lock logic: If NOT pro, show only the first (most recent) item fully.
-                    // Lock all others.
                     const isLocked = !isPro && index > 0;
 
                     return (
@@ -76,12 +76,13 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ history, isPro, onBack, o
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05 }}
-                                className={`p-4 rounded-2xl border border-white/10 flex items-center justify-between
-                                    ${isLocked ? 'blur-sm opacity-50 bg-white/5 pointer-events-none select-none' : 'bg-white/5 hover:bg-white/10'}
+                                onClick={() => !isLocked && setSelectedExam(exam)}
+                                className={`p-4 rounded-2xl border border-white/10 flex items-center justify-between transition-all cursor-pointer
+                                    ${isLocked ? 'blur-sm opacity-50 bg-white/5 pointer-events-none select-none' : 'bg-white/5 hover:bg-white/10 hover:border-white/20 active:scale-[0.98]'}
                                 `}
                             >
                                 <div className="flex items-start gap-3">
-                                    <div className={`p-3 rounded-xl ${exam.score >= 80 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/10 text-white'}`}>
+                                    <div className={`p-3 rounded-xl ${exam.score >= 700 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/10 text-white'}`}>
                                         <Award className="w-6 h-6" />
                                     </div>
                                     <div>
@@ -93,12 +94,11 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ history, isPro, onBack, o
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-2xl font-black text-electric-blue">{exam.score}%</div>
+                                    <div className="text-2xl font-black text-electric-blue">{exam.score}</div>
                                     <div className="text-[10px] text-text-muted">{exam.total} שאלות</div>
                                 </div>
                             </motion.div>
 
-                            {/* Lock Overlay for individual items - actually, we might want a global overlay */}
                             {isLocked && (
                                 <div className="absolute inset-0 z-10 flex items-center justify-center">
                                     <Lock className="w-6 h-6 text-white/50" />
@@ -107,13 +107,6 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ history, isPro, onBack, o
                         </div>
                     );
                 })}
-
-                {/* Global Paywall Overlay for the list if there are locked items */}
-                {!isPro && sortedHistory.length > 1 && (
-                    <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-charcoal to-transparent pointer-events-none flex items-end justify-center pb-8 z-20">
-                        {/* We can put a button here or just let the PaywallOverlay handle interactions if we want a full block */}
-                    </div>
-                )}
 
                 {!isPro && sortedHistory.length > 1 && (
                     <div className="sticky bottom-4 z-30">
@@ -126,6 +119,53 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ history, isPro, onBack, o
                     </div>
                 )}
             </div>
+
+            {/* Result Modal */}
+            {selectedExam && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-charcoal/90 backdrop-blur-md">
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="bg-charcoal border border-white/10 p-8 rounded-3xl w-full max-w-sm text-center shadow-glass relative via-transparent"
+                    >
+                        <button
+                            onClick={() => setSelectedExam(null)}
+                            className="absolute top-4 right-4 text-text-muted hover:text-white"
+                        >
+                            <ChevronRight className="w-6 h-6" />
+                        </button>
+
+                        <div className="w-20 h-20 bg-gradient-to-br from-electric-blue to-neon-purple rounded-full flex items-center justify-center mx-auto mb-6 shadow-glow-blue">
+                            <Award className="w-10 h-10 text-white" />
+                        </div>
+
+                        <h2 className="text-3xl font-black text-white mb-2">{selectedExam.score}</h2>
+                        <div className="text-sm font-bold text-text-secondary mb-6 uppercase tracking-wider">ציון סופי</div>
+
+                        <div className="grid grid-cols-2 gap-4 mb-8">
+                            <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                                <div className="text-2xl font-black text-electric-blue">{selectedExam.total}</div>
+                                <div className="text-[10px] text-text-muted mt-1">שאלות</div>
+                            </div>
+                            <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                                <div className="text-xl font-bold text-white">{new Date(selectedExam.date).toLocaleDateString('he-IL')}</div>
+                                <div className="text-[10px] text-text-muted mt-1">תאריך</div>
+                            </div>
+                        </div>
+
+                        <p className="text-xs text-text-muted mb-6">
+                            פירוט תשובות מלא אינו זמין עבור מבחן זה.
+                        </p>
+
+                        <button
+                            onClick={() => setSelectedExam(null)}
+                            className="w-full py-4 rounded-xl bg-white/10 hover:bg-white/20 font-bold text-white transition-colors"
+                        >
+                            סגור
+                        </button>
+                    </motion.div>
+                </div>
+            )}
         </motion.div>
     );
 };
