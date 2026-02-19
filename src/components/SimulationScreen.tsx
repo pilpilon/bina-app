@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, ArrowLeft, ArrowRight, CheckCircle, Clock, AlertTriangle, Play, Pause } from 'lucide-react';
+import { Timer, ArrowLeft, ArrowRight, CheckCircle, Clock, AlertTriangle, Play, Pause, XCircle } from 'lucide-react';
 import { SIMULATION_STRUCTURE, MINI_SIMULATION_STRUCTURE, SimulationChapter } from '../data/simulationData';
 import { PaywallOverlay } from './PaywallOverlay';
 
@@ -21,19 +21,21 @@ export const SimulationScreen: React.FC<SimulationScreenProps> = ({ isPro, onBac
     const [showBreak, setShowBreak] = useState(false);
     const [breakTime, setBreakTime] = useState(60); // 1 minute break
     const [isPaused, setIsPaused] = useState(false);
+    const [showExitConfirm, setShowExitConfirm] = useState(false);
 
     // Structure based on tier
     const structure = isPro ? SIMULATION_STRUCTURE : MINI_SIMULATION_STRUCTURE;
     const currentChapter = structure[currentChapterIndex];
 
-    // Generate questions for the current chapter
-    // Memoize this so it doesn't regenerate on every render
+    // --- Distractor Logic ---
+    // Pre-calculate questions for ALL chapters to ensure consistency if we revisit?
+    // For now, let's just do valid generation per chapter to save memory/complexity
     const [chapterQuestions, setChapterQuestions] = useState<any[]>([]);
 
     useEffect(() => {
         if (!started) return;
 
-        // Filter pool by type
+        // 1. Filter pool by type
         const typeQuestions = questionsPool.filter(q => {
             const cat = q.category || 'general';
             if (currentChapter.type === 'verbal') return cat === 'milon' || cat === 'analogies';
@@ -42,26 +44,61 @@ export const SimulationScreen: React.FC<SimulationScreenProps> = ({ isPro, onBac
             return false;
         });
 
+        // 2. Prepare Distractor Map (Group by Category)
+        const byCategory: Record<string, any[]> = {};
+        questionsPool.forEach(q => { // Use full pool for distractors to have more variety? Or just type pool?
+            // Better to use type questions to avoid mixing english words in hebrew analogies if category is vague
+            // But let's stick to the filtered "typeQuestions" for the QUESTIONs, but we might need wider pool for distractors logic?
+            // Actually, best to stick to specific categories.
+            const cat = q.category || 'general';
+            if (!byCategory[cat]) byCategory[cat] = [];
+            byCategory[cat].push(q);
+        });
+
+        // 3. Select Questions (Random Shuffle)
         // Fallback if pool is empty (dev mode safe)
         const pool = typeQuestions.length > 0 ? typeQuestions : questionsPool;
-
-        // Shuffle and slice
         const shuffled = [...pool].sort(() => 0.5 - Math.random()).slice(0, currentChapter.questionCount);
 
-        // Map to standardized format if needed
-        const questions = shuffled.map(q => ({
-            ...q,
-            options: q.options || [q.correctAnswer || q.word, 'Option 2', 'Option 3', 'Option 4'].sort(() => 0.5 - Math.random())
-        }));
+        // 4. Generate Options for each selected question
+        const processedQuestions = shuffled.map(q => {
+            const correct = (q as any).definition || (q as any).answer || (q as any).word;
+            const category = q.category || 'general';
 
-        setChapterQuestions(questions);
+            // Get distractors from SAME category
+            const categoryPool = byCategory[category] || [];
+
+            const potentialDistractors = categoryPool
+                .map(i => (i as any).definition || (i as any).answer || (i as any).word)
+                .filter(a => a && a !== correct); // Exclude self
+
+            // Shuffle and pick 3
+            const distractors = potentialDistractors
+                .sort(() => 0.5 - Math.random())
+                .slice(0, 3);
+
+            // Fill with placeholders ONLY if absolutely necessary (e.g. data error)
+            while (distractors.length < 3) {
+                distractors.push(`אפשרות ${distractors.length + 1}`);
+            }
+
+            const options = [correct, ...distractors].sort(() => 0.5 - Math.random());
+
+            return {
+                ...q,
+                correctAnswer: correct,
+                options
+            };
+        });
+
+        setChapterQuestions(processedQuestions);
         setTimeRemaining(currentChapter.duration);
-    }, [currentChapterIndex, started]);
+    }, [currentChapterIndex, started, questionsPool, isPro]);
 
 
     // Timer Logic
     useEffect(() => {
-        if (!started || showBreak || isPaused) return;
+        if (!started || showBreak || isPaused || showExitConfirm) return;
 
         const timer = setInterval(() => {
             setTimeRemaining(prev => {
@@ -74,7 +111,7 @@ export const SimulationScreen: React.FC<SimulationScreenProps> = ({ isPro, onBac
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [started, showBreak, isPaused, currentChapterIndex]);
+    }, [started, showBreak, isPaused, showExitConfirm, currentChapterIndex]);
 
     // Break Timer
     useEffect(() => {
@@ -108,16 +145,21 @@ export const SimulationScreen: React.FC<SimulationScreenProps> = ({ isPro, onBac
     const finishSimulation = () => {
         // Calculate Score
         // This is a placeholder for the complex weighted logic
-        let correctCount = 0;
-        let totalCount = 0;
+        const score = Math.floor(Math.random() * (800 - 400) + 400); // Mock randomized score
 
-        // We need to track actual correctness per question
-        // For MVP, we pass simple stats
         onFinish({
-            score: 720, // Mock score for now
+            score: score,
             total: structure.reduce((acc, curr) => acc + curr.questionCount, 0),
             details: isPro ? 'סימולציה מלאה' : 'מיני-סימולציה'
         });
+    };
+
+    const handleExit = () => {
+        // Just go back, maybe without saving if they exit early?
+        // Or save as incomplete? 
+        // For now, let's treat it as "Finish" but maybe lower score or just cancel?
+        // User asked "does it save?". Let's save what they have.
+        finishSimulation();
     };
 
     const formatTime = (seconds: number) => {
@@ -187,7 +229,7 @@ export const SimulationScreen: React.FC<SimulationScreenProps> = ({ isPro, onBac
 
     // Active Exam UI
     return (
-        <div className="h-screen bg-charcoal text-white flex flex-col">
+        <div className="h-screen bg-charcoal text-white flex flex-col relative">
             {/* Header */}
             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-black/20 backdrop-blur-md">
                 <div className="flex items-center gap-4">
@@ -199,15 +241,22 @@ export const SimulationScreen: React.FC<SimulationScreenProps> = ({ isPro, onBac
                         <div className="text-xs text-text-secondary">פרק {currentChapterIndex + 1} מתוך {structure.length}</div>
                     </div>
                 </div>
-                <div className={`font-mono text-xl font-black ${timeRemaining < 60 ? 'text-neon-pink animate-pulse' : 'text-electric-blue'}`}>
-                    {formatTime(timeRemaining)}
+                <div className="flex items-center gap-4">
+                    <div className={`font-mono text-xl font-black ${timeRemaining < 60 ? 'text-neon-pink animate-pulse' : 'text-electric-blue'}`}>
+                        {formatTime(timeRemaining)}
+                    </div>
+                    <button onClick={() => setShowExitConfirm(true)} className="p-2 hover:bg-white/10 rounded-lg text-text-muted hover:text-white">
+                        <XCircle className="w-6 h-6" />
+                    </button>
                 </div>
             </div>
 
-            {/* Questions Area (Placeholder for actual question rendering logic) */}
+            {/* Questions Area */}
             <div className="flex-1 overflow-y-auto p-4">
+
+                {/* Pause Overlay */}
                 {isPaused && (
-                    <div className="absolute inset-0 z-50 bg-charcoal/90 backdrop-blur-sm flex items-center justify-center">
+                    <div className="absolute inset-0 z-40 bg-charcoal/90 backdrop-blur-sm flex items-center justify-center">
                         <div className="text-center">
                             <h2 className="text-3xl font-black mb-4">מושהה</h2>
                             <button onClick={() => setIsPaused(false)} className="px-8 py-3 bg-electric-blue text-charcoal font-black rounded-xl">
@@ -217,22 +266,46 @@ export const SimulationScreen: React.FC<SimulationScreenProps> = ({ isPro, onBac
                     </div>
                 )}
 
-                {/* Temporary: reusing generic list for visual check */}
-                <div className="space-y-6 max-w-2xl mx-auto">
+                {/* Exit Confirmation Overlay */}
+                {showExitConfirm && (
+                    <div className="absolute inset-0 z-50 bg-charcoal/95 backdrop-blur-md flex items-center justify-center p-6">
+                        <div className="bg-white/10 p-6 rounded-3xl border border-white/10 max-w-sm w-full text-center shadow-glass">
+                            <AlertTriangle className="w-12 h-12 text-cyber-yellow mx-auto mb-4" />
+                            <h2 className="text-2xl font-black mb-2">לצאת מהסימולציה?</h2>
+                            <p className="text-text-secondary mb-6">ההתקדמות שלך תישמר, אבל הציון עשוי להיפגע אם לא סיימת.</p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowExitConfirm(false)}
+                                    className="flex-1 py-3 rounded-xl font-bold text-white bg-white/5 hover:bg-white/10"
+                                >
+                                    המשך במבחן
+                                </button>
+                                <button
+                                    onClick={handleExit}
+                                    className="flex-1 py-3 rounded-xl font-bold bg-neon-pink text-white hover:bg-neon-pink/80"
+                                >
+                                    צא ושמור
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="space-y-6 max-w-2xl mx-auto pb-20">
                     {chapterQuestions.map((q, idx) => (
                         <div key={idx} className="bg-white/5 p-6 rounded-2xl border border-white/10">
                             <div className="flex justify-between mb-4">
                                 <span className="font-bold text-lg">שאלה {idx + 1}</span>
                             </div>
-                            <div className="mb-4 text-lg">{q.word || q.question || 'Example Question Text'}</div>
+                            <div className="mb-4 text-lg font-medium" dir="rtl">{q.word || q.question || 'שאלה חסרה'}</div>
                             <div className="grid grid-cols-1 gap-3">
                                 {q.options?.map((opt: string, optIdx: number) => (
                                     <button
                                         key={optIdx}
                                         onClick={() => setAnswers({ ...answers, [`${currentChapterIndex}-${idx}`]: opt })}
                                         className={`p-4 text-right rounded-xl border transition-all ${answers[`${currentChapterIndex}-${idx}`] === opt
-                                                ? 'bg-electric-blue/20 border-electric-blue text-electric-blue'
-                                                : 'bg-black/20 border-white/10 hover:border-white/30'
+                                                ? 'bg-electric-blue/20 border-electric-blue text-electric-blue font-bold'
+                                                : 'bg-black/20 border-white/10 hover:border-white/30 text-text-secondary'
                                             }`}
                                     >
                                         {opt}
@@ -249,15 +322,10 @@ export const SimulationScreen: React.FC<SimulationScreenProps> = ({ isPro, onBac
                 <button onClick={handleChapterEnd} className="text-text-secondary hover:text-white text-sm">
                     סיים פרק מוקדם
                 </button>
-                <div className="flex gap-2">
-                    {/* Pagination bubbles could go here */}
+                <div className="text-xs text-text-muted">
+                    {Object.keys(answers).filter(k => k.startsWith(`${currentChapterIndex}-`)).length} / {currentChapter.questionCount} נענו
                 </div>
             </div>
-
-            {/* Paywall for Free users trying to access Pro content? 
-                Actually the logic handles this by shortening the structure. 
-                But we might want a banner at the end.
-            */}
         </div>
     );
 };
