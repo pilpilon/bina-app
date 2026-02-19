@@ -2845,9 +2845,8 @@ function App() {
                                             weakPoints={weakPoints}
                                             onBack={() => setActiveTab('stats')}
                                             onStartLearning={(topic: string) => {
-                                                // Directly start learning without switching activeTab first
-                                                // This prevents unmounting/remounting issues and race conditions
-                                                startLearning(topic);
+                                                if (topic === 'pricing') setActiveTab('pricing');
+                                                else startLearning(topic);
                                             }}
                                         />
                                     )}
