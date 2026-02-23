@@ -1582,7 +1582,13 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user, onLog
                                         openPaddleCheckout(
                                             // @ts-ignore
                                             plan.priceId,
-                                            user?.email
+                                            user?.email,
+                                            user?.uid,
+                                            () => {
+                                                // Handle instant success feedback for the user
+                                                alert("תודה רבה! התשלום בוצע בהצלחה. החשבון שלך ישודרג בדקות הקרובות.");
+                                                // Normally, you would fetch the new user profile from Firestore or trigger a local state update
+                                            }
                                         );
                                     }
                                 }}

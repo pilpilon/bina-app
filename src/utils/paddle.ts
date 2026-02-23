@@ -15,10 +15,22 @@ export const initializePaddle = () => {
     }
 };
 
-export const openPaddleCheckout = (priceId: string, email?: string) => {
+export const openPaddleCheckout = (priceId: string, email?: string, userId?: string, onSuccess?: () => void) => {
     if (!(window as any).Paddle) {
         alert("שגיאה בטעינת מערכת התשלומים. אנא נסה שוב מאוחר יותר.");
         return;
+    }
+
+    // Set up the event listener for this specific checkout
+    // This allows the frontend to respond immediately to a successful payment
+    if (onSuccess) {
+        (window as any).Paddle.Setup({
+            eventCallback: function (data: any) {
+                if (data.name === 'checkout.completed') {
+                    onSuccess();
+                }
+            }
+        });
     }
 
     (window as any).Paddle.Checkout.open({
@@ -35,6 +47,9 @@ export const openPaddleCheckout = (priceId: string, email?: string) => {
         ],
         customer: {
             email: email
+        },
+        customData: {
+            userId: userId || 'anonymous'
         }
     });
 };
