@@ -58,21 +58,30 @@ const GlassCard = ({ children, className = "", variant = "white", ...props }: an
 
 // ... existing components (SmartCTA, StatCard, NavItem) ...
 
-const SmartCTA = ({ onClick }: any) => {
+const SmartCTA = ({ onClick, dueCount = 0 }: any) => {
     // Component content (lines 16-29) - using existing logic
     return (
         <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => onClick('smart')}
-            className="w-full p-5 mb-8 rounded-2xl bg-electric-blue text-charcoal shadow-glow-blue flex items-center justify-center gap-4 group"
+            className="w-full p-5 mb-8 rounded-2xl bg-electric-blue text-charcoal shadow-glow-blue flex items-center justify-center gap-4 group relative overflow-hidden"
         >
             <div className="bg-charcoal/10 p-2 rounded-lg group-hover:bg-charcoal/20 transition-colors">
                 <Target className="w-8 h-8" />
             </div>
-            <div className="text-right">
-                <div className="text-xl font-black">תרגול חכם - 5 דקות</div>
-                <div className="text-sm font-medium opacity-80">ה-AI ימצא את נקודות התורפה שלך</div>
+            <div className="text-right flex-1">
+                <div className="text-xl font-black flex items-center gap-2">
+                    תרגול חכם
+                    {dueCount > 0 && (
+                        <span className="text-[10px] bg-charcoal text-white px-2 py-0.5 rounded-full shadow-md leading-none">
+                            {dueCount} לחזרה
+                        </span>
+                    )}
+                </div>
+                <div className="text-sm font-medium opacity-80">
+                    {dueCount > 0 ? 'יש לך כרטיסיות שמחכות לחזרה' : 'ה-AI ימצא את נקודות התורפה שלך'}
+                </div>
             </div>
         </motion.button>
     );
@@ -157,11 +166,16 @@ const SmartUpsellBanner = ({ userStats, onUpgrade }: { userStats: any; onUpgrade
 
 // --- Screen Components ---
 
-const HomeScreen = ({ onStartLearning, userProfile, userStats, getLevelName }: any) => {
+const HomeScreen = ({ onStartLearning, userProfile, userStats, getLevelName, dueCount = 0 }: any) => {
     const totalQuestions = Object.values(userStats.categoryTotal || {}).reduce((a: any, b: any) => a + Number(b), 0) as number;
     const totalErrors = Object.values(userStats.categoryErrors || {}).reduce((a: any, b: any) => a + Number(b), 0) as number;
     const accuracy = totalQuestions > 0 ? Math.round(((totalQuestions - totalErrors) / totalQuestions) * 100) : 0;
     const wordsLearned = Math.floor(userStats.xp / 10);
+
+    // Daily XP Target Calculation
+    const dailyTargetXP = (userProfile?.dailyMinutes || 30) * 10;
+    const dailyEarnedXP = (userStats.dailyQuestions || 0) * 10;
+    const dailyProgress = Math.min(100, (dailyEarnedXP / dailyTargetXP) * 100);
 
     return (
         <motion.div
@@ -193,21 +207,42 @@ const HomeScreen = ({ onStartLearning, userProfile, userStats, getLevelName }: a
                 </motion.div>
             </div>
 
-            <div className="mb-8 px-2">
-                <div className="flex justify-between items-center mb-2">
-                    <div className="text-sm font-black text-white/70 uppercase tracking-wider">רמה {userStats.level}: {getLevelName(userStats.level)}</div>
-                    <div className="text-sm font-black text-electric-blue">{userStats.xp} / {userStats.level * 500} XP</div>
+            <div className="mb-8 px-2 space-y-4">
+                {/* Level Progress */}
+                <div>
+                    <div className="flex justify-between items-center mb-2">
+                        <div className="text-sm font-black text-white/70 uppercase tracking-wider">רמה {userStats.level}: {getLevelName(userStats.level)}</div>
+                        <div className="text-sm font-black text-neon-purple">{userStats.xp} / {userStats.level * 500} XP</div>
+                    </div>
+                    <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden border border-white/5">
+                        <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(userStats.xp % 500) / 5}%` }}
+                            className="h-full bg-gradient-to-r from-electric-blue to-neon-purple"
+                        />
+                    </div>
                 </div>
-                <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden border border-white/5">
-                    <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(userStats.xp % 500) / 5}%` }}
-                        className="h-full bg-gradient-to-r from-electric-blue to-neon-purple"
-                    />
+
+                {/* Daily Goal Progress */}
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10 shadow-glass">
+                    <div className="flex justify-between items-center mb-2">
+                        <div className="text-sm font-black text-white flex items-center gap-1.5">
+                            <Target className="w-4 h-4 text-cyber-yellow" />
+                            יעד יומי
+                        </div>
+                        <div className="text-xs font-black text-cyber-yellow">{dailyEarnedXP} / {dailyTargetXP} XP</div>
+                    </div>
+                    <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden border border-white/5 relative">
+                        <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${dailyProgress}%` }}
+                            className="h-full bg-gradient-to-r from-cyber-yellow to-neon-pink shadow-glow-yellow absolute right-0"
+                        />
+                    </div>
                 </div>
             </div>
 
-            <SmartCTA onClick={onStartLearning} />
+            <SmartCTA onClick={onStartLearning} dueCount={dueCount} />
 
             {/* First Mission card — only for brand new users */}
             {userStats.xp === 0 && (
@@ -2302,6 +2337,18 @@ function App() {
         return saved ? JSON.parse(saved) : null;
     });
 
+    // Count of due SRS items
+    const [dueItemsCount, setDueItemsCount] = useState<number>(0);
+
+    // Fetch due SRS items count periodically or when swipe dates change
+    useEffect(() => {
+        if (userProfile || user) {
+            getDueItems(user?.uid).then(items => {
+                setDueItemsCount(items.length);
+            }).catch(console.error);
+        }
+    }, [user, userStats.lastSwipeDate, activeTab]);
+
     // History State
     const [history, setHistory] = useState<any[]>(() => {
         const saved = localStorage.getItem('examHistory');
@@ -2812,6 +2859,7 @@ function App() {
                                             userProfile={userProfile}
                                             userStats={userStats}
                                             getLevelName={getLevelName}
+                                            dueCount={dueItemsCount}
                                         />
                                     )}
                                     {activeTab === 'custom-edit' && (
