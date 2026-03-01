@@ -704,7 +704,7 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
     );
 };
 
-const StatsScreen = ({ userStats, userProfile, setActiveTab }: any) => {
+const StatsScreen = ({ userStats, userProfile, setActiveTab, onStartLearning }: any) => {
     const accuracyData = [
         {
             label: 'כמותי',
@@ -762,7 +762,7 @@ const StatsScreen = ({ userStats, userProfile, setActiveTab }: any) => {
                 </div>
                 <div className="flex gap-2">
                     <button
-                        onClick={() => setActiveTab('history')}
+                        onClick={() => onStartLearning('history')}
                         className="w-12 h-12 glass-card-dark flex items-center justify-center text-text-secondary hover:text-white border-white/10 hover:bg-white/5 transition-colors"
                     >
                         <History className="w-6 h-6" />
@@ -858,9 +858,9 @@ const StatsScreen = ({ userStats, userProfile, setActiveTab }: any) => {
                                         <div className="text-xs text-neon-pink font-bold">{weakest.acc}% דיוק • {weakest.errors} שגיאות</div>
                                     </div>
                                 </div>
-                                {setActiveTab && (
+                                {onStartLearning && (
                                     <button
-                                        onClick={() => setActiveTab('home')}
+                                        onClick={() => onStartLearning(weakest.topic)}
                                         className="px-3 py-2 bg-neon-pink text-white font-black text-xs rounded-xl hover:scale-105 active:scale-95 transition-all"
                                     >
                                         תרגל עכשיו
@@ -2973,7 +2973,17 @@ function App() {
                                             onToggleFavorite={toggleFavorite}
                                         />
                                     )}
-                                    {activeTab === 'stats' && <StatsScreen userStats={userStats} userProfile={userProfile} setActiveTab={setActiveTab} />}
+                                    {activeTab === 'stats' && (
+                                        <StatsScreen
+                                            userStats={userStats}
+                                            userProfile={userProfile}
+                                            setActiveTab={setActiveTab}
+                                            onStartLearning={(topic: string) => {
+                                                if (topic === 'pricing') setActiveTab('pricing');
+                                                else startLearning(topic);
+                                            }}
+                                        />
+                                    )}
                                     {activeTab === 'profile' && (
                                         <ProfileScreen
                                             userStats={userStats}

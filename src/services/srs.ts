@@ -76,8 +76,8 @@ export const updateItemSRS = async (userId: string | null | undefined, itemId: s
             if (docSnap.exists()) {
                 currentItem = { ...currentItem, ...docSnap.data() };
             }
-        } catch (e) {
-            console.warn("Firebase fetch failed, using local SRS data.", e);
+        } catch (e: any) {
+            if (e?.code !== 'permission-denied') console.warn("Firebase fetch failed, using local SRS data.", e);
             const localData = getLocalSRS();
             if (localData[itemId]) {
                 currentItem = { ...currentItem, ...localData[itemId] };
@@ -125,8 +125,8 @@ export const getDueItems = async (userId: string | null | undefined, topic?: str
             }
             const snap = await getDocs(q);
             return snap.docs.map(doc => doc.id);
-        } catch (e) {
-            console.warn("Failed to fetch due items from Firebase, falling back to local.", e);
+        } catch (e: any) {
+            if (e?.code !== 'permission-denied') console.warn("Failed to fetch due items from Firebase, falling back to local.", e);
         }
     }
 
@@ -153,8 +153,8 @@ export const getDueItemsCountByTopic = async (userId: string | null | undefined)
                 counts[topic] = (counts[topic] || 0) + 1;
             });
             return counts;
-        } catch (e) {
-            console.warn("Failed to fetch due item counts, using local.", e);
+        } catch (e: any) {
+            if (e?.code !== 'permission-denied') console.warn("Failed to fetch due item counts, using local.", e);
         }
     }
 
