@@ -1,9 +1,9 @@
+/* Import Inter font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import Inter font from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 /* CSS Custom Properties for Design Tokens */
 :root {
@@ -97,10 +97,13 @@
   /* Glassmorphism Fallback for low-end devices / unsupported browsers */
   @supports not (backdrop-filter: blur(12px)) {
     .glass-card {
-      @apply bg-[#1A1F3A]; /* Solid fallback for bg-glass-white */
+      @apply bg-[#1A1F3A];
+      /* Solid fallback for bg-glass-white */
     }
+
     .glass-card-dark {
-      @apply bg-[#0D1117]; /* Solid fallback for bg-glass-dark */
+      @apply bg-[#0D1117];
+      /* Solid fallback for bg-glass-dark */
     }
   }
 

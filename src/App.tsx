@@ -18,6 +18,7 @@ import { PaywallOverlay } from './components/PaywallOverlay';
 import { explainQuestion, explainTerm } from './services/aiScoring';
 import { updateItemSRS, getDueItemsCountByTopic, getDueItems } from './services/srs';
 import OnboardingScreen, { UserProfile } from './components/OnboardingScreen';
+import LandingPage from './components/LandingPage';
 import {
     loadNotificationSettings,
     saveNotificationSettings,
@@ -2378,6 +2379,15 @@ function App() {
     // Count of due SRS items
     const [dueItemsCount, setDueItemsCount] = useState<number>(0);
 
+    // Landing page: shown once to first-time visitors before onboarding
+    const [showLanding, setShowLanding] = useState<boolean>(
+        () => !localStorage.getItem('bina_seen_landing')
+    );
+    const handleLandingStart = () => {
+        localStorage.setItem('bina_seen_landing', '1');
+        setShowLanding(false);
+    };
+
     // Fetch due SRS items count periodically or when swipe dates change
     useEffect(() => {
         if (userProfile || user) {
@@ -2428,7 +2438,10 @@ function App() {
 
                 const fetchPromise = (async () => {
                     try {
-                        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+                        const docPromise = getDoc(doc(db, 'users', firebaseUser.uid));
+                        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 3000));
+                        const userDoc = await Promise.race([docPromise, timeoutPromise]) as any;
+
                         if (userDoc.exists()) {
                             const cloudData = userDoc.data();
                             if (cloudData.stats) {
@@ -2493,6 +2506,14 @@ function App() {
         localStorage.setItem('bina_onboarding', JSON.stringify(profile));
         setUserProfile(profile);
         setHasOnboarded(true);
+
+        // Force immediate sync to cloud so they don't lose it if they close the tab before the 30s debounce
+        if (auth.currentUser) {
+            setDoc(doc(db, 'users', auth.currentUser.uid), {
+                profile: profile,
+                lastUpdated: new Date().toISOString()
+            }, { merge: true }).catch(console.error);
+        }
 
         if (isFirstTime) {
             // Ensure stats are clean for new users
@@ -2789,6 +2810,9 @@ function App() {
     }
 
     if (!hasOnboarded) {
+        if (showLanding) {
+            return <LandingPage onStart={handleLandingStart} />;
+        }
         return (
             <OnboardingScreen
                 onComplete={handleOnboardingComplete}
