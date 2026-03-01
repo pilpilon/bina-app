@@ -1,0 +1,2 @@
+User-agent: * 
+Sitemap: https://bina-app.vercel.app/sitemap.xml 
