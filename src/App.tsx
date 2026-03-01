@@ -555,64 +555,84 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
                     />
                 )}
                 {isFinished ? (
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="w-full max-w-[360px] text-center"
-                    >
-                        {/* Trophy */}
+                    currentDataSet.length === 0 ? (
                         <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ type: 'spring', delay: 0.1 }}
-                            className="text-7xl mb-4"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="w-full max-w-[360px] text-center"
                         >
-                            {knownCount / currentDataSet.length >= 0.8 ? '🏆' : knownCount / currentDataSet.length >= 0.2 ? '🌟' : '💪'}
+                            <div className="text-7xl mb-4">📭</div>
+                            <h2 className="text-2xl font-black text-white mb-2">הרשימה ריקה!</h2>
+                            <p className="text-text-secondary text-sm mb-8 mt-2">
+                                אין כרטיסיות לתרגול בנושא הזה כרגע.
+                            </p>
+                            <button
+                                onClick={onBack}
+                                className="w-full py-4 rounded-2xl bg-gradient-to-r from-electric-blue to-neon-purple text-white font-black hover:scale-[1.02] active:scale-95 transition-all"
+                            >
+                                חזור אחורה
+                            </button>
                         </motion.div>
-
-                        <h2 className="text-2xl font-black text-white mb-1">
-                            {knownCount / currentDataSet.length >= 0.8 ? 'מצוין!' : knownCount / currentDataSet.length >= 0.2 ? 'עבודה טובה!' : 'לא נורא!'}
-                        </h2>
-                        <p className="text-text-secondary text-sm mb-6">סיימת את הסט בהצלחה</p>
-
-                        {/* Stats row */}
-                        <div className="grid grid-cols-3 gap-3 mb-6">
-                            <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
-                                <div className="text-2xl font-black text-electric-blue">+{knownCount * 10}</div>
-                                <div className="text-[10px] text-text-muted uppercase tracking-wider mt-0.5">XP</div>
-                            </div>
-                            <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
-                                <div className="text-2xl font-black text-emerald-400">{Math.round((knownCount / currentDataSet.length) * 100)}%</div>
-                                <div className="text-[10px] text-text-muted uppercase tracking-wider mt-0.5">דיוק</div>
-                            </div>
-                            <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
-                                <div className="text-2xl font-black text-neon-purple">{currentDataSet.length}</div>
-                                <div className="text-[10px] text-text-muted uppercase tracking-wider mt-0.5">כרטיסיות</div>
-                            </div>
-                        </div>
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => {
-                                    setIndex(0);
-                                    setKnownCount(0);
-                                    awardXP(20);
-                                }}
-                                className="flex-1 py-3 rounded-xl font-bold text-sm bg-white/5 border border-white/10 text-text-secondary hover:bg-white/10 transition-all"
+                    ) : (
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="w-full max-w-[360px] text-center"
+                        >
+                            {/* Trophy */}
+                            <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: 'spring', delay: 0.1 }}
+                                className="text-7xl mb-4"
                             >
-                                שוב 🔄
-                            </button>
-                            <button
-                                onClick={() => {
-                                    awardXP(knownCount * 10);
-                                    onBack();
-                                }}
-                                className="flex-1 py-3 rounded-xl font-black text-sm bg-gradient-to-r from-electric-blue to-neon-purple text-white shadow-glow-blue hover:scale-[1.02] active:scale-[0.98] transition-all"
-                            >
-                                בית →
-                            </button>
-                        </div>
-                    </motion.div>
+                                {knownCount / currentDataSet.length >= 0.8 ? '🏆' : knownCount / currentDataSet.length >= 0.2 ? '🌟' : '💪'}
+                            </motion.div>
+
+                            <h2 className="text-2xl font-black text-white mb-1">
+                                {knownCount / currentDataSet.length >= 0.8 ? 'מצוין!' : knownCount / currentDataSet.length >= 0.2 ? 'עבודה טובה!' : 'לא נורא!'}
+                            </h2>
+                            <p className="text-text-secondary text-sm mb-6">סיימת את הסט בהצלחה</p>
+
+                            {/* Stats row */}
+                            <div className="grid grid-cols-3 gap-3 mb-6">
+                                <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
+                                    <div className="text-2xl font-black text-electric-blue">+{knownCount * 10}</div>
+                                    <div className="text-[10px] text-text-muted uppercase tracking-wider mt-0.5">XP</div>
+                                </div>
+                                <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
+                                    <div className="text-2xl font-black text-emerald-400">{Math.round((knownCount / currentDataSet.length) * 100)}%</div>
+                                    <div className="text-[10px] text-text-muted uppercase tracking-wider mt-0.5">דיוק</div>
+                                </div>
+                                <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
+                                    <div className="text-2xl font-black text-neon-purple">{currentDataSet.length}</div>
+                                    <div className="text-[10px] text-text-muted uppercase tracking-wider mt-0.5">כרטיסיות</div>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        setIndex(0);
+                                        setKnownCount(0);
+                                        awardXP(20);
+                                    }}
+                                    className="flex-1 py-3 rounded-xl font-bold text-sm bg-white/5 border border-white/10 text-text-secondary hover:bg-white/10 transition-all"
+                                >
+                                    שוב 🔄
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        awardXP(knownCount * 10);
+                                        onBack();
+                                    }}
+                                    className="flex-1 py-3 rounded-xl font-black text-sm bg-gradient-to-r from-electric-blue to-neon-purple text-white shadow-glow-blue hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                >
+                                    בית →
+                                </button>
+                            </div>
+                        </motion.div>
+                    )
                 ) : (
                     <AnimatePresence mode="wait" custom={exitX}>
                         <motion.div
@@ -2380,21 +2400,26 @@ function App() {
         }
 
         // Firebase Auth Listener
-        const unsubscribeAuth = auth.onAuthStateChanged((firebaseUser) => {
+        const unsubscribeAuth = auth.onAuthStateChanged(async (firebaseUser) => {
             setUser(firebaseUser);
-            // DO NOT BLOCK INITIAL RENDER - Let local storage populate first instantly
-            setLoading(false);
 
             if (firebaseUser) {
-                // Fetch cloud data in the background silently
-                const fetchUserData = async () => {
+                // If local storage doesn't have onboarding data, we MUST wait for the cloud fetch
+                // to avoid showing the Onboarding Screen and resetting their progress.
+                const needsBlockingFetch = !localStorage.getItem('bina_onboarding');
+
+                const fetchPromise = (async () => {
                     try {
                         const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
                         if (userDoc.exists()) {
                             const cloudData = userDoc.data();
-                            if (cloudData.stats) setUserStats(cloudData.stats);
+                            if (cloudData.stats) {
+                                setUserStats(cloudData.stats);
+                                localStorage.setItem('bina_user_stats', JSON.stringify(cloudData.stats));
+                            }
                             if (cloudData.profile) {
                                 setUserProfile(cloudData.profile);
+                                localStorage.setItem('bina_onboarding', JSON.stringify(cloudData.profile));
                                 setHasOnboarded(true);
                             }
                         } else {
@@ -2403,10 +2428,15 @@ function App() {
                     } catch (error) {
                         console.error("Background fetch error:", error);
                     }
-                };
+                })();
 
-                fetchUserData();
+                if (needsBlockingFetch) {
+                    await fetchPromise; // Block initial render until fetch is complete
+                }
             }
+
+            // Let local storage populate instantly if it exists, or finish fetching
+            setLoading(false);
         });
 
         return () => unsubscribeAuth();
