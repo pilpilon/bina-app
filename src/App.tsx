@@ -16,6 +16,7 @@ import HistoryScreen from './components/HistoryScreen';
 import { SimulationScreen } from './components/SimulationScreen';
 import { PaywallOverlay } from './components/PaywallOverlay';
 import { explainQuestion, explainTerm } from './services/aiScoring';
+import { updateItemSRS, getDueItemsCountByTopic, getDueItems } from './services/srs';
 import OnboardingScreen, { UserProfile } from './components/OnboardingScreen';
 import {
     loadNotificationSettings,
@@ -348,7 +349,7 @@ const TopicCard = ({ icon: Icon, title, sub, color, bg, onClick }: any) => (
     </GlassCard>
 );
 
-const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity, favorites = [], onToggleFavorite, userStats, onUpgrade, onRefer, history = [], onFinish, ...props }: { onBack: () => void, topic?: string, awardXP: (n: number) => void, recordActivity: (xp: number, cat: string, correct: boolean) => void, favorites?: string[], onToggleFavorite?: (id: string) => void, userStats: any, onUpgrade: () => void, onRefer: () => void, history?: any[], onFinish?: (result: any) => void, [key: string]: any }) => {
+const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity, favorites = [], onToggleFavorite, userStats, onUpgrade, onRefer, history = [], onFinish, userId, ...props }: { onBack: () => void, topic?: string, awardXP: (n: number) => void, recordActivity: (xp: number, cat: string, correct: boolean) => void, favorites?: string[], onToggleFavorite?: (id: string) => void, userStats: any, onUpgrade: () => void, onRefer: () => void, history?: any[], onFinish?: (result: any) => void, userId?: string, [key: string]: any }) => {
     const [index, setIndex] = useState(0);
     const [knownCount, setKnownCount] = useState(0);
     const [exitX, setExitX] = useState(0);
@@ -361,6 +362,7 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
             case 'quantitative': return quantitativeData;
             case 'english': return englishData;
             case 'weakPoints': return (props as any).weakPoints || [];
+            case 'srs': return (props as any).srsItems || [];
             case 'custom': return (props as any).customLists || [];
             case 'favorites': {
                 const allData = [...vocabData, ...analogiesData, ...quantitativeData, ...englishData];
@@ -384,6 +386,7 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
         quantitative: { title: 'חשיבה כמותית', sub: 'אלגברה וגיאומטריה', category: 'כמותי' },
         english: { title: 'אנגלית', sub: 'Sentence Completion', category: 'אנגלית' },
         weakPoints: { title: 'חיזוק חולשות', sub: 'מבוסס על ביצועים', category: 'חיזוק' },
+        srs: { title: 'תרגול חכם', sub: 'חזרות במרווחי זמן', category: 'תרגול' },
         custom: { title: 'הרשימה שלי', sub: 'מילים שייבאת', category: 'אישי' },
         favorites: { title: 'מועדפים', sub: 'מילים ששמרת', category: 'מועדפים' }
     };
@@ -600,6 +603,7 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
                                     setExitX(-300); // Fly left
                                     setKnownCount(prev => prev + 1);
                                     setIndex(prev => prev + 1);
+                                    updateItemSRS(userId, currentWord.id, topic, 4); // Quality 4 = known
                                     recordActivity(10, currentTopicInfo.category, true);
                                 }}
                                 onSwipeRight={() => {
@@ -607,6 +611,7 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
                                     setExitX(300); // Fly right
                                     if ((props as any).onMiss) (props as any).onMiss(currentWord);
                                     setIndex(prev => prev + 1);
+                                    updateItemSRS(userId, currentWord.id, topic, 1); // Quality 1 = hard miss
                                     recordActivity(5, currentTopicInfo.category, false);
                                 }}
                             />
@@ -2245,6 +2250,7 @@ function App() {
         const saved = localStorage.getItem('bina_custom_lists');
         return saved ? JSON.parse(saved) : [];
     });
+    const [srsItems, setSrsItems] = useState<WordCard[]>([]);
     const [weakPoints, setWeakPoints] = useState<WordCard[]>(() => {
         const saved = localStorage.getItem('bina_weak_points');
         return saved ? JSON.parse(saved) : [];
@@ -2327,12 +2333,15 @@ function App() {
         }
 
         // Firebase Auth Listener
-        const unsubscribeAuth = auth.onAuthStateChanged(async (firebaseUser) => {
+        const unsubscribeAuth = auth.onAuthStateChanged((firebaseUser) => {
             setUser(firebaseUser);
+            // DO NOT BLOCK INITIAL RENDER - Let local storage populate first instantly
+            setLoading(false);
+
             if (firebaseUser) {
-                try {
-                    // Fetch cloud data with a timeout to prevent hanging
-                    const fetchUserData = async () => {
+                // Fetch cloud data in the background silently
+                const fetchUserData = async () => {
+                    try {
                         const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
                         if (userDoc.exists()) {
                             const cloudData = userDoc.data();
@@ -2344,19 +2353,13 @@ function App() {
                         } else {
                             console.log("New User or No Profile in Cloud");
                         }
-                    };
+                    } catch (error) {
+                        console.error("Background fetch error:", error);
+                    }
+                };
 
-                    // Race between fetch and 8s timeout
-                    await Promise.race([
-                        fetchUserData(),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
-                    ]);
-                } catch (error) {
-                    console.error("Error fetching user data (offline or timeout):", error);
-                    // Fallback to local storage is already handled by initial state
-                }
+                fetchUserData();
             }
-            setLoading(false);
         });
 
         return () => unsubscribeAuth();
@@ -2596,30 +2599,43 @@ function App() {
         return names[Math.min(level - 1, names.length - 1)];
     };
 
-    const startLearning = (topic = 'vocabulary') => {
+    const startLearning = async (topic = 'vocabulary') => {
         let finalTopic = topic;
 
         if (topic === 'smart') {
-            const topics = ['vocabulary', 'analogies', 'quantitative', 'english'];
+            const dueIds = await getDueItems(user?.uid);
+            if (dueIds.length > 0) {
+                // Compile the actual WordCard objects by searching the static datasets
+                const allData = [...vocabData, ...analogiesData, ...quantitativeData, ...englishData];
+                const dueCards = allData.filter(card => dueIds.includes(card.id));
+                if (dueCards.length > 0) {
+                    setSrsItems(dueCards);
+                    finalTopic = 'srs';
+                }
+            }
 
-            // Smarter AI: Look for category with most errors
-            const errors = userStats.categoryErrors;
-            const categoriesWithErrors = Object.keys(errors).filter(cat => errors[cat] > 0);
+            if (finalTopic === 'smart') {
+                const topics = ['vocabulary', 'analogies', 'quantitative', 'english'];
 
-            if (categoriesWithErrors.length > 0) {
-                // Find category with max errors
-                const weakestCategory = categoriesWithErrors.reduce((a, b) => errors[a] > errors[b] ? a : b);
+                // Smarter AI: Look for category with most errors
+                const errors = userStats.categoryErrors;
+                const categoriesWithErrors = Object.keys(errors).filter(cat => errors[cat] > 0);
 
-                // Map the sub-category back to the main topic
-                if (vocabData.some(c => c.category === weakestCategory)) finalTopic = 'vocabulary';
-                else if (analogiesData.some(c => c.category === weakestCategory)) finalTopic = 'analogies';
-                else if (quantitativeData.some(c => c.category === weakestCategory)) finalTopic = 'quantitative';
-                else if (englishData.some(c => c.category === weakestCategory)) finalTopic = 'english';
-                else finalTopic = topics[Math.floor(Math.random() * topics.length)];
-            } else if (weakPoints.length > 0 && Math.random() > 0.6) {
-                finalTopic = 'weakPoints';
-            } else {
-                finalTopic = topics[Math.floor(Math.random() * topics.length)];
+                if (categoriesWithErrors.length > 0) {
+                    // Find category with max errors
+                    const weakestCategory = categoriesWithErrors.reduce((a, b) => errors[a] > errors[b] ? a : b);
+
+                    // Map the sub-category back to the main topic
+                    if (vocabData.some(c => c.category === weakestCategory)) finalTopic = 'vocabulary';
+                    else if (analogiesData.some(c => c.category === weakestCategory)) finalTopic = 'analogies';
+                    else if (quantitativeData.some(c => c.category === weakestCategory)) finalTopic = 'quantitative';
+                    else if (englishData.some(c => c.category === weakestCategory)) finalTopic = 'english';
+                    else finalTopic = topics[Math.floor(Math.random() * topics.length)];
+                } else if (weakPoints.length > 0 && Math.random() > 0.6) {
+                    finalTopic = 'weakPoints';
+                } else {
+                    finalTopic = topics[Math.floor(Math.random() * topics.length)];
+                }
             }
         }
 
@@ -2751,6 +2767,7 @@ function App() {
                                     topic={learningTopic}
                                     onBack={() => setIsLearning(false)}
                                     weakPoints={weakPoints}
+                                    srsItems={srsItems}
                                     customLists={customLists}
                                     history={history}
                                     onFinish={handleSaveExam}
@@ -2766,6 +2783,7 @@ function App() {
                                     onToggleFavorite={toggleFavorite}
                                     onShowExplanation={setShowExplanation}
                                     userStats={userStats}
+                                    userId={user?.uid}
                                     onUpgrade={() => {
                                         setIsLearning(false);
                                         setActiveTab('pricing');
@@ -2818,6 +2836,7 @@ function App() {
                                             recordActivity={recordActivity}
                                             onMiss={addToWeakPoints}
                                             userStats={userStats}
+                                            userId={user?.uid}
                                             onUpgrade={() => {
                                                 setActiveTab('pricing');
                                             }}

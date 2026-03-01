@@ -5,6 +5,7 @@ import { Target, Calendar, Zap, ChevronRight, ChevronLeft, Check, BookOpen, Brai
 export interface UserProfile {
     name: string;
     targetScore: number;
+    baselineScore: number;
     examDate: string;
     dailyMinutes: number;
 }
@@ -149,6 +150,7 @@ const GoalStep = ({
     onBack: () => void;
 }) => {
     const scorePercent = ((profile.targetScore - SCORE_MIN) / (SCORE_MAX - SCORE_MIN)) * 100;
+    const baselinePercent = ((profile.baselineScore - SCORE_MIN) / (SCORE_MAX - SCORE_MIN)) * 100;
 
     const getScoreColor = (score: number) => {
         if (score >= 750) return 'from-cyber-yellow to-neon-pink';
@@ -246,6 +248,40 @@ const GoalStep = ({
                     </span>
                     <span>{SCORE_MAX}</span>
                 </div>
+            </div>
+
+            {/* Baseline Score */}
+            <div className="mb-8 p-5 rounded-2xl bg-white/5 border border-white/10">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-neon-pink" />
+                        <span className="font-bold text-sm">ציון נוכחי משוער</span>
+                    </div>
+                    <div className="text-xl font-black text-white">
+                        {profile.baselineScore}
+                    </div>
+                </div>
+
+                <div className="relative mb-3">
+                    <div className="h-3 bg-black/40 rounded-full overflow-hidden border border-white/5">
+                        <motion.div
+                            className="h-full bg-neon-pink rounded-full shadow-glow-purple flex items-center justify-end pr-2"
+                            style={{ width: `${baselinePercent}%` }}
+                            layout
+                            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                        />
+                    </div>
+                    <input
+                        type="range"
+                        min={SCORE_MIN}
+                        max={SCORE_MAX}
+                        step={10}
+                        value={profile.baselineScore}
+                        onChange={(e) => onChange({ baselineScore: Number(e.target.value) })}
+                        className="absolute inset-0 w-full opacity-0 cursor-pointer h-3"
+                    />
+                </div>
+                <div className="text-[10px] text-text-muted font-bold">הערכה בסיסית של הרמה שלך כרגע</div>
             </div>
 
             {/* Exam Date */}
@@ -572,6 +608,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, onCance
         return {
             name: user?.displayName || '',
             targetScore: 680,
+            baselineScore: 500,
             examDate: '',
             dailyMinutes: 30,
         };
