@@ -117,7 +117,7 @@ export const ReviewScreen: React.FC<ReviewScreenProps> = ({ examData, onBack, te
                                                                     className="mt-3 p-3 bg-electric-blue/5 border border-electric-blue/20 rounded-lg text-xs leading-relaxed"
                                                                 >
                                                                     <div className="font-bold mb-1">הסבר המורה:</div>
-                                                                    {explanation}
+                                                                    <bdi>{explanation}</bdi>
                                                                 </motion.div>
                                                             )}
                                                         </>

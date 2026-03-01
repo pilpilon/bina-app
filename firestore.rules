@@ -1,0 +1,34 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // User Profiles & Stats
+    match /users/{userId} {
+      // Users can only read and write their own documents
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Users can update their stats, but we can block them from changing 'tier' directly 
+      // if we want strict security (webhook should use Firebase Admin to bypass rules).
+      // For this MVP, if the frontend handles Some tier updates, we just restrict to their own ID.
+      allow write: if request.auth != null && request.auth.uid == userId 
+                   && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['tier', 'normalizedScore']) 
+                       || resource == null); 
+                       // Allow creation, but prevent modification of restricted fields
+    }
+
+    // AI Semantic Cache (Public read, no client write)
+    match /ai_cache/{document=**} {
+      // Anyone can read cached explanations
+      allow read: if true;
+      // Only the client app itself can write (weak protection, ideally backend only, 
+      // but client is doing it right now)
+      allow write: if request.auth != null;
+    }
+
+    // Other generic collections
+    match /{document=**} {
+      allow read, write: if false; // Deny by default
+    }
+  }
+}

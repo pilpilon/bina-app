@@ -44,6 +44,28 @@ export const WritingScreen: React.FC<WritingScreenProps> = ({ duration, onFinish
     };
 
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [loadingStep, setLoadingStep] = useState(0);
+
+    const loadingSteps = [
+        "קורא את החיבור...",
+        "מנתח מבנה ולכידות...",
+        "בודק אוצר מילים ותחביר...",
+        "מחשב ציון סופי..."
+    ];
+
+    useEffect(() => {
+        if (!isAnalyzing) {
+            setLoadingStep(0);
+            return;
+        }
+
+        // Cycle through loading steps to mask latency
+        const stepInterval = setInterval(() => {
+            setLoadingStep(prev => Math.min(prev + 1, loadingSteps.length - 1));
+        }, 2500);
+
+        return () => clearInterval(stepInterval);
+    }, [isAnalyzing]);
 
     const handleFinish = async () => {
         // Basic validation
@@ -54,6 +76,7 @@ export const WritingScreen: React.FC<WritingScreenProps> = ({ duration, onFinish
         }
 
         setIsAnalyzing(true);
+        setLoadingStep(0);
 
         try {
             const { analyzeWriting } = await import('../services/aiScoring');
@@ -64,7 +87,8 @@ export const WritingScreen: React.FC<WritingScreenProps> = ({ duration, onFinish
                 details: 'מטלת כתיבה (נבדק ע"י AI)',
                 text: text,
                 wordCount,
-                feedback: analysis.feedback
+                feedback: analysis.feedback,
+                is_valid_essay: analysis.is_valid_essay
             });
         } catch (e) {
             // Fallback if AI fails (network etc)
@@ -81,6 +105,36 @@ export const WritingScreen: React.FC<WritingScreenProps> = ({ duration, onFinish
 
     return (
         <div className="h-screen bg-charcoal text-white flex flex-col relative">
+            {/* Loading Overlay */}
+            {isAnalyzing && (
+                <div className="absolute inset-0 z-50 bg-charcoal/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center">
+                    <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                        className="w-16 h-16 border-4 border-electric-blue/20 border-t-electric-blue rounded-full mb-8"
+                    />
+                    <div className="h-8 overflow-hidden relative w-full max-w-xs">
+                        {loadingSteps.map((step, idx) => (
+                            <motion.div
+                                key={idx}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{
+                                    opacity: loadingStep === idx ? 1 : 0,
+                                    y: loadingStep === idx ? 0 : loadingStep > idx ? -20 : 20
+                                }}
+                                transition={{ duration: 0.5 }}
+                                className="absolute inset-0 text-xl font-black text-white"
+                            >
+                                {step}
+                            </motion.div>
+                        ))}
+                    </div>
+                    <p className="text-text-secondary mt-4 max-w-xs text-sm">
+                        Bina בודקת את החיבור שלך לעומק. זה עשוי לקחת כמה שניות.
+                    </p>
+                </div>
+            )}
+
             {/* Header */}
             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-black/20 backdrop-blur-md">
                 <div className="flex items-center gap-4">
@@ -125,14 +179,7 @@ export const WritingScreen: React.FC<WritingScreenProps> = ({ duration, onFinish
                         disabled={isAnalyzing}
                         className="px-8 py-3 bg-electric-blue text-charcoal font-black rounded-xl hover:scale-105 transition-transform shadow-glow-blue disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
-                        {isAnalyzing ? (
-                            <>
-                                <Loader className="w-4 h-4 animate-spin" />
-                                מנתח...
-                            </>
-                        ) : (
-                            'הגש מטלה 📝'
-                        )}
+                        הגש מטלה 📝
                     </button>
                 </div>
 

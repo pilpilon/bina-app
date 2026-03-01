@@ -94,6 +94,16 @@
     @apply bg-glass-dark backdrop-blur-2xl border border-white/5 rounded-2xl shadow-glass;
   }
 
+  /* Glassmorphism Fallback for low-end devices / unsupported browsers */
+  @supports not (backdrop-filter: blur(12px)) {
+    .glass-card {
+      @apply bg-[#1A1F3A]; /* Solid fallback for bg-glass-white */
+    }
+    .glass-card-dark {
+      @apply bg-[#0D1117]; /* Solid fallback for bg-glass-dark */
+    }
+  }
+
   /* Neon Button */
   .btn-neon {
     @apply px-6 py-3 rounded-xl font-semibold text-lg transition-all duration-300;

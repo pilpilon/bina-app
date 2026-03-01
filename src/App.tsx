@@ -2207,7 +2207,7 @@ const AIExplanationModal = ({ item, onClose, tier = 'free', onUpgrade }: { item:
                                     transition={{ delay: 0.2 }}
                                     className="whitespace-pre-wrap"
                                 >
-                                    {explanation}
+                                    <bdi>{explanation}</bdi>
                                 </motion.div>
                             )}
                         </>
