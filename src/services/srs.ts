@@ -69,7 +69,7 @@ const saveLocalSRS = (data: Record<string, SRSItem>) => {
 export const updateItemSRS = async (userId: string | null | undefined, itemId: string, topic: string, quality: number) => {
     let currentItem: Partial<SRSItem> = { id: itemId, topic };
 
-    if (userId) {
+    if (userId && window.navigator.onLine) {
         const docRef = doc(db, 'users', userId, 'srs', itemId);
         try {
             const docSnap = await getDoc(docRef);
@@ -77,7 +77,11 @@ export const updateItemSRS = async (userId: string | null | undefined, itemId: s
                 currentItem = { ...currentItem, ...docSnap.data() };
             }
         } catch (e) {
-            console.error("Failed to fetch SRS from Firebase", e);
+            console.warn("Firebase fetch failed, using local SRS data.", e);
+            const localData = getLocalSRS();
+            if (localData[itemId]) {
+                currentItem = { ...currentItem, ...localData[itemId] };
+            }
         }
     } else {
         const localData = getLocalSRS();
@@ -89,18 +93,19 @@ export const updateItemSRS = async (userId: string | null | undefined, itemId: s
     const updatedStats = calculateNextReview(currentItem, quality);
     const finalItem = { ...currentItem, ...updatedStats } as SRSItem;
 
-    if (userId) {
+    if (userId && window.navigator.onLine) {
         const docRef = doc(db, 'users', userId, 'srs', itemId);
         try {
             await setDoc(docRef, finalItem, { merge: true });
         } catch (e) {
-            console.error("Failed to save SRS to Firebase", e);
+            console.warn("Failed to save SRS to Firebase, saving locally.", e);
         }
-    } else {
-        const localData = getLocalSRS();
-        localData[itemId] = finalItem;
-        saveLocalSRS(localData);
     }
+
+    // Always keep local storage updated as a backup
+    const localData = getLocalSRS();
+    localData[itemId] = finalItem;
+    saveLocalSRS(localData);
 
     return finalItem;
 };
@@ -111,7 +116,7 @@ export const updateItemSRS = async (userId: string | null | undefined, itemId: s
 export const getDueItems = async (userId: string | null | undefined, topic?: string): Promise<string[]> => {
     const today = new Date().toISOString().split('T')[0];
 
-    if (userId) {
+    if (userId && window.navigator.onLine) {
         try {
             const srsRef = collection(db, 'users', userId, 'srs');
             let q = query(srsRef, where("nextReviewDate", "<=", today));
@@ -121,15 +126,14 @@ export const getDueItems = async (userId: string | null | undefined, topic?: str
             const snap = await getDocs(q);
             return snap.docs.map(doc => doc.id);
         } catch (e) {
-            console.error("Failed to fetch due items from Firebase", e);
-            return [];
+            console.warn("Failed to fetch due items from Firebase, falling back to local.", e);
         }
-    } else {
-        const localData = getLocalSRS();
-        return Object.values(localData)
-            .filter(item => item.nextReviewDate <= today && (!topic || item.topic === topic))
-            .map(item => item.id);
     }
+
+    const localData = getLocalSRS();
+    return Object.values(localData)
+        .filter(item => item.nextReviewDate <= today && (!topic || item.topic === topic))
+        .map(item => item.id);
 };
 
 /**
@@ -139,7 +143,7 @@ export const getDueItemsCountByTopic = async (userId: string | null | undefined)
     const today = new Date().toISOString().split('T')[0];
     const counts: Record<string, number> = {};
 
-    if (userId) {
+    if (userId && window.navigator.onLine) {
         try {
             const srsRef = collection(db, 'users', userId, 'srs');
             const q = query(srsRef, where("nextReviewDate", "<=", today));
@@ -148,16 +152,18 @@ export const getDueItemsCountByTopic = async (userId: string | null | undefined)
                 const topic = doc.data().topic;
                 counts[topic] = (counts[topic] || 0) + 1;
             });
+            return counts;
         } catch (e) {
-            console.error("Failed to fetch due item counts", e);
+            console.warn("Failed to fetch due item counts, using local.", e);
         }
-    } else {
-        const localData = getLocalSRS();
-        Object.values(localData).forEach(item => {
-            if (item.nextReviewDate <= today) {
-                counts[item.topic] = (counts[item.topic] || 0) + 1;
-            }
-        });
     }
+
+    const localData = getLocalSRS();
+    Object.values(localData).forEach(item => {
+        if (item.nextReviewDate <= today) {
+            counts[item.topic] = (counts[item.topic] || 0) + 1;
+        }
+    });
+
     return counts;
 };

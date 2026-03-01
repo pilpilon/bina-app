@@ -58,29 +58,33 @@ const GlassCard = ({ children, className = "", variant = "white", ...props }: an
 
 // ... existing components (SmartCTA, StatCard, NavItem) ...
 
-const SmartCTA = ({ onClick, dueCount = 0 }: any) => {
+const SmartCTA = ({ onClick, dueCount = 0, isLoading = false }: any) => {
     // Component content (lines 16-29) - using existing logic
     return (
         <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => onClick('smart')}
-            className="w-full p-5 mb-8 rounded-2xl bg-electric-blue text-charcoal shadow-glow-blue flex items-center justify-center gap-4 group relative overflow-hidden"
+            whileHover={{ scale: isLoading ? 1 : 1.05 }}
+            whileTap={{ scale: isLoading ? 1 : 0.95 }}
+            onClick={() => { if (!isLoading) onClick('smart'); }}
+            className={`w-full p-5 mb-8 rounded-2xl bg-electric-blue text-charcoal shadow-glow-blue flex items-center justify-center gap-4 group relative overflow-hidden ${isLoading ? 'opacity-80 cursor-wait' : ''}`}
         >
             <div className="bg-charcoal/10 p-2 rounded-lg group-hover:bg-charcoal/20 transition-colors">
-                <Target className="w-8 h-8" />
+                {isLoading ? (
+                    <div className="w-8 h-8 rounded-full border-4 border-charcoal/20 border-t-charcoal animate-spin" />
+                ) : (
+                    <Target className="w-8 h-8" />
+                )}
             </div>
             <div className="text-right flex-1">
                 <div className="text-xl font-black flex items-center gap-2">
-                    תרגול חכם
-                    {dueCount > 0 && (
+                    {isLoading ? 'מכין תרגול...' : 'תרגול חכם'}
+                    {!isLoading && dueCount > 0 && (
                         <span className="text-[10px] bg-charcoal text-white px-2 py-0.5 rounded-full shadow-md leading-none">
                             {dueCount} לחזרה
                         </span>
                     )}
                 </div>
                 <div className="text-sm font-medium opacity-80">
-                    {dueCount > 0 ? 'יש לך כרטיסיות שמחכות לחזרה' : 'ה-AI ימצא את נקודות התורפה שלך'}
+                    {isLoading ? 'רגע, אנחנו מתאימים את התרגול...' : (dueCount > 0 ? 'יש לך כרטיסיות שמחכות לחזרה' : 'ה-AI ימצא את נקודות התורפה שלך')}
                 </div>
             </div>
         </motion.button>
@@ -166,7 +170,7 @@ const SmartUpsellBanner = ({ userStats, onUpgrade }: { userStats: any; onUpgrade
 
 // --- Screen Components ---
 
-const HomeScreen = ({ onStartLearning, userProfile, userStats, getLevelName, dueCount = 0 }: any) => {
+const HomeScreen = ({ onStartLearning, userProfile, userStats, getLevelName, dueCount = 0, isSmartLoading = false }: any) => {
     const totalQuestions = Object.values(userStats.categoryTotal || {}).reduce((a: any, b: any) => a + Number(b), 0) as number;
     const totalErrors = Object.values(userStats.categoryErrors || {}).reduce((a: any, b: any) => a + Number(b), 0) as number;
     const accuracy = totalQuestions > 0 ? Math.round(((totalQuestions - totalErrors) / totalQuestions) * 100) : 0;
@@ -242,7 +246,7 @@ const HomeScreen = ({ onStartLearning, userProfile, userStats, getLevelName, due
                 </div>
             </div>
 
-            <SmartCTA onClick={onStartLearning} dueCount={dueCount} />
+            <SmartCTA onClick={onStartLearning} dueCount={dueCount} isLoading={isSmartLoading} />
 
             {/* First Mission card — only for brand new users */}
             {userStats.xp === 0 && (
@@ -561,14 +565,20 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
                             animate={{ opacity: 1, scale: 1 }}
                             className="w-full max-w-[360px] text-center"
                         >
-                            <div className="text-7xl mb-4">📭</div>
-                            <h2 className="text-2xl font-black text-white mb-2">הרשימה ריקה!</h2>
-                            <p className="text-text-secondary text-sm mb-8 mt-2">
-                                אין כרטיסיות לתרגול בנושא הזה כרגע.
+                            <div className="text-7xl mb-4">
+                                {topic === 'favorites' ? '🤍' : '📭'}
+                            </div>
+                            <h2 className="text-2xl font-black text-white mb-2">
+                                {topic === 'favorites' ? 'אין מועדפים עדיין' : 'הרשימה ריקה!'}
+                            </h2>
+                            <p className="text-text-secondary text-sm mb-8 mt-2 max-w-[250px] mx-auto leading-relaxed">
+                                {topic === 'favorites'
+                                    ? 'לחץ על סמל הלב בזמן הלמידה כדי לשמור כאן את המילים שקשות לך במיוחד.'
+                                    : 'אין כרטיסיות לתרגול בנושא הזה כרגע.'}
                             </p>
                             <button
                                 onClick={onBack}
-                                className="w-full py-4 rounded-2xl bg-gradient-to-r from-electric-blue to-neon-purple text-white font-black hover:scale-[1.02] active:scale-95 transition-all"
+                                className="w-full py-4 rounded-2xl bg-gradient-to-r from-electric-blue to-neon-purple text-white font-black hover:scale-[1.02] active:scale-95 transition-all shadow-glow-blue"
                             >
                                 חזור אחורה
                             </button>
@@ -1937,9 +1947,16 @@ const CustomListScreen = ({ initialData = [], onSave, onBack, onStartLearning }:
             return `${item.word} : ${item.definition}`;
         }).join('\n');
     });
-    const [saved, setSaved] = useState(false);
+    const [saved, setSaved] = useState(() => initialData && initialData.length > 0);
     const [translating, setTranslating] = useState(false);
-    const [preview, setPreview] = useState<{ word: string; definition: string; example?: string }[]>([]);
+    const [preview, setPreview] = useState<{ word: string; definition: string; example?: string }[]>(() => {
+        if (!initialData || initialData.length === 0) return [];
+        return initialData.map((item: any) => ({
+            word: item.word,
+            definition: item.definition,
+            example: item.example
+        }));
+    });
 
     // Detect if a string is Hebrew
     const isHebrew = (str: string) => /[\u05d0-\u05ea]/.test(str);
@@ -2312,6 +2329,7 @@ function App() {
     });
     const [showSurprise, setShowSurprise] = useState<WordCard | null>(null);
     const [achievementToast, setAchievementToast] = useState<string | null>(null);
+    const [isSmartLoading, setIsSmartLoading] = useState(false);
 
     const showAchievementToast = (msg: string) => {
         setAchievementToast(msg);
@@ -2680,39 +2698,44 @@ function App() {
         let finalTopic = topic;
 
         if (topic === 'smart') {
-            const dueIds = await getDueItems(user?.uid);
-            if (dueIds.length > 0) {
-                // Compile the actual WordCard objects by searching the static datasets
-                const allData = [...vocabData, ...analogiesData, ...quantitativeData, ...englishData];
-                const dueCards = allData.filter(card => dueIds.includes(card.id));
-                if (dueCards.length > 0) {
-                    setSrsItems(dueCards);
-                    finalTopic = 'srs';
+            setIsSmartLoading(true);
+            try {
+                const dueIds = await getDueItems(user?.uid);
+                if (dueIds.length > 0) {
+                    // Compile the actual WordCard objects by searching the static datasets
+                    const allData = [...vocabData, ...analogiesData, ...quantitativeData, ...englishData];
+                    const dueCards = allData.filter(card => dueIds.includes(card.id));
+                    if (dueCards.length > 0) {
+                        setSrsItems(dueCards);
+                        finalTopic = 'srs';
+                    }
                 }
-            }
 
-            if (finalTopic === 'smart') {
-                const topics = ['vocabulary', 'analogies', 'quantitative', 'english'];
+                if (finalTopic === 'smart') {
+                    const topics = ['vocabulary', 'analogies', 'quantitative', 'english'];
 
-                // Smarter AI: Look for category with most errors
-                const errors = userStats.categoryErrors;
-                const categoriesWithErrors = Object.keys(errors).filter(cat => errors[cat] > 0);
+                    // Smarter AI: Look for category with most errors
+                    const errors = userStats.categoryErrors;
+                    const categoriesWithErrors = Object.keys(errors).filter(cat => errors[cat] > 0);
 
-                if (categoriesWithErrors.length > 0) {
-                    // Find category with max errors
-                    const weakestCategory = categoriesWithErrors.reduce((a, b) => errors[a] > errors[b] ? a : b);
+                    if (categoriesWithErrors.length > 0) {
+                        // Find category with max errors
+                        const weakestCategory = categoriesWithErrors.reduce((a, b) => errors[a] > errors[b] ? a : b);
 
-                    // Map the sub-category back to the main topic
-                    if (vocabData.some(c => c.category === weakestCategory)) finalTopic = 'vocabulary';
-                    else if (analogiesData.some(c => c.category === weakestCategory)) finalTopic = 'analogies';
-                    else if (quantitativeData.some(c => c.category === weakestCategory)) finalTopic = 'quantitative';
-                    else if (englishData.some(c => c.category === weakestCategory)) finalTopic = 'english';
-                    else finalTopic = topics[Math.floor(Math.random() * topics.length)];
-                } else if (weakPoints.length > 0 && Math.random() > 0.6) {
-                    finalTopic = 'weakPoints';
-                } else {
-                    finalTopic = topics[Math.floor(Math.random() * topics.length)];
+                        // Map the sub-category back to the main topic
+                        if (vocabData.some(c => c.category === weakestCategory)) finalTopic = 'vocabulary';
+                        else if (analogiesData.some(c => c.category === weakestCategory)) finalTopic = 'analogies';
+                        else if (quantitativeData.some(c => c.category === weakestCategory)) finalTopic = 'quantitative';
+                        else if (englishData.some(c => c.category === weakestCategory)) finalTopic = 'english';
+                        else finalTopic = topics[Math.floor(Math.random() * topics.length)];
+                    } else if (weakPoints.length > 0 && Math.random() > 0.6) {
+                        finalTopic = 'weakPoints';
+                    } else {
+                        finalTopic = topics[Math.floor(Math.random() * topics.length)];
+                    }
                 }
+            } finally {
+                setIsSmartLoading(false);
             }
         }
 
@@ -2890,6 +2913,7 @@ function App() {
                                             userStats={userStats}
                                             getLevelName={getLevelName}
                                             dueCount={dueItemsCount}
+                                            isSmartLoading={isSmartLoading}
                                         />
                                     )}
                                     {activeTab === 'custom-edit' && (
