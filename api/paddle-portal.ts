@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { Paddle } from '@paddle/paddle-node-sdk';
 import * as crypto from 'crypto';
 
 // Helper to generate a Google Cloud JWT for Firestore REST API
@@ -46,9 +45,6 @@ async function getFirestoreAccessToken(): Promise<string> {
     const data = await res.json();
     return data.access_token;
 }
-
-// Initialize Paddle Node SDK
-const paddle = new Paddle(process.env.PADDLE_API_KEY || ''); // Requires PADDLE_API_KEY in Vercel Env
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
