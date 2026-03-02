@@ -1,25 +1,50 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as crypto from 'crypto';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
 
-// Initialize Firebase Admin if not already initialized
-if (!getApps().length) {
-  try {
-    initializeApp({
-      credential: cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        // Replace escaped newlines if any
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-    });
-  } catch (error) {
-    console.error('Firebase Admin initialization error', error);
-  }
+// Helper to generate a Google Cloud JWT for Firestore REST API
+function getGoogleAuthToken(clientEmail: string, privateKey: string): string {
+  const header = {
+    alg: 'RS256',
+    typ: 'JWT',
+  };
+  const now = Math.floor(Date.now() / 1000);
+  const claim = {
+    iss: clientEmail,
+    scope: 'https://www.googleapis.com/auth/datastore',
+    aud: 'https://oauth2.googleapis.com/token',
+    exp: now + 3600,
+    iat: now,
+  };
+
+  const encodeBase64 = (obj: any) => Buffer.from(JSON.stringify(obj)).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+
+  const signatureInput = `${encodeBase64(header)}.${encodeBase64(claim)}`;
+  const signer = crypto.createSign('RSA-SHA256');
+  signer.update(signatureInput);
+  const signature = signer.sign(privateKey, 'base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+
+  return `${signatureInput}.${signature}`;
 }
 
-const db = getFirestore();
+async function getFirestoreAccessToken(): Promise<string> {
+  const jwt = getGoogleAuthToken(
+    process.env.FIREBASE_CLIENT_EMAIL || '',
+    (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n')
+  );
+
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion: jwt
+    })
+  });
+  const data = await res.json();
+  return data.access_token;
+}
 
 // Basic Webhook schema
 type PaddleWebhook = {
@@ -99,38 +124,60 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     switch (event.event_type) {
       case 'subscription.created':
       case 'subscription.updated':
-        // A subscription was created or updated successfully
         console.log(`Subscription created/updated! userId: ${userId}`);
         if (userId) {
           const status = event.data?.status;
           const customerId = event.data?.customer_id;
           const subscriptionId = event.data?.id;
-          // You might need to map price IDs to your app's tiers (e.g., 'plus' or 'pro')
-          // For now, we'll extract the tier directly if it was passed in customData, or default to a logic
           const mappedTier = customData.tier || 'pro';
 
           if (status === 'active' || status === 'trialing') {
-            await db.collection('users').doc(userId).update({
-              tier: mappedTier,
-              paddleCustomerId: customerId,
-              paddleSubscriptionId: subscriptionId
+            const projectId = process.env.FIREBASE_PROJECT_ID;
+            const accessToken = await getFirestoreAccessToken();
+
+            const payload = {
+              fields: {
+                tier: { stringValue: mappedTier },
+                paddleCustomerId: { stringValue: customerId },
+                paddleSubscriptionId: { stringValue: subscriptionId }
+              }
+            };
+
+            await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${userId}?updateMask.fieldPaths=tier&updateMask.fieldPaths=paddleCustomerId&updateMask.fieldPaths=paddleSubscriptionId`, {
+              method: 'PATCH',
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(payload)
             });
-            console.log(`Updated user ${userId} to ${mappedTier} tier.`);
+            console.log(`Updated user ${userId} to ${mappedTier} tier via REST.`);
           }
         }
         break;
 
       case 'subscription.canceled':
-        // A subscription has been canceled
         console.log(`Subscription canceled! restoring to 'free'. userId: ${userId}`);
         if (userId) {
-          // Update the user document to reflect the free tier
-          await db.collection('users').doc(userId).update({
-            tier: 'free',
-            // Maintain historical data but unset active subs
-            paddleSubscriptionId: null
+          const projectId = process.env.FIREBASE_PROJECT_ID;
+          const accessToken = await getFirestoreAccessToken();
+
+          const payload = {
+            fields: {
+              tier: { stringValue: 'free' },
+              paddleSubscriptionId: { nullValue: null }
+            }
+          };
+
+          await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${userId}?updateMask.fieldPaths=tier&updateMask.fieldPaths=paddleSubscriptionId`, {
+            method: 'PATCH',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
           });
-          console.log(`Updated user ${userId} back to free tier following cancellation.`);
+          console.log(`Updated user ${userId} back to free tier following cancellation via REST.`);
         }
         break;
 
