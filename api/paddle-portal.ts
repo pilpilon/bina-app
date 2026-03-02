@@ -1,12 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { Environment, Paddle } from '@paddle/paddle-node-sdk';
-import * as admin from 'firebase-admin';
+import { Paddle } from '@paddle/paddle-node-sdk';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
 // Initialize Firebase Admin if not already initialized
-if (!admin.apps.length) {
+if (!getApps().length) {
     try {
-        admin.initializeApp({
-            credential: admin.credential.cert({
+        initializeApp({
+            credential: cert({
                 projectId: process.env.FIREBASE_PROJECT_ID,
                 clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
                 privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
@@ -17,7 +18,7 @@ if (!admin.apps.length) {
     }
 }
 
-const db = admin.firestore();
+const db = getFirestore();
 
 // Initialize Paddle Node SDK
 const paddle = new Paddle(process.env.PADDLE_API_KEY || ''); // Requires PADDLE_API_KEY in Vercel Env
