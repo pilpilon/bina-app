@@ -90,12 +90,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(404).json({ error: 'No active Paddle customer ID associated with this user.' });
         }
 
-        // 2. Fetch Customer Portal details using the SDK
-        // Creating an authenticated customer portal session
-        // Typically, this gives a securely scoped URL
+        // 2. Fetch Customer Portal details using Paddle REST API directly
         let customer;
         try {
-            customer = await paddle.customers.get(customerId);
+            const paddleRes = await fetch(`https://api.paddle.com/customers/${customerId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${process.env.PADDLE_API_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (paddleRes.ok) {
+                const paddleData = await paddleRes.json();
+                customer = paddleData.data;
+            } else {
+                console.error('Paddle API Error:', await paddleRes.text());
+                return res.status(500).json({ error: 'Failed to find customer in billing system.' });
+            }
         } catch (paddleErr) {
             console.error('Paddle SDK Error fetching customer:', paddleErr);
             return res.status(500).json({ error: 'Failed to find customer in billing system.' });
