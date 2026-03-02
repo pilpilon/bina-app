@@ -2534,7 +2534,17 @@ function App() {
                                 setHasOnboarded(true);
                             }
                         } else {
-                            console.log("New User or No Profile in Cloud");
+                            console.log("New User or No Profile in Cloud - Syncing immediately");
+                            const localProfile = localStorage.getItem('bina_onboarding');
+                            const localStats = localStorage.getItem('bina_user_stats');
+
+                            if (localProfile || localStats) {
+                                await setDoc(doc(db, 'users', firebaseUser.uid), {
+                                    profile: localProfile ? JSON.parse(localProfile) : null,
+                                    stats: localStats ? JSON.parse(localStats) : null,
+                                    lastUpdated: new Date().toISOString()
+                                }, { merge: true }).catch(console.error);
+                            }
                         }
                     } catch (error) {
                         console.error("Background fetch error:", error);
@@ -2587,39 +2597,40 @@ function App() {
         setUserProfile(profile);
         setHasOnboarded(true);
 
+        const cleanStats = {
+            xp: 0,
+            level: 1,
+            streak: { count: 1, lastDate: new Date().toISOString().split('T')[0] },
+            achievements: [],
+            categoryErrors: {},
+            categoryTotal: {},
+            dailyQuestions: 0,
+            activityHistory: [
+                { day: 'א', value: 0 }, { day: 'ב', value: 0 }, { day: 'ג', value: 0 },
+                { day: 'ד', value: 0 }, { day: 'ה', value: 0 }, { day: 'ו', value: 0 }, { day: 'ש', value: 0 },
+            ],
+            favorites: [],
+            teacherMode: false,
+            tier: 'free',
+            tierExpiry: null,
+            dailySwipes: 0,
+            lastSwipeDate: new Date().toISOString().split('T')[0],
+            credits: 10,
+            referralCode: `BINA-${Math.random().toString(36).substring(2, 7).toUpperCase()}`
+        };
+
+        if (isFirstTime) {
+            setUserStats(cleanStats);
+            localStorage.setItem('bina_user_stats', JSON.stringify(cleanStats));
+        }
+
         // Force immediate sync to cloud so they don't lose it if they close the tab before the 30s debounce
         if (auth.currentUser) {
             setDoc(doc(db, 'users', auth.currentUser.uid), {
                 profile: profile,
+                stats: isFirstTime ? cleanStats : userStats,
                 lastUpdated: new Date().toISOString()
             }, { merge: true }).catch(console.error);
-        }
-
-        if (isFirstTime) {
-            // Ensure stats are clean for new users
-            const cleanStats = {
-                xp: 0,
-                level: 1,
-                streak: { count: 1, lastDate: new Date().toISOString().split('T')[0] },
-                achievements: [],
-                categoryErrors: {},
-                categoryTotal: {},
-                dailyQuestions: 0,
-                activityHistory: [
-                    { day: 'א', value: 0 }, { day: 'ב', value: 0 }, { day: 'ג', value: 0 },
-                    { day: 'ד', value: 0 }, { day: 'ה', value: 0 }, { day: 'ו', value: 0 }, { day: 'ש', value: 0 },
-                ],
-                favorites: [],
-                teacherMode: false,
-                tier: 'free',
-                tierExpiry: null,
-                dailySwipes: 0,
-                lastSwipeDate: new Date().toISOString().split('T')[0],
-                credits: 10,
-                referralCode: `BINA-${Math.random().toString(36).substring(2, 7).toUpperCase()}`
-            };
-            setUserStats(cleanStats);
-            localStorage.setItem('bina_user_stats', JSON.stringify(cleanStats));
         }
     };
 
