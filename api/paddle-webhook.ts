@@ -1,5 +1,24 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as crypto from 'crypto';
+import * as admin from 'firebase-admin';
+
+// Initialize Firebase Admin if not already initialized
+if (!admin.apps.length) {
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        // Replace escaped newlines if any
+        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      }),
+    });
+  } catch (error) {
+    console.error('Firebase Admin initialization error', error);
+  }
+}
+
+const db = admin.firestore();
 
 // Basic Webhook schema
 type PaddleWebhook = {
@@ -77,21 +96,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Process specific events
     switch (event.event_type) {
-      case 'transaction.completed':
-        // A payment was successful
-        console.log(`Transaction completed! userId: ${userId}`);
-        
-        // TODO: In a real app with firebase-admin installed via npm, you would do:
-        // import * as admin from 'firebase-admin';
-        // await admin.firestore().collection('users').doc(userId).update({ tier: 'pro' });
-        
-        // As a workaround, since firebase-admin npm install fails contextually, 
-        // we log the success here. Note that Firebase handles read/writes on the client usually, 
-        // but for server-side updates Firebase Admin SDK is required.
-        break;
-      
       case 'subscription.created':
-        console.log(`Subscription created! userId: ${userId}`);
+      case 'subscription.updated':
+        // A subscription was created or updated successfully
+        console.log(`Subscription created/updated! userId: ${userId}`);
+        if (userId) {
+          const status = event.data?.status;
+          const customerId = event.data?.customer_id;
+          const subscriptionId = event.data?.id;
+          // You might need to map price IDs to your app's tiers (e.g., 'plus' or 'pro')
+          // For now, we'll extract the tier directly if it was passed in customData, or default to a logic
+          const mappedTier = customData.tier || 'pro';
+
+          if (status === 'active' || status === 'trialing') {
+            await db.collection('users').doc(userId).update({
+              tier: mappedTier,
+              paddleCustomerId: customerId,
+              paddleSubscriptionId: subscriptionId
+            });
+            console.log(`Updated user ${userId} to ${mappedTier} tier.`);
+          }
+        }
+        break;
+
+      case 'subscription.canceled':
+        // A subscription has been canceled
+        console.log(`Subscription canceled! restoring to 'free'. userId: ${userId}`);
+        if (userId) {
+          // Update the user document to reflect the free tier
+          await db.collection('users').doc(userId).update({
+            tier: 'free',
+            // Maintain historical data but unset active subs
+            paddleSubscriptionId: null
+          });
+          console.log(`Updated user ${userId} back to free tier following cancellation.`);
+        }
         break;
 
       default:

@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 // Triggering production deployment with latest infrastructure - Commit 96f2188++
 import { Routes, Route, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { History, Target, BookOpen, BarChart3, User, Home, Flame, ChevronRight, ChevronLeft, X, Check, TrendingUp, Calendar, Zap, Timer, Heart, Bell, BellOff, Loader } from 'lucide-react';
+import { History, Target, BookOpen, BarChart3, User, Home, Flame, ChevronRight, ChevronLeft, X, Check, TrendingUp, Calendar, Zap, Timer, Heart, Bell, BellOff, Loader, ExternalLink } from 'lucide-react';
 import SwipeCard from './components/SwipeCard';
 import PerformanceChart from './components/PerformanceChart';
 import vocabData from './data/vocabulary.json';
@@ -1722,8 +1722,38 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user, onLog
 };
 
 const ProfileScreen = ({ userStats, userProfile, user, setActiveTab, onEditProfile, onLogout, onRedeem, onSimulateFriend, showToast, onGoogleLogin }: any) => {
+    const [showManageSub, setShowManageSub] = useState(false);
+    const [portalUrl, setPortalUrl] = useState('');
+    const [isLoadingPortal, setIsLoadingPortal] = useState(false);
+
+    const handleManageSub = async () => {
+        setShowManageSub(true);
+        if (portalUrl) return;
+        setIsLoadingPortal(true);
+        try {
+            const res = await fetch('/api/paddle-portal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user?.uid })
+            });
+            const data = await res.json();
+            if (data.customerPortalUrl) {
+                setPortalUrl(data.customerPortalUrl);
+            } else {
+                showToast('שגיאה בטעינת הקישור לניהול. נסה לרענן.');
+            }
+        } catch {
+            showToast('אירעה שגיאה בגישה לשרת התשלומים. נסה שוב מאוחר יותר.');
+        } finally {
+            setIsLoadingPortal(false);
+        }
+    };
+
+    const hasActiveSubscription = userStats?.tier === 'plus' || userStats?.tier === 'pro';
+
     const settings = [
         { icon: User, label: 'עריכת פרופיל', color: 'text-electric-blue', action: () => onEditProfile() },
+        ...(hasActiveSubscription ? [{ icon: ExternalLink, label: 'ניהול מנוי ותשלומים', color: 'text-emerald-400', action: handleManageSub }] : []),
         { icon: Zap, label: 'הגדרות AI אישיות', color: 'text-cyber-yellow', action: () => setActiveTab('ai-settings') },
         { icon: Calendar, label: 'תוכנית לימודים', color: 'text-neon-purple', action: () => setActiveTab('study-plan') },
         { icon: BookOpen, label: 'הישגים', color: 'text-emerald-400', action: () => setActiveTab('achievements') },
@@ -1934,6 +1964,56 @@ const ProfileScreen = ({ userStats, userProfile, user, setActiveTab, onEditProfi
                     </GlassCard>
                 ))}
             </div>
+
+            {/* Manage Subscription Modal */}
+            <AnimatePresence>
+                {showManageSub && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-5 bg-charcoal/80 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="w-full max-w-[400px]"
+                        >
+                            <GlassCard className="p-6 border-emerald-400/30 bg-gradient-to-br from-charcoal to-[#002f20] relative shadow-glow-green">
+                                <button
+                                    onClick={() => setShowManageSub(false)}
+                                    className="absolute top-4 left-4 p-2 text-text-muted hover:text-white transition-colors bg-white/5 rounded-full"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+
+                                <div className="w-12 h-12 rounded-full bg-emerald-400/20 flex items-center justify-center mb-4">
+                                    <ExternalLink className="w-6 h-6 text-emerald-400" />
+                                </div>
+
+                                <h3 className="text-2xl font-black text-white mb-2">ניהול מנוי Premium</h3>
+                                <p className="text-sm text-text-secondary mb-6 leading-relaxed">
+                                    ניהול המנוי, עדכון פרטי אשראי וביטולים מתבצעים בצורה מאובטחת דרך חברת Paddle השומרת על פרטיותך. לחיצה למטה תפתח את פורטל החיוב.
+                                </p>
+
+                                {isLoadingPortal ? (
+                                    <div className="w-full py-4 flex items-center justify-center gap-3 bg-white/5 rounded-xl border border-white/10 text-white font-bold">
+                                        <Loader className="w-5 h-5 animate-spin text-emerald-400" />
+                                        מייצר קישור מאובטח...
+                                    </div>
+                                ) : (
+                                    <a
+                                        href={portalUrl || "https://paddle.net"}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-full py-4 flex items-center justify-center gap-2 bg-emerald-400 text-charcoal rounded-xl font-black text-lg transition-all active:scale-95 shadow-glow-green hover:bg-emerald-300"
+                                        onClick={() => setShowManageSub(false)}
+                                    >
+                                        מעבר לפורטל החיוב
+                                        <ExternalLink className="w-5 h-5" />
+                                    </a>
+                                )}
+                            </GlassCard>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 };
