@@ -1,42 +1,77 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import * as crypto from 'crypto';
+export const config = {
+  runtime: 'edge',
+};
 
-// Helper to generate a Google Cloud JWT for Firestore REST API
-function getGoogleAuthToken(clientEmail: string, privateKey: string): string {
-  const header = {
-    alg: 'RS256',
-    typ: 'JWT',
-  };
+// Helper to base64url encode
+function base64url(input: string): string {
+  return btoa(input).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+function base64urlFromBuffer(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+// Convert PEM private key to CryptoKey for Web Crypto API
+async function importPrivateKey(pem: string): Promise<CryptoKey> {
+  const pemContents = pem
+    .replace(/-----BEGIN PRIVATE KEY-----/g, '')
+    .replace(/-----END PRIVATE KEY-----/g, '')
+    .replace(/-----BEGIN RSA PRIVATE KEY-----/g, '')
+    .replace(/-----END RSA PRIVATE KEY-----/g, '')
+    .replace(/\s/g, '');
+
+  const binaryString = atob(pemContents);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+
+  return crypto.subtle.importKey(
+    'pkcs8',
+    bytes.buffer,
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+}
+
+// Generate a Google Cloud JWT for Firestore REST API using Web Crypto
+async function getGoogleAuthToken(clientEmail: string, privateKeyPem: string): Promise<string> {
+  const header = base64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
   const now = Math.floor(Date.now() / 1000);
-  const claim = {
+  const claim = base64url(JSON.stringify({
     iss: clientEmail,
     scope: 'https://www.googleapis.com/auth/datastore',
     aud: 'https://oauth2.googleapis.com/token',
     exp: now + 3600,
     iat: now,
-  };
+  }));
 
-  const encodeBase64 = (obj: any) => Buffer.from(JSON.stringify(obj)).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const signatureInput = `${header}.${claim}`;
+  const key = await importPrivateKey(privateKeyPem);
+  const signature = await crypto.subtle.sign(
+    'RSASSA-PKCS1-v1_5',
+    key,
+    new TextEncoder().encode(signatureInput)
+  );
 
-  const signatureInput = `${encodeBase64(header)}.${encodeBase64(claim)}`;
-  const signer = crypto.createSign('RSA-SHA256');
-  signer.update(signatureInput);
-  const signature = signer.sign(privateKey, 'base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-
-  return `${signatureInput}.${signature}`;
+  return `${signatureInput}.${base64urlFromBuffer(signature)}`;
 }
 
 async function getFirestoreAccessToken(): Promise<string> {
-  const jwt = getGoogleAuthToken(
+  const jwt = await getGoogleAuthToken(
     process.env.FIREBASE_CLIENT_EMAIL || '',
     (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n')
   );
 
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
       assertion: jwt
@@ -46,20 +81,12 @@ async function getFirestoreAccessToken(): Promise<string> {
   return data.access_token;
 }
 
-// Basic Webhook schema
-type PaddleWebhook = {
-  event_id: string;
-  event_type: string;
-  occurred_at: string;
-  data: any;
-};
-
-function verifySignature(request: VercelRequest, payload: string, secret: string): boolean {
+// HMAC signature verification for Paddle webhooks using Web Crypto
+async function verifySignature(req: Request, payload: string, secret: string): Promise<boolean> {
   try {
-    const signatureHeader = request.headers['paddle-signature'] as string;
+    const signatureHeader = req.headers.get('paddle-signature');
     if (!signatureHeader) return false;
 
-    // Extract ts and h1 properties from the signature header
     const parts = signatureHeader.split(';');
     let ts = '';
     let signature = '';
@@ -73,46 +100,66 @@ function verifySignature(request: VercelRequest, payload: string, secret: string
     // Construct the signed payload string
     const signedPayload = `${ts}:${payload}`;
 
-    // Create a HMAC SHA256 signature using the secret key
-    const hmac = crypto.createHmac('sha256', secret);
-    hmac.update(signedPayload);
-    const expectedSignature = hmac.digest('hex');
-
-    // Secure compare
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
+    // Create HMAC SHA256 using Web Crypto API
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
     );
+
+    const sigBuffer = await crypto.subtle.sign('HMAC', key, encoder.encode(signedPayload));
+    const expectedSignature = Array.from(new Uint8Array(sigBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    // Constant-time compare
+    if (signature.length !== expectedSignature.length) return false;
+    let result = 0;
+    for (let i = 0; i < signature.length; i++) {
+      result |= signature.charCodeAt(i) ^ expectedSignature.charCodeAt(i);
+    }
+    return result === 0;
   } catch (error) {
     console.error('Signature verification failed', error);
     return false;
   }
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+// Basic Webhook schema
+type PaddleWebhook = {
+  event_id: string;
+  event_type: string;
+  occurred_at: string;
+  data: any;
+};
+
+export default async function handler(req: Request) {
   if (req.method !== 'POST') {
-    return res.status(405).send('Method Not Allowed');
+    return new Response('Method Not Allowed', { status: 405 });
   }
 
-  const payloadStr = JSON.stringify(req.body);
+  const body = await req.json();
+  const payloadStr = JSON.stringify(body);
   const signatureKey = process.env.PADDLE_WEBHOOK_SECRET;
 
   if (!signatureKey) {
     console.error('Missing PADDLE_WEBHOOK_SECRET in environment variables.');
-    return res.status(500).send('Webhook secret not configured.');
+    return new Response('Webhook secret not configured.', { status: 500 });
   }
 
   // Verify the event signature
-  if (!verifySignature(req, payloadStr, signatureKey)) {
+  if (!(await verifySignature(req, payloadStr, signatureKey))) {
     console.error('Invalid signature');
-    return res.status(401).send('Invalid signature');
+    return new Response('Invalid signature', { status: 401 });
   }
 
-  const event = req.body as PaddleWebhook;
+  const event = body as PaddleWebhook;
   console.log(`Received Paddle event: ${event.event_type} (${event.event_id})`);
 
   try {
-    // We expect the frontend to have passed the Firebase UID in customData
     const customData = event.data?.custom_data || {};
     const userId = customData.userId;
 
@@ -120,10 +167,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.warn('Webhook received but no userId found in custom_data.');
     }
 
-    // Process specific events
     switch (event.event_type) {
       case 'subscription.created':
-      case 'subscription.updated':
+      case 'subscription.updated': {
         console.log(`Subscription created/updated! userId: ${userId}`);
         if (userId) {
           const status = event.data?.status;
@@ -155,8 +201,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
         }
         break;
+      }
 
-      case 'subscription.canceled':
+      case 'subscription.canceled': {
         console.log(`Subscription canceled! restoring to 'free'. userId: ${userId}`);
         if (userId) {
           const projectId = process.env.FIREBASE_PROJECT_ID;
@@ -180,14 +227,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           console.log(`Updated user ${userId} back to free tier following cancellation via REST.`);
         }
         break;
+      }
 
       default:
         console.log(`Unhandled event type: ${event.event_type}`);
     }
 
-    return res.status(200).send('Webhook processed');
+    return new Response('Webhook processed', { status: 200 });
   } catch (error: any) {
     console.error('Error processing webhook:', error.message);
-    return res.status(500).send('Internal Server Error');
+    return new Response('Internal Server Error', { status: 500 });
   }
 }

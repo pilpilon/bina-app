@@ -1,42 +1,77 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import * as crypto from 'crypto';
+export const config = {
+    runtime: 'edge',
+};
 
-// Helper to generate a Google Cloud JWT for Firestore REST API
-function getGoogleAuthToken(clientEmail: string, privateKey: string): string {
-    const header = {
-        alg: 'RS256',
-        typ: 'JWT',
-    };
+// Helper to base64url encode
+function base64url(input: string): string {
+    return btoa(input).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+function base64urlFromBuffer(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (const byte of bytes) {
+        binary += String.fromCharCode(byte);
+    }
+    return btoa(binary).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+// Convert PEM private key to CryptoKey for Web Crypto API
+async function importPrivateKey(pem: string): Promise<CryptoKey> {
+    const pemContents = pem
+        .replace(/-----BEGIN PRIVATE KEY-----/g, '')
+        .replace(/-----END PRIVATE KEY-----/g, '')
+        .replace(/-----BEGIN RSA PRIVATE KEY-----/g, '')
+        .replace(/-----END RSA PRIVATE KEY-----/g, '')
+        .replace(/\s/g, '');
+
+    const binaryString = atob(pemContents);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    return crypto.subtle.importKey(
+        'pkcs8',
+        bytes.buffer,
+        { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+        false,
+        ['sign']
+    );
+}
+
+// Generate a Google Cloud JWT for Firestore REST API using Web Crypto
+async function getGoogleAuthToken(clientEmail: string, privateKeyPem: string): Promise<string> {
+    const header = base64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
     const now = Math.floor(Date.now() / 1000);
-    const claim = {
+    const claim = base64url(JSON.stringify({
         iss: clientEmail,
         scope: 'https://www.googleapis.com/auth/datastore',
         aud: 'https://oauth2.googleapis.com/token',
         exp: now + 3600,
         iat: now,
-    };
+    }));
 
-    const encodeBase64 = (obj: any) => Buffer.from(JSON.stringify(obj)).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    const signatureInput = `${header}.${claim}`;
+    const key = await importPrivateKey(privateKeyPem);
+    const signature = await crypto.subtle.sign(
+        'RSASSA-PKCS1-v1_5',
+        key,
+        new TextEncoder().encode(signatureInput)
+    );
 
-    const signatureInput = `${encodeBase64(header)}.${encodeBase64(claim)}`;
-    const signer = crypto.createSign('RSA-SHA256');
-    signer.update(signatureInput);
-    const signature = signer.sign(privateKey, 'base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-
-    return `${signatureInput}.${signature}`;
+    return `${signatureInput}.${base64urlFromBuffer(signature)}`;
 }
 
 async function getFirestoreAccessToken(): Promise<string> {
-    const jwt = getGoogleAuthToken(
+    const jwt = await getGoogleAuthToken(
         process.env.FIREBASE_CLIENT_EMAIL || '',
         (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n')
     );
 
     const res = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
             grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
             assertion: jwt
@@ -46,84 +81,71 @@ async function getFirestoreAccessToken(): Promise<string> {
     return data.access_token;
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: Request) {
     if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed. Use POST.' });
+        return new Response(JSON.stringify({ error: 'Method Not Allowed. Use POST.' }), { status: 405, headers: { 'Content-Type': 'application/json' } });
     }
 
     try {
-        const { userId } = req.body;
+        const { userId } = await req.json();
 
         if (!userId) {
-            return res.status(400).json({ error: 'Missing userId in request body.' });
+            return new Response(JSON.stringify({ error: 'Missing userId in request body.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
         }
 
-        // 1. Fetch user data to cross-check subscription details via REST API
+        // 1. Fetch user data from Firestore REST API
         const projectId = process.env.FIREBASE_PROJECT_ID;
         const accessToken = await getFirestoreAccessToken();
 
         const docRes = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${userId}`, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`
-            }
+            headers: { Authorization: `Bearer ${accessToken}` }
         });
 
         if (docRes.status === 404) {
-            return res.status(404).json({ error: 'User not found in database.' });
+            return new Response(JSON.stringify({ error: 'User not found in database.' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
         }
 
         if (!docRes.ok) {
             console.error('Firestore REST API error', await docRes.text());
-            return res.status(500).json({ error: 'Failed to access database.' });
+            return new Response(JSON.stringify({ error: 'Failed to access database.' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
         }
 
         const userDoc = await docRes.json();
-
-        // Firestore REST API returns fields in a specific format: { fields: { paddleCustomerId: { stringValue: "..." } } }
         const customerId = userDoc?.fields?.paddleCustomerId?.stringValue;
 
         if (!customerId) {
-            return res.status(404).json({ error: 'No active Paddle customer ID associated with this user.' });
+            return new Response(JSON.stringify({ error: 'No active Paddle customer ID associated with this user.' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
         }
 
-        // 2. Fetch Customer Portal details using Paddle REST API directly
-        let customer;
-        try {
-            const paddleRes = await fetch(`https://api.paddle.com/customers/${customerId}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${process.env.PADDLE_API_KEY}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (paddleRes.ok) {
-                const paddleData = await paddleRes.json();
-                customer = paddleData.data;
-            } else {
-                console.error('Paddle API Error:', await paddleRes.text());
-                return res.status(500).json({ error: 'Failed to find customer in billing system.' });
+        // 2. Fetch Customer from Paddle REST API
+        const paddleRes = await fetch(`https://api.paddle.com/customers/${customerId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${process.env.PADDLE_API_KEY}`,
+                'Content-Type': 'application/json'
             }
-        } catch (paddleErr) {
-            console.error('Paddle SDK Error fetching customer:', paddleErr);
-            return res.status(500).json({ error: 'Failed to find customer in billing system.' });
+        });
+
+        if (!paddleRes.ok) {
+            console.error('Paddle API Error:', await paddleRes.text());
+            return new Response(JSON.stringify({ error: 'Failed to find customer in billing system.' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
         }
+
+        const paddleData = await paddleRes.json();
+        const customer = paddleData.data;
 
         if (!customer) {
-            return res.status(404).json({ error: 'Customer not found.' });
+            return new Response(JSON.stringify({ error: 'Customer not found.' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
         }
 
-        // Ensure we handle potentially null states on Paddle SDK gracefully
-        // For paddle-node-sdk, the typical way to get a portal URL is through retrieving the customer or subscription
-        // If not directly exposed on customer, fallback to the generic paddle.net email form
-        return res.status(200).json({
+        return new Response(JSON.stringify({
             success: true,
             customerPortalUrl: `https://paddle.net/`,
             message: "Manage subscription using Paddle Customer Portal."
-        });
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
     } catch (error: any) {
         console.error('Error generating paddle portal link:', error.message);
-        return res.status(500).json({ error: 'Internal Server Error' });
+        return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
     }
 }
