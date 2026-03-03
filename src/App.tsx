@@ -2536,8 +2536,16 @@ function App() {
                         if (userDoc.exists()) {
                             const cloudData = userDoc.data();
                             if (cloudData.stats) {
-                                setUserStats(cloudData.stats);
-                                localStorage.setItem('bina_user_stats', JSON.stringify(cloudData.stats));
+                                const today = new Date().toISOString().split('T')[0];
+                                const fetchedStats = { ...cloudData.stats };
+                                const lastDate = fetchedStats.lastSwipeDate || fetchedStats.streak?.lastDate;
+                                if (lastDate !== today) {
+                                    fetchedStats.dailySwipes = 0;
+                                    fetchedStats.dailyQuestions = 0;
+                                    fetchedStats.lastSwipeDate = today;
+                                }
+                                setUserStats(fetchedStats);
+                                localStorage.setItem('bina_user_stats', JSON.stringify(fetchedStats));
                             }
                             if (cloudData.profile) {
                                 setUserProfile(cloudData.profile);
@@ -2709,7 +2717,19 @@ function App() {
             const newXP = prev.xp + amount;
             const newLevel = Math.floor(newXP / 500) + 1;
             const today = new Date().toISOString().split('T')[0];
-            const isNewDay = prev.streak.lastDate !== today;
+            const isNewDay = prev.lastSwipeDate !== today;
+
+            let newStreakCount = prev.streak.count;
+            if (prev.streak.lastDate !== today) {
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayStr = yesterday.toISOString().split('T')[0];
+                if (prev.streak.lastDate === yesterdayStr) {
+                    newStreakCount += 1;
+                } else {
+                    newStreakCount = 1;
+                }
+            }
 
             // Check for achievements
             let newAchievements = [...prev.achievements];
@@ -2748,7 +2768,7 @@ function App() {
                 categoryTotal: newCategoryTotal,
                 dailyQuestions: newDailyQuestions,
                 activityHistory: newActivityHistory,
-                streak: { ...prev.streak, lastDate: today },
+                streak: { count: newStreakCount, lastDate: today },
                 // Only increment swipes if it was a learning activity (category present)
                 dailySwipes: isNewDay ? (category ? 1 : 0) : (category ? (prev.dailySwipes || 0) + 1 : (prev.dailySwipes || 0)),
                 lastSwipeDate: today
