@@ -2418,7 +2418,17 @@ function App() {
     };
     const [userStats, setUserStats] = useState(() => {
         const saved = localStorage.getItem('bina_user_stats');
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            const today = new Date().toISOString().split('T')[0];
+            const lastDate = parsed.lastSwipeDate || (parsed.streak && parsed.streak.lastDate);
+            if (lastDate !== today) {
+                parsed.dailySwipes = 0;
+                parsed.dailyQuestions = 0;
+                parsed.lastSwipeDate = today;
+            }
+            return parsed;
+        }
         return {
             xp: 0,
             level: 1,
@@ -2739,7 +2749,7 @@ function App() {
                 activityHistory: newActivityHistory,
                 streak: { ...prev.streak, lastDate: today },
                 // Only increment swipes if it was a learning activity (category present)
-                dailySwipes: (category) ? (prev.dailySwipes || 0) + 1 : (prev.dailySwipes || 0),
+                dailySwipes: isNewDay ? (category ? 1 : 0) : (category ? (prev.dailySwipes || 0) + 1 : (prev.dailySwipes || 0)),
                 lastSwipeDate: today
             };
 
