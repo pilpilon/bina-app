@@ -2426,6 +2426,7 @@ function App() {
                 parsed.dailySwipes = 0;
                 parsed.dailyQuestions = 0;
                 parsed.lastSwipeDate = today;
+                localStorage.setItem('bina_user_stats', JSON.stringify(parsed));
             }
             return parsed;
         }
