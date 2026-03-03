@@ -2421,7 +2421,7 @@ function App() {
         if (saved) {
             const parsed = JSON.parse(saved);
             const today = new Date().toISOString().split('T')[0];
-            const lastDate = parsed.lastSwipeDate || (parsed.streak && parsed.streak.lastDate);
+            const lastDate = parsed.lastSwipeDate || parsed.streak?.lastDate;
             if (lastDate !== today) {
                 parsed.dailySwipes = 0;
                 parsed.dailyQuestions = 0;
