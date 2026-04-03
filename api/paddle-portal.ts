@@ -87,10 +87,15 @@ export default async function handler(req: Request) {
     }
 
     try {
-        const { userId } = await req.json();
+        const { userId, authUid } = await req.json();
 
         if (!userId) {
             return new Response(JSON.stringify({ error: 'Missing userId in request body.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        // Security: Verify the requesting user matches the userId
+        if (!authUid || authUid !== userId) {
+            return new Response(JSON.stringify({ error: 'Unauthorized: You can only access your own billing portal.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
         }
 
         // 1. Fetch user data from Firestore REST API

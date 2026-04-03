@@ -688,15 +688,37 @@ const LearningScreen = ({ onBack, topic = 'vocabulary', awardXP, recordActivity,
 
             <div className="flex justify-between px-8 mt-8">
                 <div className="flex flex-col items-center gap-2">
-                    <div className="w-16 h-16 rounded-full border-2 border-neon-pink flex items-center justify-center text-neon-pink bg-neon-pink/10 shadow-glow-purple">
+                    <button
+                        onClick={() => {
+                            if (isLimitHit || !currentWord) return;
+                            setExitX(300);
+                            if ((props as any).onMiss) (props as any).onMiss(currentWord);
+                            setIndex(prev => prev + 1);
+                            updateItemSRS(userId, currentWord.id, topic, 1);
+                            recordActivity(5, currentTopicInfo.category, false);
+                        }}
+                        disabled={isLimitHit || !currentWord}
+                        className="w-16 h-16 rounded-full border-2 border-neon-pink flex items-center justify-center text-neon-pink bg-neon-pink/10 shadow-glow-purple hover:bg-neon-pink/20 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                         <X className="w-8 h-8" />
-                    </div>
+                    </button>
                     <span className="text-xs font-bold text-text-secondary">לא יודע</span>
                 </div>
                 <div className="flex flex-col items-center gap-2">
-                    <div className="w-16 h-16 rounded-full border-2 border-electric-blue flex items-center justify-center text-electric-blue bg-electric-blue/10 shadow-glow-blue">
+                    <button
+                        onClick={() => {
+                            if (isLimitHit || !currentWord) return;
+                            setExitX(-300);
+                            setKnownCount(prev => prev + 1);
+                            setIndex(prev => prev + 1);
+                            updateItemSRS(userId, currentWord.id, topic, 4);
+                            recordActivity(10, currentTopicInfo.category, true);
+                        }}
+                        disabled={isLimitHit || !currentWord}
+                        className="w-16 h-16 rounded-full border-2 border-electric-blue flex items-center justify-center text-electric-blue bg-electric-blue/10 shadow-glow-blue hover:bg-electric-blue/20 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                         <Check className="w-8 h-8" />
-                    </div>
+                    </button>
                     <span className="text-xs font-bold text-text-secondary">יודע</span>
                 </div>
             </div>
@@ -1446,24 +1468,32 @@ const PricingScreen = ({ onBack, currentTier = 'free', onSelectPlan, user, onLog
     const [promoStatus, setPromoStatus] = useState<'none' | 'success' | 'info' | 'error'>('none');
     const [promoMessage, setPromoMessage] = useState('');
 
-    const handleApplyPromo = () => {
+    const handleApplyPromo = async () => {
         const code = promoCode.trim().toUpperCase();
         if (!code) return;
 
-        // 1. Full Access Codes (Case Sensitive for added security, but here we use Upper for UX)
-        if (code === 'BINA-PRO-2026' || code === 'BINA-GIFT-FREE') {
-            onSelectPlan?.('pro');
-            setPromoStatus('success');
-            setPromoMessage('✨ קוד תקין! Bina Pro נפתח עבורך ללא הגבלה.');
-            // Save to localStorage immediately via selecting plan
-            return;
-        }
+        // Promo codes are validated server-side only — no client-side tier grants
+        setPromoStatus('info');
+        setPromoMessage('בודק קוד...');
 
-        if (code === 'BINA-PLUS-2026') {
-            onSelectPlan?.('plus');
-            setPromoStatus('success');
-            setPromoMessage('✨ קוד תקין! Bina Plus נפתח עבורך ללא הגבלה.');
-            return;
+        try {
+            const res = await fetch('/api/validate-promo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, userId: user?.uid }),
+            });
+            const data = await res.json();
+            if (data.valid && data.tier) {
+                onSelectPlan?.(data.tier);
+                setPromoStatus('success');
+                setPromoMessage(data.message || '✨ קוד תקין! התוכנית נפתחה עבורך.');
+            } else {
+                setPromoStatus('error');
+                setPromoMessage(data.error || '❌ קוד לא תקין. נסה שוב.');
+            }
+        } catch {
+            setPromoStatus('error');
+            setPromoMessage('❌ שגיאה בבדיקת הקוד. נסה שוב מאוחר יותר.');
         }
 
         // 2. Paddle Discount Codes (These are set up in Paddle Dashboard)
@@ -1825,6 +1855,12 @@ const ProfileScreen = ({ userStats, userProfile, user, setActiveTab, onEditProfi
                     <Calendar className="w-4 h-4" />
                     <span>מועד המבחן: {examDateStr}</span>
                 </div>
+                {/* Past exam date warning */}
+                {isValidDate && safeExamDate < new Date() && (
+                    <div className="mt-3 w-full max-w-[280px] p-3 rounded-xl bg-neon-pink/10 border border-neon-pink/30 text-center">
+                        <p className="text-neon-pink text-xs font-bold">מועד הבחינה עבר! עדכן את התאריך בהגדרות הפרופיל.</p>
+                    </div>
+                )}
 
                 {/* Exam Countdown */}
                 <div className="mt-6 w-full max-w-[280px]">
@@ -1880,11 +1916,11 @@ const ProfileScreen = ({ userStats, userProfile, user, setActiveTab, onEditProfi
                     </p>
                     <div className="flex gap-2 mb-4">
                         <div className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-[10px] font-mono text-text-muted flex items-center overflow-hidden">
-                            bina.app/ref/{userStats.referralCode}
+                            bina-app.vercel.app/?ref={userStats.referralCode}
                         </div>
                         <button
                             onClick={() => {
-                                navigator.clipboard.writeText(`bina.app/ref/${userStats.referralCode}`);
+                                navigator.clipboard.writeText(`bina-app.vercel.app/?ref=${userStats.referralCode}`);
                                 showToast('קישור הועתק! 🚀');
                             }}
                             className="bg-neon-purple text-white px-4 py-2 rounded-lg font-black text-xs hover:scale-105 transition-all shadow-glow-purple"
@@ -2389,6 +2425,7 @@ function App() {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('home');
     const [globalToast, setGlobalToast] = useState<string | null>(null);
+    const [showAiDisclosure, setShowAiDisclosure] = useState(() => !localStorage.getItem('bina_ai_disclosure_dismissed'));
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
@@ -2582,7 +2619,7 @@ function App() {
         return () => unsubscribeAuth();
     }, []);
 
-    // Sync to Firestore on change with debounce (30s)
+    // Sync to Firestore on change with debounce (5s)
     useEffect(() => {
         if (!user) return;
 
@@ -2593,10 +2630,28 @@ function App() {
                 lastUpdated: new Date().toISOString()
             }, { merge: true });
             console.log("Cloud Sync: Firestore updated (debounced)");
-        }, 30000);
+        }, 5000);
 
         return () => clearTimeout(timer);
     }, [userStats, userProfile, user]);
+
+    // Save data before tab/window close to prevent loss
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            if (user) {
+                const data = JSON.stringify({
+                    stats: userStats,
+                    profile: userProfile,
+                    lastUpdated: new Date().toISOString()
+                });
+                navigator.sendBeacon?.(`https://firestore.googleapis.com/v1/projects/bina-app-9ab6c/databases/(default)/documents/users/${user.uid}`, data);
+            }
+            localStorage.setItem('bina_user_stats', JSON.stringify(userStats));
+            localStorage.setItem('bina_user_profile', JSON.stringify(userProfile));
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [user, userStats, userProfile]);
 
     // Re-schedule when settings change
     useEffect(() => {
@@ -2643,7 +2698,7 @@ function App() {
             localStorage.setItem('bina_user_stats', JSON.stringify(cleanStats));
         }
 
-        // Force immediate sync to cloud so they don't lose it if they close the tab before the 30s debounce
+        // Force immediate sync to cloud so they don't lose it if they close the tab before the 5s debounce
         if (auth.currentUser) {
             setDoc(doc(db, 'users', auth.currentUser.uid), {
                 profile: profile,
@@ -2959,7 +3014,7 @@ function App() {
                         <div className="absolute bottom-[10%] left-[20%] w-48 h-48 bg-neon-pink/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '4s', animationDuration: '7s' }} />
                     </div>
 
-                    <div className="relative z-10 max-w-md mx-auto min-h-screen flex flex-col">
+                    <div className="relative z-10 max-w-md mx-auto min-h-screen flex flex-col px-2 sm:px-0 sm:shadow-2xl sm:shadow-black/50 sm:border-x sm:border-white/5">
                         <AnimatePresence>
                             {globalToast && (
                                 <motion.div
@@ -2974,6 +3029,25 @@ function App() {
                                 </motion.div>
                             )}
                         </AnimatePresence>
+                        {/* AI Disclosure Banner (shown once, dismissible) */}
+                        {showAiDisclosure && (
+                            <div className="mx-4 mt-2 p-3 rounded-xl bg-electric-blue/10 border border-electric-blue/30 flex items-start gap-3 relative">
+                                <span className="text-lg shrink-0">🤖</span>
+                                <div className="text-xs text-text-secondary leading-relaxed">
+                                    <strong className="text-electric-blue">גילוי נאות:</strong> הערכות חיבורים, הסברים ותובנות למידה מופקים על ידי בינה מלאכותית (AI) ולא על ידי מורים אנושיים.
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setShowAiDisclosure(false);
+                                        localStorage.setItem('bina_ai_disclosure_dismissed', 'true');
+                                    }}
+                                    className="shrink-0 text-text-muted hover:text-white text-xs font-bold"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        )}
+
                         <AnimatePresence mode="wait">
                             {showSurprise && (
                                 <SmartAlert

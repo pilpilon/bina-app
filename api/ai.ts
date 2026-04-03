@@ -41,6 +41,23 @@ export default async function handler(req: Request) {
   try {
     const { prompt, responseJson, modelType = "gemini-2.5-flash-lite", systemInstruction } = await req.json();
 
+    // Validate model type to prevent abuse
+    const ALLOWED_MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash'];
+    if (!ALLOWED_MODELS.includes(modelType)) {
+      return new Response(JSON.stringify({ error: 'Invalid model type.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Validate prompt
+    if (!prompt || typeof prompt !== 'string' || prompt.length > 10000) {
+      return new Response(JSON.stringify({ error: 'Invalid or oversized prompt.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     if (!process.env.GEMINI_API_KEY) {
       return new Response(JSON.stringify({ error: 'API key not configured on server' }), { 
         status: 500,

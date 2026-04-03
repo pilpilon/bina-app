@@ -31,7 +31,7 @@ const features = [
     {
         icon: '🃏',
         title: 'כרטיסיות סוויפ כמו טינדר',
-        desc: 'גרור שמאלה / ימינה כדי לסמן ידוע / לא ידוע. ממכר. ומהיר פי 3 מ-MCQ רגיל.',
+        desc: 'גרור שמאלה / ימינה כדי לסמן ידוע / לא ידוע. ממכר ומהיר.',
         accent: '#00D9FF',
     },
     {
@@ -67,24 +67,21 @@ const comparison = [
 ];
 
 // ─── Testimonials ─────────────────────────────────────────────────────────────
-const testimonials = [
+const highlights = [
     {
-        name: 'נועה ל.',
-        score: '+42 נקודות',
-        text: 'לא האמנתי שאפליקציה תוכל להסביר לי למה טעיתי בחיבור. Bina עשתה את זה, וציון המבחן שלי קפץ.',
-        avatar: '👩‍🎓',
+        icon: '🎯',
+        title: 'תרגול ממוקד',
+        text: 'ה-AI מזהה את נקודות החולשה שלך ומתמקד בדיוק במה שצריך לשפר.',
     },
     {
-        name: 'יונתן כ.',
-        score: 'ציון 718',
-        text: 'הסוויפ כרטיסיות ממכר — למדתי מילים בכל 5 דקות שהיה לי פנוי. 3 שבועות אחר כך עברתי את הפסיכומטרי.',
-        avatar: '👨‍💻',
+        icon: '📈',
+        title: 'מעקב התקדמות',
+        text: 'ציון חזוי בזמן אמת שמתעדכן עם כל תרגול — תמיד תדע איפה אתה עומד.',
     },
     {
-        name: 'שיר מ.',
-        score: '+56 נקודות',
-        text: 'הציון החזוי של Bina היה מדויק להפליא. ידעתי בדיוק על מה להתמקד בשבוע לפני הבחינה.',
-        avatar: '👩‍🔬',
+        icon: '🧠',
+        title: 'למידה חכמה',
+        text: 'אלגוריתם SRS מציג מילים בדיוק בזמן הנכון כדי שתזכור אותן לטווח ארוך.',
     },
 ];
 
@@ -113,7 +110,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                     className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full border border-[#CCFF00]/30 bg-[#CCFF00]/8 text-[#CCFF00] text-xs font-black tracking-widest uppercase"
                 >
                     <span>⚡</span>
-                    <span>2,500+ סטודנטים שיפרו את ציונם</span>
+                    <span>אפליקציית AI לפסיכומטרי</span>
                 </motion.div>
 
                 {/* Main H1 — primary keyword */}
@@ -161,23 +158,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                     transition={{ duration: 0.4, delay: 0.2 }}
                     className="text-center text-[#475569] text-xs mt-3 font-medium"
                 >
-                    אין צורך בכרטיס אשראי · זמין לאייפון ואנדרואיד
+                    אין צורך בכרטיס אשראי · עובד על כל מכשיר
                 </motion.p>
 
-                {/* Platform badges */}
+                {/* Platform badge */}
                 <motion.div
                     {...fadeUp}
                     transition={{ duration: 0.4, delay: 0.25 }}
                     className="flex justify-center gap-3 mt-4"
                 >
                     <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-[#94A3B8]">
-                        <span>🍎</span> iOS
-                    </div>
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-[#94A3B8]">
-                        <span>🤖</span> Android
-                    </div>
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-[#94A3B8]">
-                        <span>🌐</span> Web
+                        <span>🌐</span> Web App
                     </div>
                 </motion.div>
             </section>
@@ -316,19 +307,19 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
             </section>
 
             {/* ────────────────────────────────────────────────────────────────── */}
-            {/* SECTION 5 — SOCIAL PROOF */}
+            {/* SECTION 5 — WHY BINA */}
             {/* ────────────────────────────────────────────────────────────────── */}
             <section className="relative z-10 px-5 py-12 max-w-lg mx-auto">
                 <motion.div {...fadeUp}>
-                    <div className="text-[10px] font-black text-[#FFD700] uppercase tracking-[0.25em] mb-3">עדויות</div>
+                    <div className="text-[10px] font-black text-[#FFD700] uppercase tracking-[0.25em] mb-3">למה Bina</div>
                     <h2 className="text-2xl font-black mb-8 leading-tight">
-                        הצלחות אמיתיות של<br />
-                        <span className="text-[#FFD700]">סטודנטים כמוך</span>
+                        למידה חכמה שעובדת<br />
+                        <span className="text-[#FFD700]">בשבילך</span>
                     </h2>
                 </motion.div>
 
                 <div className="space-y-4">
-                    {testimonials.map((t, i) => (
+                    {highlights.map((h, i) => (
                         <motion.div
                             key={i}
                             {...fadeUp}
@@ -337,15 +328,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                         >
                             <div className="flex items-center gap-3 mb-3">
                                 <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center text-xl">
-                                    {t.avatar}
+                                    {h.icon}
                                 </div>
-                                <div>
-                                    <div className="font-black text-white text-sm">{t.name}</div>
-                                    <div className="text-[#CCFF00] text-xs font-black">{t.score}</div>
-                                </div>
-                                <div className="mr-auto text-yellow-400 text-xs tracking-widest">★★★★★</div>
+                                <div className="font-black text-white text-sm">{h.title}</div>
                             </div>
-                            <p className="text-[#94A3B8] text-sm leading-relaxed">{t.text}</p>
+                            <p className="text-[#94A3B8] text-sm leading-relaxed">{h.text}</p>
                         </motion.div>
                     ))}
                 </div>
@@ -372,11 +359,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                     <div className="relative z-10">
                         <div className="text-4xl mb-4">🧠</div>
                         <h2 className="text-2xl font-black mb-3 leading-tight">
-                            מוכן לשפר את הציון שלך{' '}
-                            <span className="text-[#CCFF00]">60+ נקודות</span>?
+                            מוכן להתחיל{' '}
+                            <span className="text-[#CCFF00]">ללמוד חכם</span>?
                         </h2>
                         <p className="text-[#94A3B8] text-sm mb-7 leading-relaxed">
-                            הצטרף לאלפי סטודנטים שמשתמשים ב-Bina להכנה לפסיכומטרי — אפליקציה ללימוד פסיכומטרי לאייפון ואנדרואיד.
+                            התחל להתכונן לפסיכומטרי עם Bina — תרגול מותאם אישית עם בינה מלאכותית.
                         </p>
 
                         <motion.button
@@ -391,7 +378,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                         </motion.button>
 
                         <p className="text-[#475569] text-xs font-medium">
-                            ✓ בחינם לתמיד &nbsp;·&nbsp; ✓ ללא כרטיס אשראי &nbsp;·&nbsp; ✓ iOS, Android, Web
+                            ✓ בחינם לתמיד &nbsp;·&nbsp; ✓ ללא כרטיס אשראי &nbsp;·&nbsp; ✓ Web App
                         </p>
                     </div>
                 </motion.div>
